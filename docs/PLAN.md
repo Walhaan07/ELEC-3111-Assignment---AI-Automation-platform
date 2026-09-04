@@ -7,11 +7,20 @@ compare the application with n8n.
 platform. (The brief's sentence about the cloud-platform report format belongs to a different
 group's project and does not apply to us.)
 
-**Decisions taken (see `docs/adr/`):** Node.js + TypeScript monorepo · React + React Flow editor ·
-Postgres + Redis · deployed on AWS ECS Fargate · team of 5+ · ~10 weeks to demo.
+**Decisions taken (see `docs/adr/`):** Node.js + TypeScript monorepo · Express API · React + React
+Flow editor · Postgres · deployed with Docker Compose on a single EC2 instance · team of 5+ ·
+~10 weeks to demo.
+
+> **New to this kind of project? Read [`BUILD-GUIDE.md`](BUILD-GUIDE.md) first.** It explains what a
+> workflow engine actually is (a loop over some JSON), then walks through fifteen build stages with
+> code. This plan is the schedule; that guide is the method. The toolchain there is deliberately
+> lighter than a production team would choose — Express over NestJS, npm workspaces over Turborepo,
+> Docker Compose on one instance over ECS and Terraform — because every tool you have to learn is a
+> tool you are not spending on the engine.
 
 | Document | Owner | What it covers |
 |---|---|---|
+| `docs/BUILD-GUIDE.md` | Stream A | **Read first** — the concepts, then fifteen stages with code |
 | `docs/PLAN.md` (this file) | Team lead | Scope, schedule, work split, risks, demo |
 | `docs/ARCHITECTURE.md` | Stream A | Services, data model, engine semantics, AWS topology |
 | `docs/NODE-SPEC.md` | Stream D | Node SDK contract and the node catalogue |

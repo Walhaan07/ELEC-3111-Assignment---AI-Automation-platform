@@ -1,7 +1,13 @@
 # Architecture
 
-Target stack: Node.js 22 + TypeScript everywhere, Postgres 16, Redis 7, React 18 + React Flow,
-deployed as containers on AWS ECS Fargate.
+Target stack: Node.js 22 + TypeScript everywhere, Express, Postgres 16, React 18 + React Flow,
+deployed as containers with Docker Compose on a single EC2 instance. Redis and BullMQ arrive as a
+deliberate upgrade once the engine works, not on day one.
+
+> **This document describes the destination.** For how to get there — and why the toolchain is
+> deliberately lighter than a production team would pick — read [`BUILD-GUIDE.md`](BUILD-GUIDE.md)
+> first. Until Stage 13 of that guide, the api, worker and scheduler below all run inside one
+> process; the split is a refactor you do once you can feel why you want it, not a starting shape.
 
 ---
 
@@ -153,18 +159,17 @@ expression.
 
 ### 3.4 Code node sandbox
 
-Use **`isolated-vm`**: a genuine V8 isolate with its own heap. Limits: 128 MB memory, 5 s wall clock,
-no `require`, no filesystem, no network. Items cross the isolate boundary as structured-cloned JSON.
+**Start with `node:vm` inside a `worker_thread`**, with a 5 s timeout enforced by terminating the
+thread. No native modules, nothing to fail in a Docker build, about forty lines — see BUILD-GUIDE
+Stage 11. `isolated-vm` (a true V8 isolate with its own heap and memory cap) is the upgrade, worth
+taking only once everything else works.
 
-> **This is a report highlight.** Node's built-in `vm` module is *not* a security boundary — the
-> classic escape is `this.constructor.constructor('return process')().exit()`, which reaches the host
-> `process` through a leaked constructor. Say this in the report, show the escape working against
-> `vm`, then show it failing against `isolated-vm`. It is the strongest security content available in
-> this project for about an hour of work.
-
-Prototype `isolated-vm` inside the production Docker image in **Week 6** — it is a native module and
-build failures on slim base images are common. Fallback if it will not build: run the Code node in a
-forked Node process with `--no-experimental-fetch`, no network namespace and a hard kill timer.
+> **This is a report highlight, and the weaker sandbox makes it better rather than worse.** Node's
+> built-in `vm` module is *not* a security boundary — `this.constructor.constructor('return
+> process')()` reaches the host `process` through a leaked constructor and escapes. Demonstrate that
+> escape working, explain that a real platform needs a separate isolate or a separate process, and
+> state that the weaker boundary was accepted because the only users are the developers. Naming your
+> threat model earns more than silently importing a stronger library would.
 
 ---
 
@@ -231,7 +236,7 @@ Redirect URI: `https://<your-domain>/rest/oauth2-credential/callback`. Store the
 
 ```
 apps/
-  api/          NestJS — REST, webhook ingress, OAuth callback, SSE
+  api/          Express — REST, webhook ingress, OAuth callback, SSE
   worker/       BullMQ consumer hosting the engine
   scheduler/    cron registry
   editor/       React + React Flow + Monaco
@@ -247,8 +252,8 @@ benchmarks/     k6 scripts, workflow JSON for both platforms, raw results, chart
 docs/           plan, architecture, node spec, comparison, report source, ADRs
 ```
 
-pnpm workspaces + Turborepo. One `docker-compose.yml` at the root that brings up Postgres, Redis, api,
-worker, scheduler and the editor dev server.
+**npm workspaces** — built into npm, no extra tooling. One `docker-compose.yml` at the root brings up
+Postgres, the API and the editor dev server; Redis joins it at Stage 13.
 
 ---
 
@@ -256,21 +261,23 @@ worker, scheduler and the editor dev server.
 
 | Concern | Choice |
 |---|---|
-| Compute | ECS Fargate: `api` ×2, `worker` ×2, `scheduler` ×1 |
-| Ingress | ALB with an ACM certificate; `/rest/*`, `/webhook/*`, `/webhook-test/*` → api |
-| Editor | S3 bucket + CloudFront distribution |
-| Database | RDS Postgres 16, `db.t4g.micro`, single-AZ, 20 GB gp3 |
-| Cache/queue | ElastiCache Redis `cache.t4g.micro` |
-| Binary data | S3 bucket, lifecycle rule expiring objects after 7 days |
-| Images | ECR, one repository per service |
-| Secrets | Secrets Manager: encryption key, Google client secret, Anthropic API key |
-| Logs | CloudWatch Logs, one log group per service, 7-day retention |
-| CI/CD | GitHub Actions → build, test, push to ECR, `aws ecs update-service --force-new-deployment` |
-| IaC | Terraform in `infra/terraform`, with a `make destroy` teardown |
+| Compute | **One EC2 instance (t3.small), running `docker compose up -d`** |
+| Ingress | **Caddy** in front of the API — it obtains and renews the TLS certificate itself |
+| DNS | A cheap domain, or a free DuckDNS subdomain |
+| Database | Postgres in a container on the same instance, on a named volume |
+| Binary data | The instance's disk to start; S3 only if binary handling grows |
+| Secrets | An `.env` file on the instance, outside the repository |
+| Logs | `docker compose logs`, plus a `logs/` bind mount |
+| Deploy | `git pull && docker compose up -d --build` over SSH |
 
-Rough cost if left running: **USD 60–90/month**, dominated by RDS, ElastiCache and the ALB. Scale the
-ECS services to zero between working sessions and set a $50 budget alarm on day one. Everything is in
-Terraform precisely so a teardown between sessions is not scary.
+Rough cost: **USD 15–20/month**, and the whole thing stops with `docker compose down`. Set a $50
+budget alarm on day one.
+
+**The production version, if you get there:** ECS Fargate for `api`/`worker`/`scheduler`, an ALB with
+ACM, RDS, ElastiCache, S3 and CloudFront for the editor, all in Terraform. Around USD 60–90/month.
+This is a genuine stretch goal — it is roughly two weeks of learning, it earns few marks the single
+instance does not, and it competes directly with Weeks 12–13, which you cannot afford to lose.
+Describe it in the report's future-work section instead, unless you are comfortably ahead.
 
 ---
 

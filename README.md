@@ -19,14 +19,16 @@ compare the application with n8n. **Demo:** Week 14. **Report:** Week 15.
 
 ## Stack
 
-Node.js 22 + TypeScript · NestJS · Postgres · Redis + BullMQ · React + React Flow · Docker ·
-Terraform · AWS ECS Fargate
+Node.js 22 + TypeScript · Express · Postgres · React + React Flow · Docker Compose · AWS EC2
+*(Redis + BullMQ and container orchestration are planned upgrades, not starting points — see the
+build guide.)*
 
 ## Documentation
 
 | Document | What it covers |
 |---|---|
-| [`docs/PLAN.md`](docs/PLAN.md) | **Start here** — scope, weekly schedule, work split, risks, demo plan |
+| [`docs/BUILD-GUIDE.md`](docs/BUILD-GUIDE.md) | **Start here** — what the project actually is, then fifteen stages from a 40-line engine to the demo |
+| [`docs/PLAN.md`](docs/PLAN.md) | Scope, weekly schedule, work split, risks, demo plan |
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Services, data model, execution engine, sandbox, credentials, AWS topology |
 | [`docs/NODE-SPEC.md`](docs/NODE-SPEC.md) | The node SDK contract and the node catalogue |
 | [`docs/N8N-COMPARISON.md`](docs/N8N-COMPARISON.md) | Feature matrix, architectural comparison, benchmark methodology |
