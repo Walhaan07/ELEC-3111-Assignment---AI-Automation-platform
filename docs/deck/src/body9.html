@@ -1,0 +1,173 @@
+
+<!-- ============================== 4.1 ============================== -->
+<div class="page">
+  <div class="rh"><span>Part 4 · Running the project</span><span class="r">4.1 — Who owns what</span></div>
+  <div class="h-wrap"><span class="secno">4.1</span><h2>Who owns what</h2></div>
+  <div class="band" style="background:linear-gradient(90deg,#3568d4,#0a7d75,#237a40,#a86610,#d0454a,#6f52c9)"></div>
+
+  <div class="stack">
+    <p class="lede">We own <b>parts of the system</b>, not tasks. That way nobody has to ask whose decision
+      something is, and we rarely edit the same file at the same time.</p>
+
+    <figure>
+      <svg viewBox="0 0 760 262" xmlns="http://www.w3.org/2000/svg">
+        <defs><marker id="c1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#7c8492"/></marker></defs>
+        <rect x="10" y="44" width="168" height="56" rx="6" fill="#dbf0ee" stroke="#0a7d75" stroke-width="1.5"/>
+        <text x="26" y="68" class="t">The canvas</text><text x="26" y="85" class="s2">what people look at</text>
+        <rect x="10" y="16" width="26" height="23" rx="4" fill="#0a7d75"/><text x="17" y="32" class="t" style="fill:#fff">B</text>
+        <path d="M178 72L228 72" stroke="#7c8492" fill="none" marker-end="url(#c1)"/>
+        <rect x="236" y="44" width="168" height="56" rx="6" fill="#fbeeda" stroke="#a86610" stroke-width="1.5"/>
+        <text x="252" y="68" class="t">The server</text><text x="252" y="85" class="s2">API, webhooks, timers</text>
+        <rect x="236" y="16" width="26" height="23" rx="4" fill="#a86610"/><text x="243" y="32" class="t" style="fill:#fff">C</text>
+        <path d="M404 72L454 72" stroke="#7c8492" fill="none" marker-end="url(#c1)"/>
+        <rect x="462" y="44" width="168" height="56" rx="6" fill="#e6ecfb" stroke="#3568d4" stroke-width="1.5"/>
+        <text x="478" y="68" class="t">The engine</text><text x="478" y="85" class="s2">the loop, expressions</text>
+        <rect x="462" y="16" width="26" height="23" rx="4" fill="#3568d4"/><text x="469" y="32" class="t" style="fill:#fff">A</text>
+        <path d="M546 100L546 150" stroke="#7c8492" fill="none" marker-end="url(#c1)"/>
+        <rect x="462" y="158" width="168" height="56" rx="6" fill="#fbe5e6" stroke="#d0454a" stroke-width="1.5"/>
+        <text x="478" y="182" class="t">The nodes</text><text x="478" y="199" class="s2">Google, Code, AI</text>
+        <rect x="638" y="158" width="26" height="23" rx="4" fill="#d0454a"/><text x="645" y="174" class="t" style="fill:#fff">D</text>
+        <rect x="10" y="158" width="436" height="56" rx="6" fill="#ebe6f9" stroke="#6f52c9" stroke-width="1.5"/>
+        <text x="26" y="182" class="t">Docker, deployment, testing, the report</text>
+        <text x="26" y="199" class="s2">everything that makes the other four work reliably</text>
+        <rect x="10" y="130" width="26" height="23" rx="4" fill="#6f52c9"/><text x="17" y="146" class="t" style="fill:#fff">E</text>
+        <text x="10" y="238" class="s2">Two written agreements hold it together: the node shape, frozen in Phase 1,</text>
+        <text x="10" y="254" class="s2">and the five addresses, frozen in Phase 2.</text>
+      </svg>
+      <figcaption><b>Figure @.</b> With six people, D splits in two: Sheets and Drive on one side, Gmail,
+        Docs and the AI node on the other.</figcaption>
+    </figure>
+
+    <div class="row2">
+      <div class="box" style="border-left:3px solid #3568d4"><span class="tag">Stream A</span>
+        <h4>The engine</h4>
+        <p>Owns the loop, the item model and expressions. Writes Phase 1 alone, then supports everyone
+          else. This is the technical-lead seat, and the one place two people editing at once produces
+          a mess.</p></div>
+      <div class="box" style="border-left:3px solid #0a7d75"><span class="tag">Stream B</span>
+        <h4>The canvas</h4>
+        <p>Owns everything in the browser: the drawing surface, the settings-panel generator, the run
+          viewer, the code box. The largest single piece of work in the project.</p></div>
+    </div>
+    <div class="row2">
+      <div class="box" style="border-left:3px solid #a86610"><span class="tag">Stream C</span>
+        <h4>The server</h4>
+        <p>Owns the five addresses, webhook handling, the schedule timers and the Google permission
+          flow. The trickiest debugging in the project lands here.</p></div>
+      <div class="box" style="border-left:3px solid #d0454a"><span class="tag">Stream D</span>
+        <h4>The nodes</h4>
+        <p>Owns every integration. Cannot start properly until Phase 3 is finished — before that, writes
+          node descriptions and does the Google Cloud setup.</p></div>
+    </div>
+    <div class="box" style="border-left:3px solid #6f52c9"><span class="tag">Stream E</span>
+      <h4>Infrastructure, testing and the report</h4>
+      <p>Owns Docker, deployment, the test setup and the benchmark, and is editor-in-chief of the report
+        and director of the demo. Starts on day one, not in Week 12 — the report is written a section a
+        week from Week 5 onwards.</p></div>
+
+    <div class="call warn"><b>The sequencing mistake to avoid</b>Do not put five people on nodes in Week 5.
+      Until the skeleton exists there is nothing to build against, and parallel work on an unstable core
+      produces five rewrites. Weeks 4–5 are A and C building the spine while B builds the canvas, D writes
+      node descriptions and does the Google setup, and E stands up Docker and the automatic checks. Real
+      parallel work starts once Phase 3 lands.</div>
+  </div>
+</div>
+
+<!-- ============================== 4.2 ============================== -->
+<div class="page">
+  <div class="rh"><span>Part 4 · Running the project</span><span class="r">4.2 — Risks and habits</span></div>
+  <div class="h-wrap"><span class="secno">4.2</span><h2>Three risks that end projects, and six habits that save them</h2></div>
+  <div class="band" style="background:#d0454a"></div>
+
+  <div class="stack">
+    <div class="row3">
+      <div class="box" style="border-left:3px solid #d0454a">
+        <h4>Google keys expire after seven days</h4>
+        <p>While our app is in Testing mode the long-lived key stops working after a week. Connected in
+          Week 9, dead by Week 14 — and it looks like a broken node, not an expired key.</p>
+        <p style="margin-top:5px"><b>What we do:</b> reconnect every Google account on the morning of the
+          demo. It is step one of the checklist, not a footnote.</p></div>
+      <div class="box" style="border-left:3px solid #d0454a">
+        <h4>Gmail permissions are restricted</h4>
+        <p>Making the app public needs a Google security review we cannot complete this semester.</p>
+        <p style="margin-top:5px"><b>What we do:</b> stay in Testing mode and add every member — plus our
+          demonstrator — as test users in Week 7, not in Week 8 when we first need it.</p></div>
+      <div class="box" style="border-left:3px solid #d0454a">
+        <h4>Nothing works on demo day</h4>
+        <p>Campus wifi, an API outage, a laptop that decides to update. All of it happens, and always at
+          nine in the morning.</p>
+        <p style="margin-top:5px"><b>What we do:</b> record a full video of the working demo in Week 13,
+          bring a second laptop, and have a phone hotspot ready.</p></div>
+    </div>
+
+    <div style="margin-top:6px">
+      <h3 style="margin-bottom:8px">Six habits that will save us weeks</h3>
+      <ul class="pl">
+        <li><span class="m" style="color:#3568d4">01</span><span><b>Build the boring version first.</b> An
+          HTTP node that only does the simplest request is worth more in Week 6 than a perfect one in
+          Week 9, because everything downstream can start.</span></li>
+        <li><span class="m" style="color:#0a7d75">02</span><span><b>One person owns the engine.</b> Two
+          people editing it at once produces a mess nobody can untangle.</span></li>
+        <li><span class="m" style="color:#237a40">03</span><span><b>We are not building user accounts.</b>
+          Logins and password resets earn no marks here and will eat a week.</span></li>
+        <li><span class="m" style="color:#a86610">04</span><span><b>When a node will not work, test the
+          plain request in Postman first.</b> Most “my node is broken” turns out to be a missing
+          permission or a wrong header — nothing to do with our code.</span></li>
+        <li><span class="m" style="color:#d0454a">05</span><span><b>Print the data between nodes,
+          constantly.</b> Almost every confusing bug is the shape of the data, not the logic — and
+          section 1.3 explains the shape it should have.</span></li>
+        <li><span class="m" style="color:#6f52c9">06</span><span><b>Copy n8n's good ideas deliberately,
+          and say so in the report.</b> Explaining <em>why</em> a design is right is exactly what the
+          assignment asks for. Copying without understanding is what costs marks.</span></li>
+      </ul>
+    </div>
+
+    <div class="call why"><b>If we fall behind</b>We cut <em>nodes</em>, never phases. Losing the Drive node
+      costs almost nothing — it is one row in the acceptance checklist. Losing Phase 3 means every later
+      node needs a hand-built settings panel and only one person can work at a time, which would cost us
+      the whole of Weeks 8 to 10. The order of what to drop, if it comes to it: Drive, then Docs, then the
+      second half of the benchmark, then the Code node. Never the AI node, and never a phase.</div>
+  </div>
+</div>
+
+<!-- ============================== 4.3 ============================== -->
+<div class="page">
+  <div class="rh"><span>Part 4 · Running the project</span><span class="r">4.3 — This week</span></div>
+  <div class="h-wrap"><span class="secno">4.3</span><h2>What each of us does this week</h2></div>
+  <div class="band" style="background:linear-gradient(90deg,#3568d4,#0a7d75,#237a40,#a86610,#d0454a,#6f52c9)"></div>
+
+  <div class="stack">
+    <p class="lede">Everything on this page can be finished inside one week, and Phase 1 cannot start
+      properly until it is.</p>
+
+    <table>
+      <thead><tr><th style="width:60px">Who</th><th>Task</th><th style="width:96px">Blocks</th></tr></thead>
+      <tbody>
+        <tr><td><b>A</b></td><td><b>Write the engine script</b> from Figure 5 and walk the whole group through it. Everything else waits on this.</td><td>everything</td></tr>
+        <tr><td><b>B</b></td><td>Get a React Flow canvas running that can add a box and connect two boxes. Nothing needs to save yet.</td><td>Phase 2</td></tr>
+        <tr><td><b>C</b></td><td>Postgres in a container, the two tables, and a server that answers one address.</td><td>Phase 2</td></tr>
+        <tr><td><b>D</b></td><td><b>Create the Google Cloud project</b>, switch on the four APIs, fill in the consent screen, add everyone as test users.</td><td>Phase 5</td></tr>
+        <tr><td><b>E</b></td><td>Repository set up, the shared Docker file, automatic checks on every change, and an AWS account with a spending alarm.</td><td>Phases 2 and 6</td></tr>
+        <tr><td><b>All</b></td><td>Read Parts 0 and 1 of this document before Monday, and put the Week 13 rehearsal in the calendar now.</td><td>—</td></tr>
+      </tbody>
+    </table>
+
+    <div class="row2">
+      <div class="call why"><b>Why D's task is on this list</b>It looks like it belongs in Week 8. It is
+        here because the Google permission screen has a waiting period we do not control, restricted
+        permissions we cannot argue with, and a test-user list that must include our demonstrator. Fifteen
+        minutes now removes the single most common cause of a failed demo in this kind of project.</div>
+      <div class="call"><b>Our weekly rhythm from here</b>Monday, thirty minutes: agree this week's
+        “done when”. Thursday, thirty minutes: everyone shows what actually runs, and one person clones
+        the repository fresh and starts it. Nothing else. Two meetings a week is enough if both end in
+        something running.</div>
+    </div>
+
+    <div class="call done"><b>The one sentence to remember</b>Every phase ends in something we can run and
+      show. If a phase takes twice as long as this document says, that is completely normal — we cut a
+      node, never a phase, and we never start a new phase before the previous one's “done when” is
+      actually true.</div>
+  </div>
+</div>
+
+</body></html>

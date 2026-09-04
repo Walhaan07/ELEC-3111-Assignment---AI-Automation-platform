@@ -37,7 +37,7 @@ const { chromium } = require('playwright');
           const overB = bb.y + bb.height - (host.y + host.h);
           if (overR > 1) res.overflow.push({ f: si + 1, kind: 'box-right', over: Math.round(overR), txt });
           else if (overB > 1) res.overflow.push({ f: si + 1, kind: 'box-bottom', over: Math.round(overB), txt });
-          const fg = t.getAttribute('fill') || getComputedStyle(t).fill;
+          const fg = getComputedStyle(t).fill || t.getAttribute('fill');
           const hx = (s) => { const m = /^#([0-9a-f]{3,6})$/i.exec(s || ''); if (m) return s;
             const m2 = /rgb\((\d+),\s*(\d+),\s*(\d+)\)/.exec(s || '');
             return m2 ? '#' + [1,2,3].map(i => (+m2[i]).toString(16).padStart(2,'0')).join('') : null; };

@@ -1,42 +1,44 @@
 # Presentation deck
 
-`ELEC3111-AI-Automation-Platform-Plan.pdf` — 15 A4 pages, 14 diagrams. Written to be *presented*:
-four introduction pages that explain what a workflow engine is, then one page per phase covering what
-we are doing, the tools that phase uses, how to proceed, and how we know it is finished.
+`ELEC3111-AI-Automation-Platform-Plan.pdf` — 24 A4 pages, 21 diagrams, written to be presented and to
+be read by someone who has *used* n8n but never built one.
 
-`plan-print.html` is the source. Fonts are embedded as data URIs so it renders identically anywhere.
-To regenerate after editing:
+| Part | Pages | What it covers |
+|---|---|---|
+| 0 · The vocabulary | 3–4 | Sixteen terms — node, item, trigger, canvas, engine, server, API, endpoint, JSON, database, token, container — each with a plain definition and where you already met it in n8n |
+| 1 · How it all works | 5–11 | What a workflow, a node, an item, the engine, the canvas and the API really are, before any code |
+| 2 · Building it | 12–18 | Six phases, each with its own colour: what we are doing, what it was in n8n, the tools, how to proceed, and a “done when” |
+| 3 · Putting it together | 19–21 | Integration, four levels of testing, and the demo-day runbook with an acceptance checklist |
+| 4 · Running the project | 22–24 | Who owns what, the three risks that end demos, six habits, and this week's tasks |
+
+Colour is introduced gradually: Parts 0 and 1 are a quiet single accent, and each phase in Part 2
+carries its own colour through its heading and every diagram belonging to it.
+
+## Editing and regenerating
+
+The document is assembled from `src/body1.html` … `src/body9.html` plus `src/fonts.html` (the three
+typefaces embedded as data URIs, so it renders identically anywhere).
 
 ```bash
-npm i -g playwright            # already present in the dev container
-node render.js .               # see the snippet below, or use any headless Chromium print-to-PDF
+python3 assemble.py     # concatenates, numbers the figures, fills in the contents page
+node measure.js         # every page must be under 1024 px tall or it spills onto a second sheet
+node audit.js           # must print nothing — see below
+node render.js .        # writes the PDF
 ```
 
-Minimal renderer:
+`assemble.py` numbers figures sequentially in document order (write `<b>Figure @.</b>` in a caption
+and it fills in the number) and rewrites the contents page with real page numbers and figure
+references, so neither can drift out of date.
 
-```js
-const { chromium } = require('playwright');
-(async () => {
-  const b = await chromium.launch();
-  const p = await b.newPage();
-  await p.goto('file://' + process.cwd() + '/plan-print.html', { waitUntil: 'networkidle' });
-  await p.pdf({ path: 'ELEC3111-AI-Automation-Platform-Plan.pdf', format: 'A4',
-    printBackground: true,
-    margin: { top: '12mm', bottom: '14mm', left: '15mm', right: '15mm' } });
-  await b.close();
-})();
-```
+## What audit.js checks
 
-Keep every page under ~1024 CSS px tall at 680 px wide, or it will spill onto a second sheet.
+Two classes of bug that are invisible until someone prints the document:
 
-## Checking a page before you regenerate
+1. **Text escaping its shape.** For every `<text>` it finds the rectangle the text actually sits
+   inside and reports anything overflowing that shape or the viewBox.
+2. **Unreadable colour.** It reports any text below 4.5:1 contrast against the shape behind it.
 
-Two scripts guard the two things that break silently when you edit a diagram:
-
-- `node measure.js` — prints each page's height against the 1024 px printable limit. Anything marked
-  OVER will spill onto a second sheet.
-- `node audit.js` — walks every `<text>` in every SVG and reports two classes of bug: text that
-  escapes the box it sits in (or the viewBox), and text whose colour falls below 4.5:1 contrast
-  against the shape behind it. Both must print nothing before you render.
-
-Run both, then `node render.js .`.
+It reads the **computed** fill, not the `fill` attribute. That matters: in SVG a CSS class beats a
+presentation attribute, so `class="s2" fill="#e8eaed"` renders in the class colour, not the one you
+asked for. Seventy-two labels in this document were silently wrong for exactly that reason — they are
+now written as `style="fill:…"`, which does win. Keep it that way.

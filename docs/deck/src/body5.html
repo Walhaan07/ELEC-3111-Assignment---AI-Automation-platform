@@ -1,0 +1,190 @@
+
+<!-- ============================== 2.1 PHASE 1 ============================== -->
+<div class="page" style="--acc:#3568d4;--accs:#e6ecfb">
+  <div class="rh"><span>Part 2 · Building it</span><span class="r">2.1 — Phase 1 · Make it run</span></div>
+  <div class="ph"><span class="chip">Phase 1 · Make it run</span>
+    <span class="stages">Stages 1–2 · Weeks 4–5 · lead: engine</span></div>
+  <div class="h-wrap"><span class="secno">2.1</span><h2>A workflow runs, from a single file</h2></div>
+  <div class="band"></div>
+
+  <div class="stack">
+    <p class="lede"><b>What we are doing.</b> Writing the loop from section 1.4 as one small program, and
+      agreeing the exact shape every node will have. <b>No web page, no database, no canvas</b> — just a
+      file we run from the terminal and watch print real results.</p>
+
+    <figure>
+      <svg viewBox="0 0 760 206" xmlns="http://www.w3.org/2000/svg">
+        <rect x="10" y="20" width="452" height="176" rx="6" fill="#14161a"/>
+        <rect x="10" y="20" width="452" height="20" rx="6" fill="#2b3038"/>
+        <rect x="10" y="34" width="452" height="6" fill="#2b3038"/>
+        <circle cx="26" cy="30" r="3.4" fill="#5b6472"/><circle cx="38" cy="30" r="3.4" fill="#5b6472"/><circle cx="50" cy="30" r="3.4" fill="#5b6472"/>
+        <text x="66" y="34" class="s" style="fill:#b9c0cb">engine.js</text>
+        <text x="26" y="64" class="s2" style="fill:#7fd39a">$ node engine.js</text>
+        <text x="26" y="88" class="s2" style="fill:#e8eaed">Start   -&gt; [ { } ]</text>
+        <text x="26" y="110" class="s2" style="fill:#e8eaed">Weather -&gt; [ { "temp_C": "18",</text>
+        <text x="26" y="128" class="s2" style="fill:#e8eaed">              "desc": "Partly cloudy" } ]</text>
+        <text x="26" y="152" class="s2" style="fill:#e8eaed">Shape   -&gt; [ { "city": "Newcastle",</text>
+        <text x="26" y="170" class="s2" style="fill:#e8eaed">              "temp": 18 } ]</text>
+        <text x="26" y="190" class="s2" style="fill:#7fd39a">done</text>
+
+        <rect x="478" y="20" width="272" height="176" rx="6" fill="#e6ecfb" stroke="#3568d4" stroke-width="1.5"/>
+        <text x="494" y="46" class="t">What just happened</text>
+        <text x="494" y="70" class="s2">A hard-coded workflow object, three</text>
+        <text x="494" y="86" class="s2">node functions, and the loop — all in</text>
+        <text x="494" y="102" class="s2">one file, about forty lines.</text>
+        <text x="494" y="128" class="s2">It called a real weather API, passed</text>
+        <text x="494" y="144" class="s2">the result to the next node, and</text>
+        <text x="494" y="160" class="s2">printed what each one produced.</text>
+        <text x="494" y="186" class="s" style="fill:#2a53ab">everything else is built around this</text>
+      </svg>
+      <figcaption><b>Figure @.</b> The whole product, on the first day. Every later phase adds a way to
+        create, store, trigger or display this — never a second way to run it.</figcaption>
+    </figure>
+
+    <div class="n8n"><b>Familiar from n8n</b>This is the moment n8n goes from magic to machinery. What you
+      watched happen on the n8n canvas — nodes lighting up in order, data appearing in each output panel
+      — is exactly what those printed lines are. The only difference is that n8n draws it prettily and
+      we are printing it to a terminal.</div>
+
+    <div class="tools">
+      <div class="eyebrow" style="color:#3568d4">Tools we use in this phase</div>
+      <div class="tgrid">
+        <div><b>Node.js</b><span>the language we already learned — nothing new to install</span></div>
+        <div><b>VS Code + Git</b><span>one shared repository, everyone on a branch</span></div>
+        <div><b>TypeScript</b><span>used lightly, only to write down the node shape</span></div>
+        <div><b>No frameworks</b><span>deliberately — this phase is plain JavaScript in one file</span></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="eyebrow" style="margin-bottom:6px">How we proceed</div>
+      <ol class="steps">
+        <li><b>One person writes the file.</b> A hard-coded workflow, two or three node functions, and the
+          waiting-list loop. It should end by printing real data from a public weather API.</li>
+        <li><b>All five of us read it together</b> until nobody has a question. This is worth an hour of
+          everyone's time — it is the only genuinely conceptual part of the whole project.</li>
+        <li><b>We write the node shape down</b> in the repository: what a node receives, what it must
+          hand back, and what it is never allowed to do (touch the database, draw anything, or decide
+          what runs next).</li>
+        <li><b>We build two boring nodes against it</b> — one that adds fields to each item, one that
+          splits the flow in two. Nothing that can fail for reasons outside our control.</li>
+        <li><b>We freeze the shape.</b> From here on, changing it needs everyone to agree, because a
+          change breaks work already in progress.</li>
+      </ol>
+    </div>
+
+    <div class="row2">
+      <div class="call done"><b>Done when</b>Three nodes run in a chain, the splitting node sends data
+        down the correct branch, and every one of us can explain the loop without notes.</div>
+      <div class="call warn"><b>Watch out</b>Do not put five people on this. One writes, four read.
+        Parallel work on an unstable core produces five rewrites — the most common way a project like
+        ours fails quietly in week three.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================== 2.2 PHASE 2 ============================== -->
+<div class="page" style="--acc:#0a7d75;--accs:#dbf0ee">
+  <div class="rh"><span>Part 2 · Building it</span><span class="r">2.2 — Phase 2 · Make it real</span></div>
+  <div class="ph"><span class="chip">Phase 2 · Make it real</span>
+    <span class="stages">Stages 3–4 · Weeks 5–6 · lead: server + canvas</span></div>
+  <div class="h-wrap"><span class="secno">2.2</span><h2>Workflows survive a restart, and we can draw them</h2></div>
+  <div class="band"></div>
+
+  <div class="stack">
+    <p class="lede"><b>What we are doing.</b> Giving the engine a home. A <b>database</b> remembers
+      workflows, a <b>server</b> hands them out through the five addresses from section 1.5, and a
+      <b>canvas</b> lets us draw one instead of typing JSON by hand.</p>
+
+    <figure>
+      <svg viewBox="0 0 760 216" xmlns="http://www.w3.org/2000/svg">
+        <defs><marker id="p2a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#0a7d75"/></marker></defs>
+        <text x="10" y="16" class="e">AFTER PHASE 1</text>
+        <rect x="10" y="26" width="192" height="120" rx="5" fill="#14161a"/>
+        <rect x="10" y="26" width="192" height="16" rx="5" fill="#2b3038"/>
+        <circle cx="24" cy="34" r="2.8" fill="#5b6472"/><circle cx="33" cy="34" r="2.8" fill="#5b6472"/><circle cx="42" cy="34" r="2.8" fill="#5b6472"/>
+        <text x="22" y="62" class="s2" style="fill:#7fd39a">$ node engine.js</text>
+        <text x="22" y="82" class="s2" style="fill:#e8eaed">Start   -&gt; [ { } ]</text>
+        <text x="22" y="100" class="s2" style="fill:#e8eaed">Weather -&gt; [ … ]</text>
+        <text x="22" y="120" class="s2" style="fill:#7fd39a">done</text>
+        <text x="10" y="166" class="s">one file, hard-coded,</text>
+        <text x="10" y="180" class="s">gone when it finishes</text>
+
+        <path d="M210 86L256 86" stroke="#0a7d75" fill="none" marker-end="url(#p2a)"/>
+        <text x="212" y="78" class="e" style="fill:#08635d">PHASE 2 ADDS</text>
+
+        <text x="266" y="16" class="e" style="fill:#08635d">AFTER PHASE 2</text>
+        <rect x="266" y="26" width="256" height="66" rx="5" fill="#dbf0ee" stroke="#0a7d75" stroke-width="1.5"/>
+        <rect x="266" y="26" width="256" height="14" rx="5" fill="#b9ded9"/>
+        <circle cx="278" cy="33" r="2.6" fill="#0a7d75"/><circle cx="287" cy="33" r="2.6" fill="#0a7d75"/><circle cx="296" cy="33" r="2.6" fill="#0a7d75"/>
+        <rect x="284" y="50" width="70" height="16" rx="3" fill="#fff" stroke="#8fc9c3"/>
+        <rect x="284" y="70" width="70" height="16" rx="3" fill="#fff" stroke="#8fc9c3"/>
+        <rect x="384" y="60" width="70" height="16" rx="3" fill="#fff" stroke="#8fc9c3"/>
+        <path d="M354 58L382 65" stroke="#0a7d75" fill="none"/><path d="M354 78L382 71" stroke="#0a7d75" fill="none"/>
+        
+        <path d="M394 92L394 106" stroke="#0a7d75" fill="none" marker-end="url(#p2a)"/>
+        <rect x="266" y="108" width="256" height="42" rx="5" fill="#fff" stroke="#0a7d75" stroke-width="1.5"/>
+        <text x="282" y="126" class="t">the server</text>
+        <text x="282" y="142" class="s">five addresses · the engine</text>
+        <path d="M394 150L394 164" stroke="#0a7d75" fill="none" marker-end="url(#p2a)"/>
+        <ellipse cx="394" cy="172" rx="34" ry="7" fill="#dbf0ee" stroke="#0a7d75"/>
+        <path d="M360 172 L360 196 A34 7 0 0 0 428 196 L428 172" fill="#dbf0ee" stroke="#0a7d75"/>
+        <ellipse cx="394" cy="172" rx="34" ry="7" fill="#fff" stroke="#0a7d75"/>
+        <text x="440" y="188" class="s2">the database</text>
+
+        <rect x="546" y="26" width="204" height="176" rx="5" fill="#f7f8fa" stroke="#dcdfe5"/>
+        <text x="562" y="48" class="t">What is new</text>
+        <text x="562" y="72" class="s2">a page you can draw on</text>
+        <text x="562" y="92" class="s2">five addresses to call</text>
+        <text x="562" y="112" class="s2">two tables that remember</text>
+        <text x="562" y="132" class="s2">a Run button that works</text>
+        <text x="562" y="164" class="s" style="fill:#08635d">the engine itself does not</text>
+        <text x="562" y="178" class="s" style="fill:#08635d">change at all — it is simply</text>
+        <text x="562" y="192" class="s" style="fill:#08635d">called from somewhere new</text>
+      </svg>
+      <figcaption><b>Figure @.</b> Phase 2 wraps phase 1 in the four things every web application has: a
+        screen, a server, a database, and a way back. Nothing about the engine is rewritten.</figcaption>
+    </figure>
+
+    <div class="n8n"><b>Familiar from n8n</b>Everything on this page is what n8n already gave you for
+      free: a canvas that saved when you clicked away, a workflow list that survived a restart, and a
+      Run button. You never thought about the database behind it — which is exactly the experience we
+      are now building for ourselves.</div>
+
+    <div class="tools">
+      <div class="eyebrow" style="color:#0a7d75">Tools we use in this phase</div>
+      <div class="tgrid">
+        <div><b>Docker Compose</b><span>starts the database with one command — nobody installs Postgres by hand</span></div>
+        <div><b>PostgreSQL</b><span>remembers the workflows and every past run</span></div>
+        <div><b>Express</b><span>the smallest useful server — readable end to end in an afternoon</span></div>
+        <div><b>node-postgres</b><span>talks to the database in plain SQL; no extra layer to learn</span></div>
+        <div><b>React + Vite</b><span>builds the page the canvas lives in</span></div>
+        <div><b>React Flow</b><span>dragging, connecting, panning and zooming — already solved</span></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="eyebrow" style="margin-bottom:6px">How we proceed</div>
+      <ol class="steps">
+        <li><b>Start the database in a container.</b> One configuration file, one command, the same on
+          every laptop.</li>
+        <li><b>Two tables only:</b> one for workflows, one for runs. The whole drawing goes into a single
+          column as the text from Figure 2 — which is what makes saving one write and loading one read.</li>
+        <li><b>Build the five addresses:</b> list, fetch, create, save, run. That really is enough for the
+          next month.</li>
+        <li><b>Put React Flow on the page.</b> We write the boxes and the sidebar; we do not write
+          dragging, zooming or line-drawing.</li>
+        <li><b>Join the two halves</b> so the drawing saves to the database and the Run button executes
+          it, showing what each node produced.</li>
+      </ol>
+    </div>
+
+    <div class="row2">
+      <div class="call done"><b>Done when</b>We can drag out two nodes, connect them, refresh the browser
+        and find them still there — then press Run and see the result of each one.</div>
+      <div class="call warn"><b>Watch out</b>Converting between React Flow's format and ours is the fiddly
+        job here, and essentially every canvas bug for the rest of the semester will live in it. Write it
+        once, carefully, with someone reading over your shoulder.</div>
+    </div>
+  </div>
+</div>
