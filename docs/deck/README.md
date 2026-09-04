@@ -28,3 +28,15 @@ const { chromium } = require('playwright');
 ```
 
 Keep every page under ~1024 CSS px tall at 680 px wide, or it will spill onto a second sheet.
+
+## Checking a page before you regenerate
+
+Two scripts guard the two things that break silently when you edit a diagram:
+
+- `node measure.js` — prints each page's height against the 1024 px printable limit. Anything marked
+  OVER will spill onto a second sheet.
+- `node audit.js` — walks every `<text>` in every SVG and reports two classes of bug: text that
+  escapes the box it sits in (or the viewBox), and text whose colour falls below 4.5:1 contrast
+  against the shape behind it. Both must print nothing before you render.
+
+Run both, then `node render.js .`.
