@@ -18,7 +18,7 @@ page_figs = [[int(x) for x in re.findall(r"<b>Figure (\d+)\.</b>", p)] for p in 
 rows = list(re.finditer(
     r'<div class="row"><span class="n">([\d.]+)</span><span>(.*?)</span><span class="pg"[^>]*>.*?</span></div>',
     doc, re.S))
-assert len(rows) == 22, len(rows)
+assert len(rows) == 23, len(rows)
 for i, m in enumerate(rows):
     figs = page_figs[2 + i]
     label = re.sub(r'\s*·\s*Figures?\s*[\d–—-]+\s*$', '', m.group(2)).rstrip()

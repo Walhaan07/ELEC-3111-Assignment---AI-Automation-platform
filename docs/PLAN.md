@@ -8,7 +8,7 @@ platform. (The brief's sentence about the cloud-platform report format belongs t
 group's project and does not apply to us.)
 
 **Decisions taken (see `docs/adr/`):** Node.js + TypeScript monorepo · Express API · React + React
-Flow editor · Postgres · deployed with Docker Compose on a single EC2 instance · team of 5+ ·
+Flow editor · Postgres · deployed with Docker Compose on a single EC2 instance · team of 8 ·
 ~10 weeks to demo.
 
 > **New to this kind of project? Read [`BUILD-GUIDE.md`](BUILD-GUIDE.md) first.** It explains what a
@@ -20,12 +20,12 @@ Flow editor · Postgres · deployed with Docker Compose on a single EC2 instance
 
 | Document | Owner | What it covers |
 |---|---|---|
-| `docs/BUILD-GUIDE.md` | Stream A | **Read first** — the concepts, then fifteen stages with code |
+| `docs/BUILD-GUIDE.md` | A1 | **Read first** — the concepts, then fifteen stages with code |
 | `docs/PLAN.md` (this file) | Team lead | Scope, schedule, work split, risks, demo |
-| `docs/ARCHITECTURE.md` | Stream A | Services, data model, engine semantics, AWS topology |
-| `docs/NODE-SPEC.md` | Stream D | Node SDK contract and the node catalogue |
-| `docs/N8N-COMPARISON.md` | Stream E | Feature matrix and benchmark methodology |
-| `docs/REPORT-OUTLINE.md` | Stream E | Week 15 report structure |
+| `docs/ARCHITECTURE.md` | A1 | Services, data model, engine semantics, AWS topology |
+| `docs/NODE-SPEC.md` | D1 | Node SDK contract and the node catalogue |
+| `docs/N8N-COMPARISON.md` | D2 | Feature matrix and benchmark methodology |
+| `docs/REPORT-OUTLINE.md` | D2 | Week 15 report structure |
 
 ---
 
@@ -95,28 +95,61 @@ pushes to `main`.
 
 ---
 
-## 3. Work split (5 streams)
+## 3. Work split (8 people, 4 areas of 2)
 
-Streams own directories, so merge conflicts are rare and ownership is unambiguous.
+Streams own **directories**, so merge conflicts are rare and ownership is unambiguous. Eight people
+means four areas of two: inside a pair you swap work freely and review each other; across pairs you
+talk through the three written agreements below.
 
-| Stream | Owns | Responsibilities |
-|---|---|---|
-| **A — Engine & core** (tech lead) | `packages/engine` | Execution engine, item model, branch pruning, expression resolver, queue integration, cancellation, error and retry semantics |
-| **B — Editor** | `apps/editor` | React Flow canvas, properties panel generator, execution log viewer, credential UI, Monaco Code editor |
-| **C — Platform & triggers** | `apps/api`, `apps/scheduler` | REST API, auth, webhook ingress, scheduler, credential encryption, Google OAuth2 flow and token refresh |
-| **D — Integrations** | `packages/nodes` | HTTP node, four Google nodes, AI node, credential type definitions. **With 6 people split this: D1 = Sheets + Drive, D2 = Gmail + Docs + AI** |
-| **E — Infra, QA & report** | `infra/`, `.github/`, `docs/` | Docker, Terraform, CI/CD, test strategy, benchmark harness, report editor-in-chief, demo director |
+| | Owns | Responsible for, all semester | Surge node |
+|---|---|---|---|
+| **A1 — Engine core** *(tech lead)* | `packages/engine` | The loop, item model, branch pruning, expression resolver. Writes Phase 1 alone. Casting vote on architecture | AI node |
+| **A2 — Control flow & isolation** | `packages/nodes/core` | IF, Set, Merge, per-node retry and error handling; later the Code node's sandbox. Reviews A1 and vice versa | Code node |
+| **B1 — Canvas** | `apps/editor/canvas` | React Flow, node rendering, and the conversion between its format and ours. Later the Monaco code box | — |
+| **B2 — Sidebar & run viewer** | `apps/editor/panel` | The properties-panel generator (highest-leverage piece in the project), execution list and log viewer | Google Docs |
+| **C1 — Server & database** | `apps/api` | REST API, schema and migrations, the query layer, auth stub | Google Drive |
+| **C2 — Triggers & credentials** | `apps/api/triggers` | Webhook ingress, schedule registry, AES-256-GCM encryption, the Google OAuth2 flow and refresh | Gmail |
+| **D1 — Integrations lead** | `packages/nodes/google` | The shared Google request helper and the node-writing conventions everyone copies. Ships Sheets first so the pattern exists before the surge | Google Sheets |
+| **D2 — Infra, QA & report** | `infra/`, `.github/`, `docs/` | Docker, CI, deployment, benchmark harness, test strategy. Editor-in-chief of the report, director of the demo | test harness |
 
-**Contracts between streams (frozen Week 6, changed only by ADR):**
-- A ↔ D: the `INode` interface in `packages/nodes-sdk`
-- B ↔ C: the OpenAPI description of the REST API
-- Everyone ↔ E: `docker-compose.yml`
+**The node surge (Weeks 8–10).** Node ownership is *temporary*. Once Phase 3 lands, nodes are
+independent of the editor, so six people take one node each — the "surge node" column above. This is
+the only reason eight people are an advantage rather than an overhead.
 
-**Sequencing warning.** Do *not* put five people on nodes in Week 5. Until the skeleton exists there
-is nothing to build against, and parallel work on an unstable core produces five rewrites. Weeks 4–5
-are A and C building the spine while B builds the canvas, D writes node *specs* (not code) and
-prototypes the Google OAuth click-path, and E stands up CI and Compose. Real parallelism starts in
-Week 6 when the SDK is frozen.
+**Three written agreements, frozen and owned:**
+
+| Agreement | Frozen | Owner | Breaks if changed |
+|---|---|---|---|
+| The `INode` shape | Phase 1 | A1 | every node |
+| The REST API (five routes) | Phase 2 | C1 | the whole editor |
+| The properties-description format | Phase 3 | B2 | every settings panel |
+
+**Sequencing warning — the specific danger of being eight.** Phase 1 is genuinely one person's work
+and Phase 2 is about three. Without a plan, five people spend Weeks 4–6 idle or, worse, rewriting the
+core. The answer is eight *independent tracks* in Weeks 4–6, none of which reads another's code:
+
+| | Weeks 4–6 track |
+|---|---|
+| A1 | The engine script — the critical path |
+| A2 | Read it line by line, then write IF and Set against the agreed shape |
+| B1 | A canvas that can drag and connect |
+| B2 | The panel generator, built against **three hand-written fake descriptions** |
+| C1 | Postgres, the schema, one working route |
+| C2 | Google Cloud project and consent screen, then the OAuth round trip |
+| D1 | **Prove all four Google calls by hand in Postman** and commit the exact requests |
+| D2 | Repository, Compose, CI, AWS account, report skeleton |
+
+They need exactly two Week-4 decisions in common: the node shape and the list of property types.
+
+**Working rules for eight.** Directory owner reviews; one approval plus green CI merges — nobody waits
+for eight. Pairs review each other (A1↔A2, B1↔B2, C1↔C2, D1↔D2). Monday planning runs as two
+twenty-minute groups (engine + editor, then server + delivery); Thursday is forty minutes, all eight,
+everyone demos something running. Never more than two people on one stuck problem. Write the
+contribution statement weekly from the git history — with eight names it is a marked component and
+cannot be reconstructed in Week 15.
+
+**What eight buys.** Capacity in Weeks 8–10, and therefore scope: the AI Agent node, Merge,
+per-node retry and the BullMQ queue move from Tier 2 "only if ahead" to **expected**.
 
 ---
 
@@ -124,15 +157,15 @@ Week 6 when the SDK is frozen.
 
 | Risk | L | I | Mitigation | Owner |
 |---|---|---|---|---|
-| **Google OAuth refresh tokens expire after 7 days while the app is in "Testing"** | High | Critical | Re-authorize every credential the morning of the demo; put it in the demo runbook as step 1; consider a service account for Sheets/Drive/Docs as a fallback path | C |
-| Google OAuth consent screen / restricted Gmail scopes block access | High | Critical | Stay in External + Testing mode; add every group member **and the demonstrator's account** as Test Users by Week 7; never rely on app verification | C |
-| Scope creep chasing n8n's node count | High | High | Tier 0/1/2; feature freeze end of Week 11 is enforced by the lead | Lead |
-| Code-node sandbox: `isolated-vm` fails to build in the Fargate image | Med | High | Prototype `isolated-vm` inside the production Docker image by Week 6, not Week 9. Fallback: run the Code node in a separate short-lived worker process with no network and a hard timeout | A |
-| Live-demo failure (network, API outage, quota) | Med | High | Pre-recorded fallback video by Week 13; local Docker Compose fallback on a second laptop; phone hotspot; a mock HTTP endpoint that never leaves the machine | E |
-| AWS cost overrun / credits exhausted before Week 14 | Med | Med | Budget alarm at $50; `t4g.micro` single-AZ; scale services to zero outside working sessions; teardown script in `infra/` | E |
-| Engine rewritten mid-project because the item model was wrong | Med | High | Adopt n8n's item model deliberately (ADR-002) in Week 5, freeze in Week 6 | A |
-| Benchmark comparison reads as unfair or naive | Med | Med | Identical hardware, 3+ runs, publish raw data, and state confounders explicitly — see `docs/N8N-COMPARISON.md` | E |
-| A group member becomes unavailable | Med | Med | No solo-owned secrets; everything in the repo; pair on the critical path in Weeks 5–7 | Lead |
+| **Google OAuth refresh tokens expire after 7 days while the app is in "Testing"** | High | Critical | Re-authorize every credential the morning of the demo; put it in the demo runbook as step 1; consider a service account for Sheets/Drive/Docs as a fallback path| C2 |
+| Google OAuth consent screen / restricted Gmail scopes block access | High | Critical | Stay in External + Testing mode; add every group member **and the demonstrator's account** as Test Users by Week 7; never rely on app verification| C2 |
+| Scope creep chasing n8n's node count | High | High | Tier 0/1/2; feature freeze end of Week 11 is enforced by the lead | A1 |
+| Code-node sandbox: `isolated-vm` fails to build in the Fargate image | Med | High | Prototype `isolated-vm` inside the production Docker image by Week 6, not Week 9. Fallback: run the Code node in a separate short-lived worker process with no network and a hard timeout| A1 |
+| Live-demo failure (network, API outage, quota) | Med | High | Pre-recorded fallback video by Week 13; local Docker Compose fallback on a second laptop; phone hotspot; a mock HTTP endpoint that never leaves the machine| D2 |
+| AWS cost overrun / credits exhausted before Week 14 | Med | Med | Budget alarm at $50; `t4g.micro` single-AZ; scale services to zero outside working sessions; teardown script in `infra/`| D2 |
+| Engine rewritten mid-project because the item model was wrong | Med | High | Adopt n8n's item model deliberately (ADR-002) in Week 5, freeze in Week 6| A1 |
+| Benchmark comparison reads as unfair or naive | Med | Med | Identical hardware, 3+ runs, publish raw data, and state confounders explicitly — see `docs/N8N-COMPARISON.md`| D2 |
+| A group member becomes unavailable | Med | Med | No solo-owned secrets; everything in the repo; pair on the critical path in Weeks 5–7 | A1 |
 
 ---
 
@@ -169,23 +202,30 @@ while everything still works.
 
 ## 7. Do this week
 
-1. Create the GitHub repo structure and the pnpm workspace; protect `main`. — E
-2. `docker-compose.yml` with Postgres and Redis; API `/health`; CI workflow. — E, C
-3. Write ADR-001 (workflow stored as JSONB) and ADR-002 (adopt the n8n item model). — A
-4. First migration: `workflows`, `executions`, `credentials`. — C
-5. React Flow canvas that can add a node, connect two nodes, and save to the API. — B
-6. **Create the Google Cloud project, enable the Sheets/Drive/Docs/Gmail APIs, configure the OAuth
-   consent screen (External + Testing), add every group member as a Test User.** Do it now, not in
-   Week 8 — this is the single most common cause of a failed demo in this kind of project. — D
-7. Get an AWS account with credits and set the $50 budget alarm. — E
-8. Book the Week 13 rehearsal slot in everyone's calendar. — Lead
+One task each — none of which needs anybody else's code to exist first.
+
+| | Task | Blocks |
+|---|---|---|
+| **A1** | Write the engine script, walk all eight through it, then write the `INode` shape down and freeze it. Also ADR-001 and ADR-002 | everything |
+| **A2** | Read A1's script line by line, then write IF and Set against the agreed shape. Nothing that calls an outside service | Phase 3 |
+| **B1** | A React Flow canvas that can add a node and connect two nodes. Nothing needs to save yet | Phase 2 |
+| **B2** | Agree the property types with A1, then build the panel generator against three hand-written fake descriptions | Phase 3 |
+| **C1** | Postgres in Compose, first migration (`workflows`, `executions`, `credentials`), one working route | Phase 2 |
+| **C2** | **Create the Google Cloud project**, enable the four APIs, configure the consent screen (External + Testing), add all eight of us *and the demonstrator* as Test Users | Phase 5 |
+| **D1** | **Prove all four Google calls by hand in Postman** — append a row, `replaceAllText`, upload, send — and commit the exact requests | Phase 5 |
+| **D2** | Repo structure and branch protection, `docker-compose.yml`, CI workflow, AWS account with a $50 budget alarm, report skeleton | Phases 2 and 6 |
+| **All** | Read `BUILD-GUIDE.md` Part 1 before Monday; book the Week 13 rehearsal in everyone's calendar | — |
+
+C2's and D1's tasks look like Week 8 work. They are here because Google's consent screen has waiting
+periods we do not control and restricted scopes we cannot argue with — and because proving the four
+API calls by hand now turns three weeks of research into three weeks of typing.
 
 ---
 
 ## 8. Assumptions
 
 - Currently around Week 4, giving ~10 weeks to the demo. Shift the table in §2 if not.
-- Six people would split stream D; five means D is a single owner and E carries infra plus report.
+- Eight people, in four pairs. With seven, D2 absorbs D1's Sheets work and the surge covers five nodes; with nine, split B2's generator and run-viewer work.
 - Deploying to AWS is our own choice — it buys real public webhook URLs, a deployment chapter for
   the report, and a fair benchmark host. It is not required by the brief. If Week 11 gets tight,
   falling back to Docker Compose plus a Cloudflare tunnel costs few marks and de-risks the demo.

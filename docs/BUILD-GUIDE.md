@@ -115,7 +115,7 @@ of the thing you are actually learning. The architecture is unchanged; the tools
 | `isolated-vm` | **`node:vm` in a worker thread**, with the limitation documented | A native module that fails to build in Docker will eat three days. The weaker sandbox is fine when the only users are you — and explaining *why* it is weak is worth more marks than silently using the strong one |
 | Terraform + ECS Fargate | **One EC2 instance running `docker compose`, with Caddy for HTTPS** | Same public webhook URL, roughly one afternoon instead of two weeks |
 
-Keep: **TypeScript** (the node interface is the contract that stops five people breaking each other,
+Keep: **TypeScript** (the node interface is the contract that stops eight people breaking each other,
 and your editor will autocomplete it), **Postgres**, **React + React Flow**.
 
 > Rule for TypeScript: nobody spends more than ten minutes fighting a type error. Write `as any`,
@@ -204,7 +204,7 @@ need a node to *wait* for all its inputs. Leave it; write it down as a known iss
 Stage 13 if you get there. Shipping a limitation you have named is completely fine — pretending it
 does not exist is not.
 
-**Done when:** `node engine.js` prints real weather data, and all five of you can explain the loop.
+**Done when:** `node engine.js` prints real weather data, and all eight of you can explain the loop.
 
 ---
 
@@ -752,8 +752,15 @@ you build; you cannot re-screenshot a torn-down server.
 **Build the boring version first, always.** The HTTP node that only does GET with no auth is more
 valuable in Week 6 than the complete one in Week 9, because everything downstream can start.
 
-**One person owns the engine.** It is the piece where two people editing at once produces a mess. The
-other four build nodes against its interface.
+**One person owns the engine.** It is the piece where two people editing at once produces a mess —
+which is why A2 *reviews* it rather than co-writing it. The other six build against its interface.
+
+**With eight people, sequence before you parallelise.** Weeks 4–6 have room for about three people of
+real work on the critical path. The other five build on independent tracks that touch nobody else's
+code: the panel generator against hand-written fake descriptions, the Google API calls proved by hand
+in Postman, the canvas, the Google Cloud setup, and the repository plus CI. See `PLAN.md` §3 for the
+per-person list. Everything converges at the Week 6 freeze, and from Week 8 six people build one node
+each.
 
 **Do not build authentication.** Users, logins, sessions, password resets — none of it earns a mark
 here, and it will eat a week. One hard-coded user, or none.

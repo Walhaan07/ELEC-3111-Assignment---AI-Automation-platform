@@ -1,7 +1,7 @@
 # Presentation deck
 
-`ELEC3111-AI-Automation-Platform-Plan.pdf` — 24 A4 pages, 21 diagrams, written to be presented and to
-be read by someone who has *used* n8n but never built one.
+`ELEC3111-AI-Automation-Platform-Plan.pdf` — 25 A4 pages, 22 diagrams, written to be presented and to
+be read by someone who has *used* n8n but never built one. Staffed for eight people.
 
 | Part | Pages | What it covers |
 |---|---|---|
@@ -9,7 +9,7 @@ be read by someone who has *used* n8n but never built one.
 | 1 · How it all works | 5–11 | What a workflow, a node, an item, the engine, the canvas and the API really are, before any code |
 | 2 · Building it | 12–18 | Six phases, each with its own colour: what we are doing, what it was in n8n, the tools, how to proceed, and a “done when” |
 | 3 · Putting it together | 19–21 | Integration, four levels of testing, and the demo-day runbook with an acceptance checklist |
-| 4 · Running the project | 22–24 | Who owns what, the three risks that end demos, six habits, and this week's tasks |
+| 4 · Running the project | 22–25 | Eight people in four pairs, the Weeks 4–6 idle-hands problem and its fix, the three risks that end demos, six habits, and one task each for this week |
 
 Colour is introduced gradually: Parts 0 and 1 are a quiet single accent, and each phase in Part 2
 carries its own colour through its heading and every diagram belonging to it.

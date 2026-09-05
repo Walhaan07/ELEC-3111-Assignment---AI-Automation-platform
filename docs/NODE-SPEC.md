@@ -1,7 +1,7 @@
 # Node SDK and Node Catalogue
 
-This is the contract between the engine (stream A), the editor (stream B) and the integrations
-(stream D). **It is frozen at the end of Week 6.** Changes after that need an ADR.
+This is the contract between the engine (A1), the editor (B1, B2) and everyone who writes a node —
+which, during the Weeks 8–10 surge, is six of the eight. **It is frozen at the end of Week 6.** Changes after that need an ADR.
 
 ---
 
@@ -11,7 +11,8 @@ The highest-leverage design decision in the project: **a node declares its param
 the editor renders the form from that declaration.** Adding a node then requires zero editor work,
 which means four people can add nodes in parallel in Weeks 8–10 without touching each other's code —
 and it gives the n8n comparison a measurable extensibility metric (lines of code and wall-clock
-minutes to add an identical new node on each platform).
+minutes to add an identical new node on each platform). With eight people it is also what makes the
+six-person node surge possible at all — six nodes in parallel, no editor changes.
 
 Build the generator in Week 6, before any Google node exists. If it slips, Weeks 8–10 collapse into
 a queue behind whoever owns the editor.

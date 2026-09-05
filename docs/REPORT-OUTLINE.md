@@ -8,7 +8,9 @@ automation. Section 5 is where the marks are — give it half the page count.
 *(The brief's note about the cloud-platform report format concerns a different group's project and
 does not constrain us.)*
 
-**Write it weekly, not in Week 15.** Each stream adds to its section in the week it builds the thing.
+**Write it weekly, not in Week 15.** Each of the eight adds to their own section in the week they
+build the thing; D2 edits. With eight names the contribution statement is a marked component — build
+it from the git history every week, not from memory in Week 15.
 `docs/` is the report's source. The Week 15 job is editing, the comparison chapter and the
 appendices — not first drafting.
 
@@ -18,17 +20,17 @@ appendices — not first drafting.
 
 | § | Section | Pages | Owner | Written by |
 |---|---|---|---|---|
-| 1 | Introduction | 2 | Lead | W13 |
-| 2 | Background and related work | 3 | E | W12 |
-| 3 | Requirements | 3 | Lead | W6 |
-| 4 | System architecture | 6 | A | W7, revised W11 |
-| 5 | **Implementation — step by step** | **18–22** | all streams | **weekly, W5–W11** |
-| 6 | Deployment | 5 | E | W11 |
-| 7 | Testing and validation | 4 | E | W12 |
-| 8 | Comparison with n8n | 7 | E + Lead | W12–W13 |
-| 9 | Discussion and limitations | 3 | Lead | W13 |
-| 10 | Conclusion | 1 | Lead | W14 |
-| — | References, appendices | — | E | W15 |
+| 1 | Introduction | 2 | A1 | W13 |
+| 2 | Background and related work | 3 | D2 | W12 |
+| 3 | Requirements | 3 | A1 | W6 |
+| 4 | System architecture | 6 | A1 | W7, revised W11 |
+| 5 | **Implementation — step by step** | **18–22** | all eight | **weekly, W5–W11** |
+| 6 | Deployment | 5 | D2 | W11 |
+| 7 | Testing and validation | 4 | D2 | W12 |
+| 8 | Comparison with n8n | 7 | D2 + A1 | W12–W13 |
+| 9 | Discussion and limitations | 3 | A1 | W13 |
+| 10 | Conclusion | 1 | A1 | W14 |
+| — | References, appendices | — | D2 | W15 |
 
 ---
 
