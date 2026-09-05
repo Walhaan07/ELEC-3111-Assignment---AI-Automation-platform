@@ -146,13 +146,28 @@
   .ph .chip{font-family:var(--fm);font-size:8pt;font-weight:600;letter-spacing:.09em;text-transform:uppercase;
             padding:5px 11px;border-radius:20px;color:#fff;background:var(--acc);white-space:nowrap;}
   .ph .stages{font-family:var(--fm);font-size:8pt;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);}
-  /* ---------- code blocks ---------- */
-  .fwrap{break-inside:avoid;margin:0;}
+  /* ---------- code blocks ----------
+     .fwrap intentionally does NOT set break-inside:avoid: it wraps a short .fname
+     label and a .code block that can be much taller than one page. When both the
+     wrapper and the child independently demand "avoid", and the child alone cannot
+     fit fresh on a page, Chromium relocates the *whole* .code block to the next
+     page but leaves the short .fname behind — an orphaned label on an otherwise
+     blank page. The very tallest blocks (over one full page even starting fresh)
+     hit the same trap on .code alone — it tries the next page, still doesn't
+     fit, and Chromium skips a WHOLE further page before finally giving up and
+     breaking mid-block, again stranding whatever sits just before it. So .code
+     carries no break-inside rule at all — a short block never comes near a page
+     edge to begin with, and a tall one simply reflows onto the next page at
+     whichever line lands there, the same way ordinary paragraphs already do.
+     break-after:avoid on .fname is the piece that actually keeps a label glued
+     to the code under it across an ordinary page boundary. */
+  .fwrap{margin:0;}
   .fname{display:inline-block;font-family:var(--fm);font-size:7.2pt;letter-spacing:.05em;
-         color:#fff;background:var(--acc);padding:2px 9px;border-radius:3px 3px 0 0;}
+         color:#fff;background:var(--acc);padding:2px 9px;border-radius:3px 3px 0 0;
+         break-after:avoid;}
   .fname.term{background:#2b3038;}
   .code{background:#fbfcfe;border:1px solid #e3e7ee;border-left:3px solid var(--acc);
-        border-radius:0 3px 3px 3px;padding:8px 10px;margin:0;overflow:hidden;break-inside:avoid;}
+        border-radius:0 3px 3px 3px;padding:8px 10px;margin:0;overflow:hidden;}
   .code code{font-family:var(--fm);font-size:7.4pt;line-height:1.5;white-space:pre-wrap;color:#2b3038;
              background:none;border:0;padding:0;}
   .tk-k{color:#4b46c0;font-weight:600;}

@@ -204,13 +204,28 @@
   .ph .chip{font-family:var(--fm);font-size:8pt;font-weight:600;letter-spacing:.09em;text-transform:uppercase;
             padding:5px 11px;border-radius:20px;color:#fff;background:var(--acc);white-space:nowrap;}
   .ph .stages{font-family:var(--fm);font-size:8pt;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);}
-  /* ---------- code blocks ---------- */
-  .fwrap{break-inside:avoid;margin:0;}
+  /* ---------- code blocks ----------
+     .fwrap intentionally does NOT set break-inside:avoid: it wraps a short .fname
+     label and a .code block that can be much taller than one page. When both the
+     wrapper and the child independently demand "avoid", and the child alone cannot
+     fit fresh on a page, Chromium relocates the *whole* .code block to the next
+     page but leaves the short .fname behind — an orphaned label on an otherwise
+     blank page. The very tallest blocks (over one full page even starting fresh)
+     hit the same trap on .code alone — it tries the next page, still doesn't
+     fit, and Chromium skips a WHOLE further page before finally giving up and
+     breaking mid-block, again stranding whatever sits just before it. So .code
+     is unbreak-preferred (line-height/orphans, not the CSS break property) but
+     never break-inside:avoid; break-after:avoid on .fname is what keeps label
+     and code glued together across ordinary page boundaries — the browser then
+     breaks tall blocks wherever they naturally land, which is what already
+     happens safely for every block long enough to span two pages. */
+  .fwrap{margin:0;}
   .fname{display:inline-block;font-family:var(--fm);font-size:7.2pt;letter-spacing:.05em;
-         color:#fff;background:var(--acc);padding:2px 9px;border-radius:3px 3px 0 0;}
+         color:#fff;background:var(--acc);padding:2px 9px;border-radius:3px 3px 0 0;
+         break-after:avoid;}
   .fname.term{background:#2b3038;}
   .code{background:#fbfcfe;border:1px solid #e3e7ee;border-left:3px solid var(--acc);
-        border-radius:0 3px 3px 3px;padding:8px 10px;margin:0;overflow:hidden;break-inside:avoid;}
+        border-radius:0 3px 3px 3px;padding:8px 10px;margin:0;overflow:hidden;}
   .code code{font-family:var(--fm);font-size:7.4pt;line-height:1.5;white-space:pre-wrap;color:#2b3038;
              background:none;border:0;padding:0;}
   .tk-k{color:#4b46c0;font-weight:600;}
@@ -426,7 +441,7 @@
     </div>
     <div class="cf-right">
       <div class="cf-num">8 people</div>
-      <div class="cf-sub">6 phases · 15 stages · 22 diagrams</div>
+      <div class="cf-sub">6 phases · 15 stages · 33 diagrams</div>
     </div>
   </div>
 </div>
@@ -436,7 +451,7 @@
   <div class="rh"><span>ELEC 3111 · Group 2</span><span class="r">Contents</span></div>
   <div class="h-wrap"><h2>Contents</h2></div>
   <div class="band" style="background:linear-gradient(90deg,#4b46c0,#2a5fce,#0d72b4,#087f99,#0a7a70,#14624f)"></div>
-  <div class="toc"><div class="grp">Part 1 — The big picture, and how it works</div><div class="row"><span class="n">1.1</span><span><b>Everything we are building, on one page</b> · Figure 1</span><span class="pg">4</span></div><div class="row"><span class="n">1.2</span><span><b>What a workflow really is</b> · Figure 2</span><span class="pg">5</span></div><div class="row"><span class="n">1.3</span><span><b>What a node really is</b> · Figure 3</span><span class="pg">6</span></div><div class="row"><span class="n">1.4</span><span><b>What an item really is</b> · Figure 4</span><span class="pg">7</span></div><div class="row"><span class="n">1.5</span><span><b>What the engine really is</b> · Figure 5</span><span class="pg">8</span></div><div class="row"><span class="n">1.6</span><span><b>The canvas and the API — the two halves of the app</b> · Figure 6</span><span class="pg">9</span></div><div class="row"><span class="n">1.7</span><span><b>The six phases</b> · Figure 7</span><span class="pg">11</span></div><div class="row"><span class="n">1.8</span><span><b>The toolkit — what we install, and when</b> · Figure 8</span><span class="pg">12</span></div><div class="row"><span class="n">1.9</span><span><b>Install everything, click by click</b></span><span class="pg">13</span></div><div class="row"><span class="n">1.10</span><span><b>VS Code: the program every line of this book is pasted into</b> · Figure 9</span><span class="pg">14</span></div><div class="row"><span class="n">1.11</span><span><b>The loop you will repeat a hundred times</b> · Figure 10</span><span class="pg">15</span></div><div class="row"><span class="n">1.12</span><span><b>What the interface should look like</b> · Figure 11</span><span class="pg">17</span></div><div class="grp">Part 2 — Building it, phase by phase</div><div class="row"><span class="n">2.1</span><span><b>A workflow runs, from a single file</b> · Figure 12</span><span class="pg">18</span></div><div class="row" class="bld"><span class="n">2.1b</span><span><b>Build it: the engine, line by line</b></span><span class="pg">19</span></div><div class="row"><span class="n">2.2</span><span><b>Workflows survive a restart, and we can draw them</b> · Figure 13</span><span class="pg">27</span></div><div class="row" class="bld"><span class="n">2.2b</span><span><b>Build it: database, server and canvas</b></span><span class="pg">29</span></div><div class="row" class="bld"><span class="n">2.2c</span><span><b>Build it: the canvas, and the two functions that matter</b> · Figure 14</span><span class="pg">37</span></div><div class="row"><span class="n">2.3</span><span><b>Nodes describe themselves, and fields carry live data</b> · Figures 15–16</span><span class="pg">45</span></div><div class="row" class="bld"><span class="n">2.3b</span><span><b>Build it: forms that draw themselves, and expressions</b> · Figure 17</span><span class="pg">47</span></div><div class="row"><span class="n">2.4</span><span><b>Workflows that run without anyone pressing a button</b> · Figure 18</span><span class="pg">56</span></div><div class="row" class="bld"><span class="n">2.4b</span><span><b>Build it: webhooks and schedules</b> · Figure 19</span><span class="pg">58</span></div><div class="row"><span class="n">2.5</span><span><b>First, permission to use a Google account</b> · Figure 20</span><span class="pg">66</span></div><div class="row" class="bld"><span class="n">2.5b</span><span><b>Build it: the Google permission round trip</b> · Figure 21</span><span class="pg">68</span></div><div class="row"><span class="n">2.6</span><span><b>Then the nodes people actually came for</b> · Figures 22–23</span><span class="pg">73</span></div><div class="row" class="bld"><span class="n">2.6b</span><span><b>Build it: one helper, then four Google nodes</b> · Figure 24</span><span class="pg">75</span></div><div class="row" class="bld"><span class="n">2.6c</span><span><b>Build it: Gmail, the sandbox, and the AI node</b> · Figure 25</span><span class="pg">82</span></div><div class="row"><span class="n">2.7</span><span><b>Online, measured, and written up</b> · Figure 26</span><span class="pg">91</span></div><div class="row" class="bld"><span class="n">2.7b</span><span><b>Build it: online, and measured against n8n</b></span><span class="pg">92</span></div><div class="row"><span class="n">2.8</span><span><b>How all the parts connect to each other</b> · Figure 27</span><span class="pg">98</span></div><div class="grp">Part 3 — Putting it together</div><div class="row"><span class="n">3.1</span><span><b>How six phases become one working system</b> · Figure 28</span><span class="pg">99</span></div><div class="row" class="bld"><span class="n">3.1b</span><span><b>Build it: one repository, one command</b></span><span class="pg">100</span></div><div class="row"><span class="n">3.2</span><span><b>Four levels of testing, and what each one catches</b> · Figure 29</span><span class="pg">106</span></div><div class="row" class="bld"><span class="n">3.2b</span><span><b>Build it: the four levels, in code</b></span><span class="pg">107</span></div><div class="row" class="bld"><span class="n">3.2c</span><span><b>Build it: the browser test, and running it all automatically</b> · Figure 30</span><span class="pg">113</span></div><div class="row"><span class="n">3.3</span><span><b>Proving the whole thing works, on the day</b> · Figure 31</span><span class="pg">117</span></div><div class="grp">Part 4 — Running the project</div><div class="row"><span class="n">4.1</span><span><b>Eight people, eight areas</b> · Figure 32</span><span class="pg">118</span></div><div class="row"><span class="n">4.2</span><span><b>The hard part of being eight, and how we solve it</b> · Figure 33</span><span class="pg">119</span></div><div class="row"><span class="n">4.3</span><span><b>Three risks that end projects, and six habits that save them</b></span><span class="pg">120</span></div><div class="row"><span class="n">4.4</span><span><b>What each of us does this week</b></span><span class="pg">121</span></div></div>
+  <div class="toc"><div class="grp">Part 1 — The big picture, and how it works</div><div class="row"><span class="n">1.1</span><span><b>Everything we are building, on one page</b> · Figure 1</span><span class="pg">4</span></div><div class="row"><span class="n">1.2</span><span><b>What a workflow really is</b> · Figure 2</span><span class="pg">5</span></div><div class="row"><span class="n">1.3</span><span><b>What a node really is</b> · Figure 3</span><span class="pg">6</span></div><div class="row"><span class="n">1.4</span><span><b>What an item really is</b> · Figure 4</span><span class="pg">7</span></div><div class="row"><span class="n">1.5</span><span><b>What the engine really is</b> · Figure 5</span><span class="pg">8</span></div><div class="row"><span class="n">1.6</span><span><b>The canvas and the API — the two halves of the app</b> · Figure 6</span><span class="pg">9</span></div><div class="row"><span class="n">1.7</span><span><b>The six phases</b> · Figure 7</span><span class="pg">11</span></div><div class="row"><span class="n">1.8</span><span><b>The toolkit — what we install, and when</b> · Figure 8</span><span class="pg">12</span></div><div class="row"><span class="n">1.9</span><span><b>Install everything, click by click</b></span><span class="pg">13</span></div><div class="row"><span class="n">1.10</span><span><b>VS Code: the program every line of this book is pasted into</b> · Figure 9</span><span class="pg">14</span></div><div class="row"><span class="n">1.11</span><span><b>The loop you will repeat a hundred times</b> · Figure 10</span><span class="pg">15</span></div><div class="row"><span class="n">1.12</span><span><b>What the interface should look like</b> · Figure 11</span><span class="pg">17</span></div><div class="grp">Part 2 — Building it, phase by phase</div><div class="row"><span class="n">2.1</span><span><b>A workflow runs, from a single file</b> · Figure 12</span><span class="pg">18</span></div><div class="row" class="bld"><span class="n">2.1b</span><span><b>Build it: the engine, line by line</b></span><span class="pg">19</span></div><div class="row"><span class="n">2.2</span><span><b>Workflows survive a restart, and we can draw them</b> · Figure 13</span><span class="pg">25</span></div><div class="row" class="bld"><span class="n">2.2b</span><span><b>Build it: database, server and canvas</b></span><span class="pg">27</span></div><div class="row" class="bld"><span class="n">2.2c</span><span><b>Build it: the canvas, and the two functions that matter</b> · Figure 14</span><span class="pg">33</span></div><div class="row"><span class="n">2.3</span><span><b>Nodes describe themselves, and fields carry live data</b> · Figures 15–16</span><span class="pg">38</span></div><div class="row" class="bld"><span class="n">2.3b</span><span><b>Build it: forms that draw themselves, and expressions</b> · Figure 17</span><span class="pg">40</span></div><div class="row"><span class="n">2.4</span><span><b>Workflows that run without anyone pressing a button</b> · Figure 18</span><span class="pg">46</span></div><div class="row" class="bld"><span class="n">2.4b</span><span><b>Build it: webhooks and schedules</b> · Figure 19</span><span class="pg">48</span></div><div class="row"><span class="n">2.5</span><span><b>First, permission to use a Google account</b> · Figure 20</span><span class="pg">54</span></div><div class="row" class="bld"><span class="n">2.5b</span><span><b>Build it: the Google permission round trip</b> · Figure 21</span><span class="pg">56</span></div><div class="row"><span class="n">2.6</span><span><b>Then the nodes people actually came for</b> · Figures 22–23</span><span class="pg">61</span></div><div class="row" class="bld"><span class="n">2.6b</span><span><b>Build it: one helper, then four Google nodes</b> · Figure 24</span><span class="pg">63</span></div><div class="row" class="bld"><span class="n">2.6c</span><span><b>Build it: Gmail, the sandbox, and the AI node</b> · Figure 25</span><span class="pg">69</span></div><div class="row"><span class="n">2.7</span><span><b>Online, measured, and written up</b> · Figure 26</span><span class="pg">74</span></div><div class="row" class="bld"><span class="n">2.7b</span><span><b>Build it: online, and measured against n8n</b></span><span class="pg">75</span></div><div class="row"><span class="n">2.8</span><span><b>How all the parts connect to each other</b> · Figure 27</span><span class="pg">80</span></div><div class="grp">Part 3 — Putting it together</div><div class="row"><span class="n">3.1</span><span><b>How six phases become one working system</b> · Figure 28</span><span class="pg">81</span></div><div class="row" class="bld"><span class="n">3.1b</span><span><b>Build it: one repository, one command</b></span><span class="pg">82</span></div><div class="row"><span class="n">3.2</span><span><b>Four levels of testing, and what each one catches</b> · Figure 29</span><span class="pg">86</span></div><div class="row" class="bld"><span class="n">3.2b</span><span><b>Build it: the four levels, in code</b></span><span class="pg">87</span></div><div class="row" class="bld"><span class="n">3.2c</span><span><b>Build it: the browser test, and running it all automatically</b> · Figure 30</span><span class="pg">91</span></div><div class="row"><span class="n">3.3</span><span><b>Proving the whole thing works, on the day</b> · Figure 31</span><span class="pg">94</span></div><div class="grp">Part 4 — Running the project</div><div class="row"><span class="n">4.1</span><span><b>Eight people, eight areas</b> · Figure 32</span><span class="pg">95</span></div><div class="row"><span class="n">4.2</span><span><b>The hard part of being eight, and how we solve it</b> · Figure 33</span><span class="pg">96</span></div><div class="row"><span class="n">4.3</span><span><b>Three risks that end projects, and six habits that save them</b></span><span class="pg">97</span></div><div class="row"><span class="n">4.4</span><span><b>What each of us does this week</b></span><span class="pg">98</span></div></div>
   <div class="call why" style="margin-top:14px"><b>How to read this</b>Parts 0 and 1 explain how the
     thing works and are worth reading before anyone writes code. From Part 2 onwards each phase has
     <b>two pages</b>: the first says what we are doing and why, the second gives the actual commands and
@@ -2003,7 +2018,6 @@ Weather → {"current_condition":[{"temp_C":"18",…}]} …
         <text x="10" y="180" class="s">gone when it finishes</text>
 
         <path d="M210 86L256 86" stroke="#2a5fce" fill="none" marker-end="url(#p2a)"/>
-        <text x="210" y="18" class="e" style="fill:#1f4aa8">PHASE 2 ADDS</text>
 
         <text x="266" y="16" class="e" style="fill:#1f4aa8">AFTER PHASE 2</text>
         <rect x="266" y="26" width="256" height="66" rx="5" fill="#e3ebfb" stroke="#2a5fce" stroke-width="1.5"/>
@@ -2204,6 +2218,25 @@ db.<span class="tk-f">on</span>(<span class="tk-s">&#x27;error&#x27;</span>, (er
       </div></div>
 
       <div class="bstep"><div class="bn">4</div><div class="bb">
+        <h4>One place that collects every node type that exists</h4>
+        <p>The server below is about to <code>import { nodeTypes }</code>. This tiny file is the whole
+          reason that works — and the only file every future node, for the rest of the project, ever
+          gets added to.</p>
+        <div class="fwrap"><span class="fname">packages/nodes/index.js</span>
+<pre class="code"><code><span class="tk-k">export</span> <span class="tk-k">const</span> nodeTypes = {
+  manualTrigger: {
+    description: { name: <span class="tk-s">&#x27;manualTrigger&#x27;</span>, group: <span class="tk-s">&#x27;trigger&#x27;</span>, properties: [] },
+    <span class="tk-k">async</span> <span class="tk-f">execute</span>() { <span class="tk-k">return</span> [[{ json: {} }]]; },
+  },
+};
+<span class="tk-c">// §2.3b adds httpRequest here, §2.6b adds the four Google nodes, §2.6c adds</span>
+<span class="tk-c">// the Code and AI nodes — always the same move: import the file, add one line.</span></code></pre></div>
+        <p><code>manualTrigger</code> is copied straight from §2.1b's <code>engine.js</code> — the one
+          node type every workflow needs before it can have anything else, which is why it is the only
+          one that exists here on day one.</p>
+      </div></div>
+
+      <div class="bstep"><div class="bn">5</div><div class="bb">
         <h4>The five routes, with validation and a single error handler</h4>
         <div class="fwrap"><span class="fname">apps/api/server.js</span>
 <pre class="code"><code><span class="tk-k">import</span> express <span class="tk-k">from</span> <span class="tk-s">&#x27;express&#x27;</span>;
@@ -2927,6 +2960,9 @@ function <span class="tk-f">parseJsonParameter</span>(ctx, name, i) {
         <div class="tbox"><b><code>pairedItem</code></b> — the index of the input item that produced this
           output. Nobody needs it on day one, and everybody needs it the first time a workflow fans out
           to fifty items and one of them fails. Recording it costs one property.</div>
+        <div class="fwrap"><span class="fname">packages/nodes/index.js — one line added</span>
+<pre class="code"><code><span class="tk-k">import</span> { httpRequestNode } <span class="tk-k">from</span> <span class="tk-s">&#x27;./core/httpRequest.ts&#x27;</span>;
+nodeTypes.httpRequest = httpRequestNode;</code></pre></div>
       </div></div>
 
       <div class="bstep"><div class="bn">2</div><div class="bb">
@@ -4141,6 +4177,12 @@ app.<span class="tk-f">get</span>(<span class="tk-s">&#x27;/rest/oauth2-credenti
   <div class="stack">
     <p class="lede">D1 writes the helper first. After that each node is a settings description plus one
       request, and six people can work in parallel without talking to each other.</p>
+    <p class="lede">Sheets below is shown whole, exactly the shape that goes into
+      <code>nodeTypes</code>. Docs, Drive, Gmail, Code and the AI node are shown as <b>just the request
+      logic</b> from here on — repeating <code>httpRequestNode</code>'s full <code>properties[]</code>
+      block six times would triple this page for no new idea. Wrap each one in the same two pieces
+      (<code>description.properties</code> for its sidebar fields, <code>async execute(ctx) { … }</code>
+      around the code shown) exactly like §2.3b did, then register it the same way Sheets is below.</p>
 
     <div class="where">
       <span class="wl">Program</span><span class="wv">VS&nbsp;Code — see §1.10 for the window, §1.11 for the loop</span>
@@ -4150,16 +4192,11 @@ app.<span class="tk-f">get</span>(<span class="tk-s">&#x27;/rest/oauth2-credenti
     <div class="bsteps">
       <div class="bstep"><div class="bn">0</div><div class="bb">
         <h4>First: let the engine hand a node its credential</h4>
-        <p>Two more lines in the <code>ctx</code> object from §2.1b, and every node from here on can ask
-          for the key it was configured with. Nothing else in the engine changes.</p>
+        <p>One more line in the <code>ctx</code> object from §2.1b, and every node from here on can pass
+          its configured credential straight to <code>googleRequest</code> below. Nothing else in the
+          engine changes — the loading, decrypting and caching all happen inside the helper, not here.</p>
         <div class="fwrap"><span class="fname">packages/engine/engine.js — inside the ctx object</span>
-<pre class="code"><code>credentialId: node.credentials?.id ?? <span class="tk-k">null</span>,
-<span class="tk-k">async</span> <span class="tk-f">getCredentials</span>() {
-  <span class="tk-k">if</span> (!node.credentials?.id)
-    <span class="tk-k">throw</span> <span class="tk-k">new</span> <span class="tk-f">WorkflowError</span>(<span class="tk-s">`&quot;${nodeName}&quot; has no credential selected — pick one in the sidebar`</span>,
-                            { node: nodeName, code: <span class="tk-s">&#x27;NO_CREDENTIAL&#x27;</span> });
-  <span class="tk-k">return</span> <span class="tk-f">loadDecryptedCredential</span>(node.credentials.id);   <span class="tk-c">// apps/api/credentials.js</span>
-},</code></pre></div>
+<pre class="code"><code>credentialId: node.credentials?.id ?? <span class="tk-k">null</span>,   <span class="tk-c">// undefined settings become null, never crash</span></code></pre></div>
       </div></div>
 
       <div class="bstep"><div class="bn">1</div><div class="bb">
@@ -4176,6 +4213,9 @@ app.<span class="tk-f">get</span>(<span class="tk-s">&#x27;/rest/oauth2-credenti
 <span class="tk-k">const</span> sleep = (ms) =&gt; <span class="tk-k">new</span> <span class="tk-k"><span class="tk-p">Promise</span></span>(r =&gt; <span class="tk-f">setTimeout</span>(r, ms));
 
 <span class="tk-k">export</span> <span class="tk-k">async</span> <span class="tk-k">function</span> <span class="tk-f">googleRequest</span>(credentialId, url, options = {}) {
+  <span class="tk-c">// catch the empty sidebar field here, with a clear message — not four calls deep,</span>
+  <span class="tk-c">// reported as &quot;credential has been deleted&quot; for something that was never set</span>
+  <span class="tk-k">if</span> (!credentialId) <span class="tk-k">throw</span> <span class="tk-k">new</span> <span class="tk-f">Error</span>(<span class="tk-s">&#x27;This node has no credential selected — pick one in the sidebar&#x27;</span>);
   <span class="tk-k">const</span> { retries = <span class="tk-n">4</span>, timeoutMs = 30_000, ...init } = options;
   <span class="tk-k">let</span> token = <span class="tk-k">await</span> <span class="tk-f">getAccessToken</span>(credentialId);
 
@@ -4277,6 +4317,17 @@ app.<span class="tk-f">get</span>(<span class="tk-s">&#x27;/rest/oauth2-credenti
 }
 
 <span class="tk-k">export</span> <span class="tk-k">const</span> sheetsAppend = {
+  description: {
+    name: <span class="tk-s">&#x27;googleSheets&#x27;</span>, displayName: <span class="tk-s">&#x27;Google Sheets&#x27;</span>, group: <span class="tk-s">&#x27;action&#x27;</span>,
+    icon: <span class="tk-s">&#x27;sheet&#x27;</span>, colour: <span class="tk-s">&#x27;#0a7a70&#x27;</span>, inputs: [<span class="tk-s">&#x27;main&#x27;</span>], outputs: [<span class="tk-s">&#x27;main&#x27;</span>],
+    properties: [
+      { displayName: <span class="tk-s">&#x27;Spreadsheet URL or ID&#x27;</span>, name: <span class="tk-s">&#x27;documentId&#x27;</span>, <span class="tk-k">type</span>: <span class="tk-s">&#x27;string&#x27;</span>, <span class="tk-k">default</span>: <span class="tk-s">&#x27;&#x27;</span>,
+        required: <span class="tk-k">true</span>, placeholder: <span class="tk-s">&#x27;https://docs.google.com/spreadsheets/d/…&#x27;</span> },
+      { displayName: <span class="tk-s">&#x27;Sheet name&#x27;</span>, name: <span class="tk-s">&#x27;sheetName&#x27;</span>, <span class="tk-k">type</span>: <span class="tk-s">&#x27;string&#x27;</span>, <span class="tk-k">default</span>: <span class="tk-s">&#x27;Sheet1&#x27;</span>, required: <span class="tk-k">true</span> },
+      { displayName: <span class="tk-s">&#x27;Columns&#x27;</span>, name: <span class="tk-s">&#x27;columns&#x27;</span>, <span class="tk-k">type</span>: <span class="tk-s">&#x27;json&#x27;</span>, <span class="tk-k">default</span>: <span class="tk-s">&#x27;{}&#x27;</span>,
+        hint: <span class="tk-s">&#x27;One key per column header, e.g. { &quot;name&quot;: &quot;{{ $json.name }}&quot; }&#x27;</span> },
+    ],
+  },
   <span class="tk-k">async</span> <span class="tk-f">execute</span>(ctx) {
     <span class="tk-k">const</span> items = ctx.<span class="tk-f">getInputData</span>();
     <span class="tk-k">if</span> (items.length === <span class="tk-n">0</span>) <span class="tk-k">return</span> [[]];
@@ -4311,6 +4362,9 @@ app.<span class="tk-f">get</span>(<span class="tk-s">&#x27;/rest/oauth2-credenti
       updatedRange: results[<span class="tk-n">0</span>]?.updates?.updatedRange }, pairedItem: i }))];
   },
 };</code></pre></div>
+        <div class="fwrap"><span class="fname">packages/nodes/index.js — one line added</span>
+<pre class="code"><code><span class="tk-k">import</span> { sheetsAppend } <span class="tk-k">from</span> <span class="tk-s">&#x27;./google/sheets.js&#x27;</span>;
+nodeTypes.googleSheets = sheetsAppend;</code></pre></div>
       </div></div>
 
       <div class="bstep"><div class="bn">3</div><div class="bb">
@@ -6008,8 +6062,8 @@ export default <span class="tk-f">defineConfig</span>({
       <div class="screen">
         <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="url">github.com/&lt;org&gt;/ai-automation/pull/42</span></div>
         <div class="body" style="padding:0">
-          <svg viewBox="0 0 760 176" xmlns="http://www.w3.org/2000/svg">
-            <rect x="0" y="0" width="760" height="176" fill="#ffffff"/>
+          <svg viewBox="0 0 760 194" xmlns="http://www.w3.org/2000/svg">
+            <rect x="0" y="0" width="760" height="194" fill="#ffffff"/>
             <rect x="14" y="12" width="732" height="66" rx="8" fill="#f2f9f5" stroke="#9ecfb4"/>
             <rect x="26" y="26" width="18" height="18" rx="9" fill="#1f7a4d"/>
             <text x="31" y="39" class="s" style="fill:#ffffff">✓</text>
@@ -6018,17 +6072,17 @@ export default <span class="tk-f">defineConfig</span>({
             <rect x="580" y="24" width="152" height="26" rx="6" fill="#1f7a4d"/>
             <text x="596" y="41" class="s" style="fill:#ffffff">Merge pull request</text>
 
-            <rect x="14" y="90" width="732" height="74" rx="8" fill="#ffffff" stroke="#dfe6ec"/>
-            <circle cx="36" cy="112" r="6" fill="#1f7a4d"/>
-            <text x="52" y="116" class="s2">ci / check</text>
-            <text x="300" y="116" class="s">lint · 15 tests · 1 browser test · gitleaks</text>
-            <text x="560" y="116" class="s">Successful in 2m 41s</text>
-            <text x="676" y="116" class="s" style="fill:#0a5f92">Details</text>
-            <line x1="30" y1="130" x2="730" y2="130" stroke="#eef2f6"/>
-            <circle cx="36" cy="148" r="6" fill="#1f7a4d"/>
-            <text x="52" y="152" class="s2">Review</text>
-            <text x="300" y="152" class="s">approved by a teammate</text>
-            <text x="560" y="152" class="s">required: 1 of 1</text>
+            <rect x="14" y="90" width="732" height="92" rx="8" fill="#ffffff" stroke="#dfe6ec"/>
+            <circle cx="36" cy="110" r="6" fill="#1f7a4d"/>
+            <text x="52" y="114" class="s2">ci / check</text>
+            <text x="592" y="114" class="s">2m 41s</text>
+            <text x="676" y="114" class="s" style="fill:#0a5f92">Details</text>
+            <text x="52" y="132" class="s">lint · 15 tests · 1 browser test · gitleaks</text>
+            <line x1="30" y1="146" x2="730" y2="146" stroke="#eef2f6"/>
+            <circle cx="36" cy="164" r="6" fill="#1f7a4d"/>
+            <text x="52" y="168" class="s2">Review</text>
+            <text x="300" y="168" class="s">approved by a teammate</text>
+            <text x="592" y="168" class="s">required: 1 of 1</text>
           </svg>
         </div>
       </div>
@@ -6106,9 +6160,9 @@ stopped again — nothing left running</span></div>
     <figure>
       <svg viewBox="0 0 760 132" xmlns="http://www.w3.org/2000/svg">
         <line x1="30" y1="80" x2="718" y2="80" stroke="#dcdfe5" stroke-width="2"/>
-        <circle cx="50" cy="80" r="6" fill="#14624f"/>
-        <text x="50" y="58" class="t" text-anchor="middle">Week 13</text>
-        <text x="50" y="104" class="e" text-anchor="middle">RECORD THE VIDEO</text>
+        <circle cx="58" cy="80" r="6" fill="#14624f"/>
+        <text x="58" y="58" class="t" text-anchor="middle">Week 13</text>
+        <text x="58" y="104" class="e" text-anchor="middle">RECORD THE VIDEO</text>
         <circle cx="182" cy="80" r="6" fill="#14624f"/>
         <text x="182" y="58" class="t" text-anchor="middle">Night before</text>
         <text x="182" y="104" class="e" text-anchor="middle">FULL RUN, LIVE URL</text>
@@ -6120,10 +6174,10 @@ stopped again — nothing left running</span></div>
         <text x="446" y="104" class="e" text-anchor="middle" fill="#075f57">RUN THE CHECKLIST</text>
         <circle cx="578" cy="80" r="6" fill="#087f99"/>
         <text x="578" y="58" class="t" text-anchor="middle">15 min before</text>
-        <text x="578" y="104" class="e" text-anchor="middle">TABS OPEN, HOTSPOT ON</text>
+        <text x="578" y="104" class="e" text-anchor="middle">TABS, HOTSPOT ON</text>
         <circle cx="698" cy="80" r="7" fill="#14161a"/>
         <text x="698" y="58" class="t" text-anchor="middle">Demo</text>
-        <text x="698" y="104" class="e" text-anchor="middle">FOLLOW THE SCRIPT</text>
+        <text x="698" y="104" class="e" text-anchor="middle">FOLLOW SCRIPT</text>
       </svg>
       <figcaption><b>Figure 31.</b> The two red markers are the ones that have ended other groups' demos.
         Neither takes more than fifteen minutes.</figcaption>

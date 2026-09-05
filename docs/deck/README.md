@@ -1,6 +1,6 @@
 # The complete build guide
 
-`ELEC3111-AI-Automation-Platform-Plan.pdf` — **121 A4 pages, 33 diagrams**, written for a team that has
+`ELEC3111-AI-Automation-Platform-Plan.pdf` — **98 A4 pages, 33 diagrams**, written for a team that has
 *used* n8n and is now going to build one. It is deliberately a hybrid: every part is explained twice,
 once as a concept and once as the code.
 
@@ -45,16 +45,26 @@ The document is assembled from per-page fragments in `src/pages/`, plus `src/fon
 typefaces embedded as data URIs, so it renders identically anywhere).
 
 ```bash
-python3 assemble.py     # concatenate, highlight code, number figures, build the contents
-node measure.js         # page-height check
-node audit.js           # diagram check — must print nothing
-node render.js .        # write the PDF
-python3 paginate.py     # read the PDF back and record each section's real page number
-python3 assemble.py && node render.js .    # second pass, so the contents page numbers are exact
+python3 assemble.py          # concatenate, highlight code, number figures, build the contents
+node measure.js              # page-height check
+node audit.js                # diagram check — must print "All clear."
+node render.js .             # write the PDF
+python3 paginate.py          # read the PDF back and record each section's real page number
+python3 assemble.py && node render.js .   # second pass, so the contents page numbers are exact
+node render-cover-bleed.js . # render the cover on its own, at zero margin, for a true bleed
+python3 splice-cover.py      # swap it in for page 1 — Chromium clips negative-margin bleed
+                              # tricks to the print margin, so the cover must be a separate render
 ```
 
 Set `CHROMIUM_PATH` if Playwright's bundled browser is not where it expects it
-(`CHROMIUM_PATH=/path/to/chrome node render.js .`).
+(`CHROMIUM_PATH=/path/to/chrome node render.js .`, same for the other two `.js` scripts).
+
+**Why the cover needs its own render:** Chromium's `page.pdf()` hard-clips every page to the margin
+box passed to it — a negative CSS margin on `.cover` does not escape it (verified empirically: a
+same-margin test page with a full-bleed coloured `<div>` still comes back with a border on all four
+sides). `render-cover-bleed.js` renders `pages/00-cover.html` alone with a zero print margin instead,
+and `splice-cover.py` replaces page 1 of the main PDF with that render — page numbering for every
+other page is untouched, since nothing else about the main render changes.
 
 `assemble.py` numbers figures sequentially (write `<b>Figure @.</b>` in a caption and it fills the
 number in), builds the whole contents page from the pages themselves, and syntax-highlights any
@@ -67,20 +77,56 @@ contents page is exact even though code sections now run across several printed 
 
 ## What audit.js checks
 
-Three classes of bug that are invisible until someone prints the document:
+Five classes of bug that are invisible until someone prints the document — run it after every edit
+to a `<svg>` figure, and treat anything other than `All clear.` as a blocker:
 
 1. **Text escaping its shape** — for every `<text>` it finds the rectangle the text actually sits
    inside and reports anything that comes within **11 units** of that shape's edge, or leaves the
-   viewBox. Requiring real padding rather than mere non-overlap is what catches text that *touches* a
-   border, which reads as a bug even though it technically fits.
-2. **Text colliding with a neighbour** — text that partially overlaps a shape it does not sit inside.
-   Text fully contained in an outer container is ignored, so nested boxes do not produce noise. This
-   catches arrow labels drifting onto the box next door.
-3. **Unreadable colour** — any text below 4.5:1 contrast against the shape behind it.
+   viewBox on the right/bottom. Requiring real padding rather than mere non-overlap is what catches
+   text that *touches* a border, which reads as a bug even though it technically fits.
+2. **Text escaping the viewBox on the left or top** — a centred label wider than its slot overflows
+   equally in both directions, and the left/top edge is the page's own margin: nothing clips it in a
+   browser tab, but Chromium's print-to-PDF genuinely slices the glyph off. Caught a clipped "R" in
+   the dress-rehearsal timeline (§3.3) that every other check missed, because they all only ever
+   looked for the *far* edge.
+3. **Text colliding with a neighbouring shape** — text that partially overlaps a shape it does not
+   sit inside. Text fully contained in an outer container is ignored, so nested boxes do not produce
+   noise. This catches arrow labels drifting onto the box next door.
+4. **Text colliding with a neighbouring text run** — every pair of `<text>` elements in the same
+   `<svg>` is checked for a real bounding-box overlap (more than 4 units on both axes; two ordinary
+   stacked caption lines touch by 2–3 units from glyph ascent/descent padding alone, which is not a
+   bug and is deliberately not flagged). This is the check that catches one label's tail running into
+   the next label's head — e.g. two adjacent timeline entries, or a status row whose columns are
+   narrower than the text meant to fill them — which no shape-based check can see at all.
+5. **Unreadable colour** — any text below 4.5:1 contrast against the shape behind it.
 
 It reads the **computed** fill, not the `fill` attribute. In SVG a CSS class beats a presentation
 attribute, so `class="s2" fill="#e8eaed"` renders in the class colour. Keep in-figure colours as
 `style="fill:…"`, which does win.
+
+## A page-break gotcha worth remembering
+
+`break-inside: avoid` does not fail gracefully when it is nested: a `.fwrap` label+code wrapper that
+avoids breaking, wrapping a `.code` block that *also* avoids breaking, and is taller than a page, does
+not "flow across the break" — Chromium instead relocates the whole `.code` block to a fresh page and
+leaves the short label stranded, alone, on an otherwise-blank page in between. This produced eight
+near-empty pages (one filename floating at the top of each) before it was diagnosed; the tallest code
+sample in the book triggered a second-order version of the same bug (skipping a *second* page) even
+after the wrapper was fixed. The fix that held: only the label gets `break-after: avoid` (glue it to
+whatever follows); the wrapper and the code block itself do not use `break-inside: avoid` at all, so a
+block too tall for one page simply flows onto the next, exactly like the shorter blocks already did
+without complaint. If you reintroduce `break-inside: avoid` on either `.fwrap` or `.code`, re-run the
+near-empty-page check below before trusting the page count.
+
+```bash
+python3 -c "
+import pymupdf
+d = pymupdf.open('ELEC3111-AI-Automation-Platform-Plan.pdf')
+for i, p in enumerate(d):
+    if len(p.get_text().strip()) < 120:
+        print(i + 1, repr(p.get_text()[:80]))
+"
+```
 
 ## Two conventions worth keeping
 

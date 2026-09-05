@@ -16,13 +16,38 @@ const EXE = process.env.CHROMIUM_PATH || undefined;
       return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2];
     };
     const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((m, n) => n - m); return (x + 0.05) / (y + 0.05); };
-    const res = { overflow: [], contrast: [] };
+    const res = { overflow: [], contrast: [], textoverlap: [] };
     document.querySelectorAll('svg').forEach((svg, si) => {
       const vb = svg.viewBox.baseVal;
       const rects = [...svg.querySelectorAll('rect')].map(r => {
         const bb = r.getBBox();
         return { x: bb.x, y: bb.y, w: bb.width, h: bb.height, fill: r.getAttribute('fill') || '' };
       });
+      // text vs text: two separate <text> nodes whose rendered boxes actually intersect.
+      // Shape-hosting/contrast checks below only ever compare a text run against rects,
+      // so a label like "PHASE 2 ADDS" running into the neighbouring "AFTER PHASE 2"
+      // label was invisible to every other check — this catches that class of bug.
+      const texts = [...svg.querySelectorAll('text')].map(t => {
+        let bb; try { bb = t.getBBox(); } catch (e) { return null; }
+        if (!bb.width || !bb.height) return null;
+        return { bb, txt: t.textContent.trim().slice(0, 30) };
+      }).filter(Boolean);
+      for (let i = 0; i < texts.length; i++) {
+        for (let j = i + 1; j < texts.length; j++) {
+          const A = texts[i].bb, B = texts[j].bb;
+          const ox = Math.min(A.x + A.width, B.x + B.width) - Math.max(A.x, B.x);
+          const oy = Math.min(A.y + A.height, B.y + B.height) - Math.max(A.y, B.y);
+          // stacked caption/label lines (title above subtitle, same x-span) legitimately
+          // show a couple of px of vertical bbox overlap from glyph ascent/descent padding
+          // even when they look perfectly clean on the page — real collisions, where two
+          // labels actually run into each other side by side, overlap by a lot more than
+          // that. 4px cleanly separates the two in practice (measured: genuine touching
+          // labels start at 5px; benign stacked lines top out at 3px).
+          if (ox > 4 && oy > 4)
+            res.textoverlap.push({ f: si + 1, by: Math.round(Math.min(ox, oy)),
+                                   a: texts[i].txt, b: texts[j].txt });
+        }
+      }
       svg.querySelectorAll('text').forEach(t => {
         let bb; try { bb = t.getBBox(); } catch (e) { return; }
         if (!bb.width) return;
@@ -34,6 +59,15 @@ const EXE = process.env.CHROMIUM_PATH || undefined;
         const txt = t.textContent.trim().slice(0, 46);
         if (bb.x + bb.width > vb.width - 1)
           res.overflow.push({ f: si + 1, kind: 'viewBox', over: Math.round(bb.x + bb.width - vb.width), txt });
+        // left/top edge underflow — e.g. a centred label whose string is wider than
+        // its slot runs off the LEFT of the viewBox just as easily as the right, and
+        // that edge is the page's own margin: nothing clips it in the browser preview,
+        // but Chromium's print-to-PDF genuinely slices the glyph off. Missed by every
+        // other check here, which only ever looks for the right/bottom edge.
+        if (bb.x < -0.5)
+          res.overflow.push({ f: si + 1, kind: 'viewBox-L', over: Math.round(-bb.x), txt });
+        if (bb.y < -0.5)
+          res.overflow.push({ f: si + 1, kind: 'viewBox-T', over: Math.round(-bb.y), txt });
         // text that runs into a neighbouring shape it is not inside
         for (const r of rects) {
           if (r === host || !r.fill || r.fill === 'none') continue;
@@ -67,5 +101,10 @@ const EXE = process.env.CHROMIUM_PATH || undefined;
   out.overflow.forEach(x => console.log(` fig ${String(x.f).padStart(2)} ${x.kind.padEnd(10)} +${String(x.over).padStart(3)}  ${x.txt}`));
   console.log('== LOW CONTRAST (<4.5:1) ==');
   out.contrast.forEach(x => console.log(` fig ${String(x.f).padStart(2)}  ${x.r}:1  ${x.fg} on ${x.bg}   ${x.txt}`));
+  console.log('== TEXT OVERLAPPING TEXT ==');
+  out.textoverlap.forEach(x => console.log(` fig ${String(x.f).padStart(2)} by ${String(x.by).padStart(3)}px   "${x.a}"  ×  "${x.b}"`));
+  const total = out.overflow.length + out.contrast.length + out.textoverlap.length;
+  console.log(total === 0 ? '\nAll clear.' : `\n${total} finding(s).`);
   await b.close();
+  process.exit(total === 0 ? 0 : 1);
 })();

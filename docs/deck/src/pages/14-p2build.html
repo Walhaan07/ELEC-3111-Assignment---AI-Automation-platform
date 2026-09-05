@@ -121,6 +121,25 @@ export async function withTransaction(fn) {
       </div></div>
 
       <div class="bstep"><div class="bn">4</div><div class="bb">
+        <h4>One place that collects every node type that exists</h4>
+        <p>The server below is about to <code>import { nodeTypes }</code>. This tiny file is the whole
+          reason that works — and the only file every future node, for the rest of the project, ever
+          gets added to.</p>
+        <div class="fwrap"><span class="fname">packages/nodes/index.js</span>
+<pre class="code" data-lang="js"><code>export const nodeTypes = {
+  manualTrigger: {
+    description: { name: 'manualTrigger', group: 'trigger', properties: [] },
+    async execute() { return [[{ json: {} }]]; },
+  },
+};
+// §2.3b adds httpRequest here, §2.6b adds the four Google nodes, §2.6c adds
+// the Code and AI nodes — always the same move: import the file, add one line.</code></pre></div>
+        <p><code>manualTrigger</code> is copied straight from §2.1b's <code>engine.js</code> — the one
+          node type every workflow needs before it can have anything else, which is why it is the only
+          one that exists here on day one.</p>
+      </div></div>
+
+      <div class="bstep"><div class="bn">5</div><div class="bb">
         <h4>The five routes, with validation and a single error handler</h4>
         <div class="fwrap"><span class="fname">apps/api/server.js</span>
 <pre class="code" data-lang="js"><code>import express from 'express';

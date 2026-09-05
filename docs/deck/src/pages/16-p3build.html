@@ -92,6 +92,9 @@ function parseJsonParameter(ctx, name, i) {
         <div class="tbox"><b><code>pairedItem</code></b> — the index of the input item that produced this
           output. Nobody needs it on day one, and everybody needs it the first time a workflow fans out
           to fifty items and one of them fails. Recording it costs one property.</div>
+        <div class="fwrap"><span class="fname">packages/nodes/index.js — one line added</span>
+<pre class="code" data-lang="js"><code>import { httpRequestNode } from './core/httpRequest.ts';
+nodeTypes.httpRequest = httpRequestNode;</code></pre></div>
       </div></div>
 
       <div class="bstep"><div class="bn">2</div><div class="bb">
