@@ -5,81 +5,243 @@
   <div class="band"></div>
 
   <div class="stack">
+    <div class="where">
+      <span class="wl">Program</span><span class="wv">VS&nbsp;Code — see §1.10 for the window, §1.11 for the loop</span>
+      <span class="wl">Files</span><span class="wv"><code>apps/api/webhooks.js</code>, <code>apps/api/schedules.js</code>, <code>apps/api/runner.js</code></span>
+      <span class="wl">Create them</span><span class="wv">In the Explorer, right-click <code>apps/api</code> → <span class="ui">New&nbsp;File</span> → type the name with its extension → paste → <span class="kbd">Ctrl&nbsp;S</span></span>
+    </div>
     <div class="bsteps">
       <div class="bstep"><div class="bn">1</div><div class="bb">
-        <h4>One more table, for the addresses in use</h4>
+        <h4>Two more tables, for the addresses and the timers in use</h4>
         <div class="fwrap"><span class="fname">schema.sql — additions</span>
-<pre class="code" data-lang="sql"><code>CREATE TABLE webhooks (
-  path        text NOT NULL,
-  method      text NOT NULL,
-  workflow_id uuid REFERENCES workflows(id) ON DELETE CASCADE,
-  node_name   text NOT NULL,
-  is_test     boolean NOT NULL DEFAULT false,
-  PRIMARY KEY (path, method)
+<pre class="code" data-lang="sql"><code>CREATE TABLE IF NOT EXISTS webhooks (
+  path          text NOT NULL CHECK (path ~ '^[a-z0-9][a-z0-9-]{0,62}$'),
+  method        text NOT NULL CHECK (method IN ('GET','POST','PUT','PATCH','DELETE')),
+  workflow_id   uuid NOT NULL REFERENCES workflows(id) ON DELETE CASCADE,
+  node_name     text NOT NULL,
+  is_test       boolean NOT NULL DEFAULT false,
+  response_mode text NOT NULL DEFAULT 'lastNode'
+                CHECK (response_mode IN ('immediately','lastNode')),
+  secret        bytea,                       -- optional shared secret, encrypted
+  PRIMARY KEY (path, method, is_test)        -- two workflows cannot claim one address
 );
 
-CREATE TABLE schedules (
+CREATE TABLE IF NOT EXISTS schedules (
   id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  workflow_id uuid REFERENCES workflows(id) ON DELETE CASCADE,
+  workflow_id uuid NOT NULL UNIQUE REFERENCES workflows(id) ON DELETE CASCADE,
   cron        text NOT NULL,
   timezone    text NOT NULL DEFAULT 'Australia/Sydney'
+);
+
+-- a webhook delivered twice must not do the work twice
+CREATE TABLE IF NOT EXISTS webhook_deliveries (
+  idempotency_key text PRIMARY KEY,
+  execution_id    uuid NOT NULL REFERENCES executions(id) ON DELETE CASCADE,
+  received_at     timestamptz NOT NULL DEFAULT now()
 );</code></pre></div>
+        <div class="tbox"><b>Idempotency</b> — "doing it twice has the same effect as doing it once".
+          Stripe, GitHub and Shopify all retry a webhook they think failed. Without this table a retried
+          order becomes two rows in the spreadsheet and two emails to the customer.</div>
       </div></div>
 
       <div class="bstep"><div class="bn">2</div><div class="bb">
-        <h4>The webhook route</h4>
-        <div class="fwrap"><span class="fname">apps/api/webhooks.js</span>
-<pre class="code" data-lang="js"><code>app.all('/webhook/:path', async (req, res) => {
-  const hook = (await db.query(
-    'SELECT * FROM webhooks WHERE path = $1 AND method = $2 AND is_test = false',
-    [req.params.path, req.method])).rows[0];
+        <h4>One runner, so every trigger starts a workflow the same way</h4>
+        <div class="fwrap"><span class="fname">apps/api/runner.js</span>
+<pre class="code" data-lang="js"><code>import { db } from './db.js';
+import { runWorkflow } from '../../packages/engine/engine.js';
+import { WorkflowError } from '../../packages/engine/errors.js';
+import { nodeTypes } from '../../packages/nodes/index.js';
 
-  if (!hook) return res.status(404).json({ message: 'No workflow is listening here' });
+const MAX_CONCURRENT = 5;
+let inFlight = 0;
+const queue = [];
 
-  const trigger = [{ json: { headers: req.headers, query: req.query, body: req.body } }];
+// a tiny queue: five workflows at once, the rest wait their turn. Without it, one
+// popular webhook opens 200 database clients and the whole server stops answering.
+function withSlot(fn) {
+  return new Promise((resolve, reject) =&gt; {
+    const start = async () =&gt; {
+      inFlight++;
+      try { resolve(await fn()); } catch (e) { reject(e); }
+      finally { inFlight--; queue.shift()?.(); }
+    };
+    inFlight &lt; MAX_CONCURRENT ? start() : queue.push(start);
+  });
+}
 
-  if (hook.response_mode === 'immediately') {
-    res.json({ message: 'Workflow was started' });
-    runById(hook.workflow_id, trigger).catch(console.error);   // note: no await
-    return;
-  }
-  const result = await runById(hook.workflow_id, trigger);
-  res.json(lastNodeOutput(result));
-});</code></pre></div>
-        <p>The test address is the same handler with <code>is_test = true</code> and a different path
-          prefix, so experiments never fire real emails.</p>
+export async function runById(workflowId, triggerItems, mode = 'manual') {
+  return withSlot(async () =&gt; {
+    const { rows: [wf] } = await db.query('SELECT * FROM workflows WHERE id = $1', [workflowId]);
+    if (!wf) throw new WorkflowError('That workflow no longer exists', { code: 'NOT_FOUND' });
+
+    const { rows: [run] } = await db.query(
+      "INSERT INTO executions (workflow_id, status, mode) VALUES ($1,'running',$2) RETURNING id",
+      [workflowId, mode]);
+
+    try {
+      const { results, log } = await runWorkflow(wf, nodeTypes, { triggerItems });
+      await db.query("UPDATE executions SET status='success', data=$1, log=$2, "
+                   + "finished_at=now() WHERE id=$3",
+                     [JSON.stringify(results), JSON.stringify(log), run.id]);
+      return { executionId: run.id, results, log };
+    } catch (err) {
+      const payload = err instanceof WorkflowError ? err.toJSON() : { message: err.message };
+      await db.query("UPDATE executions SET status='error', error=$1, finished_at=now() WHERE id=$2",
+                     [JSON.stringify(payload), run.id]);
+      throw Object.assign(err, { executionId: run.id });
+    }
+  });
+}
+
+// anything still 'running' when the server died is a lie — clean it up on boot
+export async function reapStuckExecutions() {
+  const { rowCount } = await db.query(
+    "UPDATE executions SET status='cancelled', finished_at=now() WHERE status='running'");
+  if (rowCount) console.log(`marked ${rowCount} interrupted execution(s) as cancelled`);
+}</code></pre></div>
       </div></div>
 
       <div class="bstep"><div class="bn">3</div><div class="bb">
-        <h4>The schedule registry</h4>
+        <h4>The webhook route — the one endpoint strangers can reach</h4>
+        <p>Everything else in this project is behind our own editor. This is not. Treat every line of it
+          as hostile input, because it is.</p>
+        <div class="fwrap"><span class="fname">apps/api/webhooks.js</span>
+<pre class="code" data-lang="js"><code>import crypto from 'node:crypto';
+import express from 'express';
+import rateLimit from 'express-rate-limit';
+import { db } from './db.js';
+import { decrypt } from './crypto.js';
+import { runById } from './runner.js';
+
+// keep the raw bytes: a signature is computed over the exact body, not over re-encoded JSON
+const rawJson = express.json({
+  limit: '1mb',
+  verify: (req, _res, buf) =&gt; { req.rawBody = buf; },
+});
+
+const hookLimit = rateLimit({ windowMs: 60_000, limit: 120,
+  message: { message: 'Too many requests' } });
+
+export function mountWebhooks(app) {
+  app.all('/webhook/:path', hookLimit, rawJson, async (req, res) =&gt; {
+    try {
+      const isTest = req.query.test === '1';
+      const { rows: [hook] } = await db.query(
+        'SELECT * FROM webhooks WHERE path = $1 AND method = $2 AND is_test = $3',
+        [req.params.path, req.method, isTest]);
+
+      if (!hook) return res.status(404).json({ message: 'No workflow is listening here' });
+
+      // optional shared secret, compared in constant time so timing cannot leak it
+      if (hook.secret) {
+        const expected = crypto.createHmac('sha256', decrypt(hook.secret))
+                               .update(req.rawBody ?? Buffer.alloc(0)).digest('hex');
+        const given = String(req.get('x-signature') ?? '');
+        const ok = given.length === expected.length
+          &amp;&amp; crypto.timingSafeEqual(Buffer.from(given), Buffer.from(expected));
+        if (!ok) return res.status(401).json({ message: 'Bad or missing signature' });
+      }
+
+      // deduplicate retries from the sender
+      const key = req.get('idempotency-key') || req.get('x-github-delivery');
+      if (key) {
+        const { rows } = await db.query(
+          'SELECT execution_id FROM webhook_deliveries WHERE idempotency_key = $1', [key]);
+        if (rows[0]) return res.status(200).json({ message: 'Already handled',
+                                                   executionId: rows[0].execution_id });
+      }
+
+      const triggerItems = [{ json: {
+        headers: req.headers, query: req.query, body: req.body,
+        method:  req.method, receivedAt: new Date().toISOString(),
+      } }];
+
+      if (hook.response_mode === 'immediately') {
+        res.status(202).json({ message: 'Workflow was started' });     // answer in ~5 ms
+        runById(hook.workflow_id, triggerItems, 'webhook')
+          .then(r =&gt; key &amp;&amp; remember(key, r.executionId))
+          .catch(err =&gt; console.error('[webhook]', err.message));      // never crash the process
+        return;
+      }
+
+      const result = await runById(hook.workflow_id, triggerItems, 'webhook');
+      if (key) await remember(key, result.executionId);
+      res.json(lastNodeOutput(result.results));
+
+    } catch (err) {
+      console.error('[webhook]', err);
+      res.status(500).json({ message: 'The workflow failed', executionId: err.executionId ?? null });
+    }
+  });
+}
+
+const remember = (key, executionId) =&gt; db.query(
+  'INSERT INTO webhook_deliveries (idempotency_key, execution_id) VALUES ($1,$2) '
+  + 'ON CONFLICT DO NOTHING', [key, executionId]);</code></pre></div>
+        <p>The test address is the same handler with <code>?test=1</code>, so experiments never fire real
+          emails.</p>
+      </div></div>
+
+      <div class="bstep"><div class="bn">4</div><div class="bb">
+        <h4>The schedule registry — with the three guards a cron always needs</h4>
         <div class="cmd"><span class="p">$</span> npm i croner --workspace apps/api</div>
         <div class="fwrap"><span class="fname">apps/api/schedules.js</span>
 <pre class="code" data-lang="js"><code>import { Cron } from 'croner';
+import { db } from './db.js';
+import { runById } from './runner.js';
+
 const jobs = new Map();
+
+export function validateSchedule({ cron, timezone }) {
+  try { Intl.DateTimeFormat(undefined, { timeZone: timezone }); }
+  catch { throw new Error(`"${timezone}" is not a time zone`); }
+  const probe = new Cron(cron, { timezone, paused: true });
+  if (!probe.nextRun()) throw new Error(`"${cron}" will never run`);
+  return probe.nextRun();
+}
 
 export function activate(workflow, schedule) {
   deactivate(workflow.id);
-  jobs.set(workflow.id, new Cron(schedule.cron, { timezone: schedule.timezone }, () =>
-    runById(workflow.id, [{ json: { timestamp: new Date().toISOString() } }])
-      .catch(console.error)));
+  validateSchedule(schedule);
+  const job = new Cron(schedule.cron, {
+    timezone:  schedule.timezone,
+    protect:   true,     // 1 · if the last run is still going, SKIP this tick — never pile up
+    catch:     (err) =&gt; console.error(`[schedule ${workflow.name}]`, err.message),  // 2 · never crash
+    maxRuns:   Infinity,
+  }, () =&gt; runById(workflow.id, [{ json: {
+       timestamp:      new Date().toISOString(),
+       scheduledFor:   job.currentRun()?.toISOString() ?? null,
+     } }], 'schedule'));
+  jobs.set(workflow.id, job);
+  console.log(`[schedule] ${workflow.name} → next ${job.nextRun()?.toISOString()}`);
 }
 
-export function deactivate(workflowId) {
+export function deactivate(workflowId) {          // 3 · always stop the old timer first
   jobs.get(workflowId)?.stop();
   jobs.delete(workflowId);
 }
 
 // rebuild every timer on boot — otherwise schedules stop silently after each deploy
-export async function restoreAll(db) {
-  const rows = (await db.query(
-    'SELECT w.*, s.cron, s.timezone FROM workflows w JOIN schedules s ON s.workflow_id = w.id ' +
-    'WHERE w.active = true')).rows;
-  for (const r of rows) activate(r, r);
-  console.log(`restored ${rows.length} schedules`);
-}</code></pre></div>
+export async function restoreAll() {
+  const { rows } = await db.query(
+    'SELECT w.*, s.cron, s.timezone FROM workflows w JOIN schedules s ON s.workflow_id = w.id '
+    + 'WHERE w.active = true');
+  for (const r of rows) {
+    try { activate(r, r); }
+    catch (e) { console.error(`[schedule] ${r.name} is broken: ${e.message}`); }
+  }
+  console.log(`restored ${rows.length} schedule(s)`);
+}
+
+export const listSchedules = () =&gt; [...jobs.entries()].map(([id, job]) =&gt;
+  ({ workflowId: id, next: job.nextRun()?.toISOString(), running: job.isBusy() }));</code></pre></div>
+        <div class="tbox"><b><code>protect: true</code></b> — the single most valuable option on this page.
+          A workflow set to every minute that takes ninety seconds will, without it, start a second copy
+          before the first finishes, then a third, until the machine dies. With it, the tick is skipped
+          and logged.</div>
       </div></div>
 
-      <div class="bstep"><div class="bn">4</div><div class="bb">
+      <div class="bstep"><div class="bn">5</div><div class="bb">
         <h4>Reach your laptop from outside</h4>
         <div class="cmd"><span class="p">$</span> npx cloudflared tunnel --url http://localhost:5678
 <span class="c"># prints https://something-random.trycloudflare.com — use that in Postman,</span>
@@ -87,8 +249,106 @@ export async function restoreAll(db) {
       </div></div>
     </div>
 
+    <div class="exhead"><b>What you should see</b><i></i></div>
+    <div class="expect two">
+      <div class="screen dark">
+        <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="ttl">Terminal — the API log</span></div>
+        <div class="body">api on http://localhost:5678
+marked <span class="y">2</span> interrupted execution(s) as cancelled
+[schedule] Daily digest → next <span class="b">2026-03-14T09:00:00Z</span>
+restored <span class="b">1</span> schedule(s)
+<span class="g">POST /webhook/new-order 202</span> 4 ms
+<span class="g">POST /webhook/new-order 200</span> 0 ms <span class="d">(duplicate key)</span>
+<span class="er">POST /webhook/new-order 401</span> Bad or missing signature
+<span class="er">POST /webhook/nope       404</span> No workflow listening
+[schedule Daily digest] <span class="y">skipped — previous run still going</span></div>
+      </div>
+      <div class="screen dark">
+        <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="ttl">Terminal — firing it from your phone</span></div>
+        <div class="body"><span class="pr">$</span> curl -i -X POST \
+   https://tidy-owl.trycloudflare.com/webhook/new-order \
+   -H 'content-type: application/json' \
+   -H 'idempotency-key: order-1042' \
+   -d '{"customer":"Alice","total":42}'
+
+<span class="g">HTTP/1.1 200 OK</span>
+{
+  "status": "<span class="g">ok</span>",
+  "sheetRow": <span class="b">18</span>,
+  "executionId": "<span class="b">7c2e…9b</span>"
+}</div>
+      </div>
+    </div>
+    <figure>
+      <div class="screen">
+        <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="url">localhost:5173/workflow/3f9a…c1/executions</span></div>
+        <div class="body" style="padding:0">
+          <svg viewBox="0 0 760 168" xmlns="http://www.w3.org/2000/svg">
+            <rect x="0" y="0" width="760" height="168" fill="#ffffff"/>
+            <rect x="0" y="0" width="760" height="26" fill="#f2f7fa"/>
+            <line x1="0" y1="26" x2="760" y2="26" stroke="#dde6ec"/>
+            <text x="16" y="18" class="e" style="fill:#334155">STATUS</text>
+            <text x="130" y="18" class="e" style="fill:#334155">STARTED</text>
+            <text x="330" y="18" class="e" style="fill:#334155">MODE</text>
+            <text x="470" y="18" class="e" style="fill:#334155">TOOK</text>
+            <text x="590" y="18" class="e" style="fill:#334155">TRIGGERED BY</text>
+
+            <rect x="16" y="36" width="82" height="19" rx="9" fill="#e6f2ea" stroke="#1f7a4d"/>
+            <text x="27" y="49" class="s" style="fill:#186340">Success</text>
+            <text x="130" y="49" class="s2">14:32:07</text>
+            <text x="330" y="49" class="s2">webhook</text>
+            <text x="470" y="49" class="s2">612 ms</text>
+            <text x="590" y="49" class="s2">order-1042</text>
+            <line x1="16" y1="64" x2="744" y2="64" stroke="#eef2f6"/>
+
+            <rect x="16" y="74" width="82" height="19" rx="9" fill="#e6f2ea" stroke="#1f7a4d"/>
+            <text x="27" y="87" class="s" style="fill:#186340">Success</text>
+            <text x="130" y="87" class="s2">14:31:00</text>
+            <text x="330" y="87" class="s2">schedule</text>
+            <text x="470" y="87" class="s2">1.4 s</text>
+            <text x="590" y="87" class="s2">* * * * *</text>
+            <line x1="16" y1="102" x2="744" y2="102" stroke="#eef2f6"/>
+
+            <rect x="16" y="112" width="82" height="19" rx="9" fill="#fbeae8" stroke="#c2413c"/>
+            <text x="33" y="125" class="s" style="fill:#a03a35">Error</text>
+            <text x="130" y="125" class="s2">14:30:02</text>
+            <text x="330" y="125" class="s2">webhook</text>
+            <text x="470" y="125" class="s2">31 s</text>
+            <text x="590" y="125" class="s2">order-1041</text>
+            <rect x="130" y="136" width="440" height="20" rx="4" fill="#fdf6f5" stroke="#eec8c4"/>
+            <text x="140" y="150" class="s" style="fill:#a03a35">Sheets: HTTP 429 after 3 retries — node "Append row"</text>
+          </svg>
+        </div>
+      </div>
+      <figcaption><b>Figure @.</b> The executions table after ten minutes of Phase 4. Mode says which
+        trigger started it, and a failed row carries the engine's message with the node's name in it.</figcaption>
+    </figure>
+    <p class="exnote"><b>The red row is the one to demonstrate.</b> It proves three separate pieces of
+      Phase 1 and 4 are wired together: the HTTP helper retried, the engine attached the node name, and
+      the runner wrote a real <code>error</code> column instead of losing it in a console somewhere.</p>
+
+    <div class="conn">
+      <h5>How this part connects to the others</h5>
+      <div class="hs">
+        <div class="hsbox"><span class="hsn">§2.2b db.js · §2.1b engine</span><span class="hsd">pool · runWorkflow()</span></div>
+        <div class="hsar"><span>runById()</span><i></i></div>
+        <div class="hsbox now"><span class="hsn">§2.4b — the triggers</span><span class="hsd">webhook · cron · runner</span></div>
+        <div class="hsar"><span>executions rows</span><i></i></div>
+        <div class="hsbox"><span class="hsn">§2.2c — the executions list</span><span class="hsd">and §2.7b&#8217;s k6 benchmark</span></div>
+      </div>
+      <div class="wires">
+      <span class="wl">Receives</span><span class="wv">the database pool and the engine, unchanged. This part adds no new way of running a workflow — it adds new <em>reasons</em> to run one.</span>
+      <span class="wl">Hands out</span><span class="wv"><code>runById(workflowId, triggerItems, mode)</code>. The manual Run route, the webhook and the scheduler all funnel through it, so the concurrency limit and the execution row exist once.</span>
+      <span class="wl">Hands on</span><span class="wv">a row in <code>executions</code> with <code>mode</code> set. §2.2c lists it, §2.7b measures it, and the report quotes it.</span>
+      <span class="wl">Seam to agree</span><span class="wv">the trigger item shape <code>{ headers, query, body, method, receivedAt }</code>. Every workflow the group builds writes <code>{{ $json.body.… }}</code> against it, so changing it later breaks all of them at once.</span>
+      </div>
+    </div>
+
     <div class="chk"><b>Check it works</b>A POST from your phone through the tunnel creates an execution
-      row within a second. A workflow on <code>* * * * *</code> makes exactly one row per minute, and
-      stops the moment you deactivate it.</div>
+      row within a second. Send the exact same request again with the same
+      <code>idempotency-key</code> — you get <code>Already handled</code> and <b>no</b> second row. A
+      workflow on <code>* * * * *</code> makes exactly one row per minute and stops the moment you
+      deactivate it. Then make a workflow that sleeps 90 seconds, schedule it every minute, and confirm
+      the log says <em>skipped</em> instead of the machine getting slower and slower.</div>
   </div>
 </div>

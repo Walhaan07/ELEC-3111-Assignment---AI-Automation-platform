@@ -34,3 +34,4 @@ build guide.)*
 | [`docs/N8N-COMPARISON.md`](docs/N8N-COMPARISON.md) | Feature matrix, architectural comparison, benchmark methodology |
 | [`docs/REPORT-OUTLINE.md`](docs/REPORT-OUTLINE.md) | Week 15 report structure and writing schedule |
 | [`docs/adr/`](docs/adr/) | Architecture decision records |
+| [`docs/deck/`](docs/deck/) | **The complete build guide as a printable book** — 121 pages, 33 diagrams: every step, every click, every line of code, what the output should look like, and how each part connects to the others |

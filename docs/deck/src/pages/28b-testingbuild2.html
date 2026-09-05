@@ -5,33 +5,88 @@
   <div class="band" style="background:linear-gradient(90deg,#087f99,#0a7a70,#14624f)"></div>
 
   <div class="stack">
+    <div class="where">
+      <span class="wl">Program</span><span class="wv">VS&nbsp;Code, then github.com in a browser to watch it run</span>
+      <span class="wl">Files</span><span class="wv"><code>playwright.config.ts</code>, <code>e2e/build-and-run.spec.ts</code>, <code>.github/workflows/ci.yml</code></span>
+      <span class="wl">Create them</span><span class="wv">In the Explorer, right-click <code>new e2e and .github/workflows folders</code> → <span class="ui">New&nbsp;File</span> → type the name with its extension → paste → <span class="kbd">Ctrl&nbsp;S</span></span>
+    </div>
     <div class="bsteps">
-      <div class="bstep"><div class="bn">3</div><div class="bb">
+      <div class="bstep"><div class="bn">4</div><div class="bb">
+        <h4>Let Playwright start the app itself</h4>
+        <div class="fwrap"><span class="fname">playwright.config.ts</span>
+<pre class="code" data-lang="ts"><code>import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  testDir: 'e2e',
+  timeout: 30_000,
+  expect: { timeout: 8_000 },        // retry an assertion for 8 s before failing it
+  retries: process.env.CI ? 2 : 0,   // a flaky test in CI is retried, but still reported
+  reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'list',
+  use: { baseURL: 'http://localhost:5173', trace: 'retain-on-failure',
+         screenshot: 'only-on-failure', video: 'retain-on-failure' },
+  webServer: {                       // no "did you remember to start the server?" ever again
+    command: 'npm run dev',
+    url: 'http://localhost:5173',
+    reuseExistingServer: !process.env.CI,
+    timeout: 120_000,
+  },
+});</code></pre></div>
+        <div class="tbox"><b>Trace</b> — a recording of the whole browser session: every click, every
+          network call, a screenshot before and after each step. When CI fails at 1 a.m., you open the
+          trace instead of guessing. <code>retain-on-failure</code> keeps it only when it is needed.</div>
+      </div></div>
+
+      <div class="bstep"><div class="bn">5</div><div class="bb">
         <h4>Level 3 — one browser test, and only one</h4>
         <div class="fwrap"><span class="fname">e2e/build-and-run.spec.ts</span>
 <pre class="code" data-lang="ts"><code>import { test, expect } from '@playwright/test';
 
-test('draw two nodes, connect them, run, see a result', async ({ page }) => {
-  await page.goto('http://localhost:5173');
+test('draw two nodes, connect them, run, see a result', async ({ page, request }) =&gt; {
+  // start from a known state: make the workflow through the API, not by clicking
+  const created = await request.post('/rest/workflows', {
+    data: { name: `e2e ${Date.now()}`, nodes: [], connections: {} } });
+  const { id } = await created.json();
+
+  await page.goto(`/workflow/${id}`);
+  await expect(page.getByTestId('canvas')).toBeVisible();
+
   await page.getByRole('button', { name: 'Add node' }).click();
   await page.getByText('Manual Trigger').click();
   await page.getByRole('button', { name: 'Add node' }).click();
   await page.getByText('Edit Fields').click();
-  await page.getByTestId('handle-Manual Trigger-0').dragTo(page.getByTestId('target-Edit Fields'));
+
+  await page.getByTestId('handle-Manual Trigger-0')
+            .dragTo(page.getByTestId('target-Edit Fields'));
+
   await page.getByRole('button', { name: 'Save' }).click();
+  await expect(page.getByTestId('save-status')).toHaveText('Saved');
+
   await page.getByRole('button', { name: 'Run' }).click();
   await expect(page.getByTestId('output-Edit Fields')).toContainText('json');
+
+  // it really persisted — reload and check again, which is the bug this test exists to catch
+  await page.reload();
+  await expect(page.getByTestId('node-Edit Fields')).toBeVisible();
 });</code></pre></div>
       </div></div>
 
-      <div class="bstep"><div class="bn">4</div><div class="bb">
+      <div class="bstep"><div class="bn">6</div><div class="bb">
         <h4>Run levels 1–3 on every push</h4>
         <div class="fwrap"><span class="fname">.github/workflows/ci.yml</span>
 <pre class="code" data-lang="yaml"><code>name: ci
 on: [push, pull_request]
+
+# a second push cancels the first run instead of queueing behind it
+concurrency: { group: "ci-${{ github.ref }}", cancel-in-progress: true }
+
 jobs:
   check:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      DATABASE_URL: postgres://postgres:dev@localhost:5432/automation
+      BASE_URL: http://localhost:5678
+      ENCRYPTION_KEY: "00000000000000000000000000000000000000000000000000000000000000ff"
     services:
       postgres:
         image: postgres:16
@@ -44,13 +99,111 @@ jobs:
         with: { node-version: 22, cache: npm }
       - run: npm ci
       - run: npm run lint
+      - run: psql $DATABASE_URL -f schema.sql
       - run: npm test
+      - name: Look for leaked keys
+        uses: gitleaks/gitleaks-action@v2
       - run: npx playwright install --with-deps chromium
-      - run: npm run e2e</code></pre></div>
+      - run: npm run e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()                       # only when something broke, and it self-deletes
+        with: { name: playwright-report, path: playwright-report/, retention-days: 7 }</code></pre></div>
+      </div></div>
+
+      <div class="bstep"><div class="bn">7</div><div class="bb">
+        <h4>Make the branch impossible to break</h4>
+        <div class="clicks">
+          <div class="click"><span class="cn">1</span><span>On GitHub open the repository → <span class="path">Settings → Branches</span></span></div>
+          <div class="click"><span class="cn">2</span><span><span class="ui">Add branch ruleset</span> → target <code>main</code></span></div>
+          <div class="click"><span class="cn">3</span><span>Tick <span class="ui">Require a pull request before merging</span> → approvals <b>1</b></span></div>
+          <div class="click"><span class="cn">4</span><span>Tick <span class="ui">Require status checks to pass</span> → search <code>check</code> → select it</span></div>
+          <div class="click"><span class="cn">5</span><span><span class="ui">Create</span>. From now on nobody — including you — can push red code to <code>main</code>.</span></div>
+        </div>
       </div></div>
     </div>
 
+    <div class="exhead"><b>What you should see</b><i></i></div>
+    <figure>
+      <div class="screen">
+        <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="url">github.com/&lt;org&gt;/ai-automation/pull/42</span></div>
+        <div class="body" style="padding:0">
+          <svg viewBox="0 0 760 176" xmlns="http://www.w3.org/2000/svg">
+            <rect x="0" y="0" width="760" height="176" fill="#ffffff"/>
+            <rect x="14" y="12" width="732" height="66" rx="8" fill="#f2f9f5" stroke="#9ecfb4"/>
+            <rect x="26" y="26" width="18" height="18" rx="9" fill="#1f7a4d"/>
+            <text x="31" y="39" class="s" style="fill:#ffffff">✓</text>
+            <text x="52" y="32" class="t">All checks have passed</text>
+            <text x="52" y="52" class="s">1 successful check · required by the ruleset on main</text>
+            <rect x="580" y="24" width="152" height="26" rx="6" fill="#1f7a4d"/>
+            <text x="596" y="41" class="s" style="fill:#ffffff">Merge pull request</text>
+
+            <rect x="14" y="90" width="732" height="74" rx="8" fill="#ffffff" stroke="#dfe6ec"/>
+            <circle cx="36" cy="112" r="6" fill="#1f7a4d"/>
+            <text x="52" y="116" class="s2">ci / check</text>
+            <text x="300" y="116" class="s">lint · 15 tests · 1 browser test · gitleaks</text>
+            <text x="560" y="116" class="s">Successful in 2m 41s</text>
+            <text x="676" y="116" class="s" style="fill:#0a5f92">Details</text>
+            <line x1="30" y1="130" x2="730" y2="130" stroke="#eef2f6"/>
+            <circle cx="36" cy="148" r="6" fill="#1f7a4d"/>
+            <text x="52" y="152" class="s2">Review</text>
+            <text x="300" y="152" class="s">approved by a teammate</text>
+            <text x="560" y="152" class="s">required: 1 of 1</text>
+          </svg>
+        </div>
+      </div>
+      <figcaption><b>Figure @.</b> The green state every pull request must reach before it can be merged.
+        This screenshot, in the report, is the evidence for the "process" marks.</figcaption>
+    </figure>
+    <div class="expect two">
+      <div class="screen dark">
+        <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="ttl">Terminal — npm run e2e</span></div>
+        <div class="body">Running 1 test using 1 worker
+
+  <span class="g">✓</span>  1 build-and-run.spec.ts:3:1 ›
+     draw two nodes, connect them,
+     run, see a result <span class="d">(4.1s)</span>
+
+  <span class="g">1 passed (11.7s)</span>
+<span class="d">web server started by playwright, then
+stopped again — nothing left running</span></div>
+      </div>
+      <div class="screen dark">
+        <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="ttl">Terminal — after you break the IF node</span></div>
+        <div class="body">  <span class="er">✘</span>  1 build-and-run.spec.ts:3:1 ›
+     draw two nodes … <span class="d">(8.2s)</span>
+
+  <span class="er">Error: expect(locator).toContainText</span>
+  Locator: getByTestId('output-Edit Fields')
+  Expected string: <span class="g">"json"</span>
+  Received string: <span class="er">"Error: branch 1 of \
+    \"IF\" is not an array"</span>
+
+  <span class="d">attachment: trace.zip, screenshot.png</span>
+  <span class="er">1 failed (14.9s)</span></div>
+      </div>
+    </div>
+
+    <div class="conn">
+      <h5>How this part connects to the others</h5>
+      <div class="hs">
+        <div class="hsbox"><span class="hsn">§3.2b tests · §3.1b scripts</span><span class="hsd">npm test · npm run lint</span></div>
+        <div class="hsar"><span>on every push</span><i></i></div>
+        <div class="hsbox now"><span class="hsn">§3.2c — CI and branch rules</span><span class="hsd">GitHub Actions</span></div>
+        <div class="hsar"><span>a green main</span><i></i></div>
+        <div class="hsbox"><span class="hsn">§2.7b — deploy</span><span class="hsd">and everybody&#8217;s next git pull</span></div>
+      </div>
+      <div class="wires">
+      <span class="wl">Receives</span><span class="wv">nothing new — it runs the same commands a teammate runs locally. If CI needs a command that is not in <code>package.json</code>, that is the bug, not the CI file.</span>
+      <span class="wl">Hands on</span><span class="wv">a <code>main</code> branch that is always green, which is what makes §2.7b&#8217;s deploy safe to run on the morning of the demo.</span>
+      <span class="wl">Closes the circle</span><span class="wv">the browser test walks every seam in one go: canvas (§2.2c) → server (§2.2b) → engine (§2.1b) → node (§2.3b). One test, three minutes, all four areas.</span>
+      <span class="wl">Seam to agree</span><span class="wv">the <code>data-testid</code> names. B2 writes Playwright against ids B1 puts in the JSX — agree the list in Week 10 and the browser test stops being flaky.</span>
+      </div>
+    </div>
+
     <div class="chk"><b>Check it works</b>Break the IF node on purpose, push, and a red cross appears
-      within two minutes — without anybody noticing by hand. That is the whole point of levels 1–3.</div>
+      within three minutes — without anybody noticing by hand. Open the failed run, download the
+      <code>playwright-report</code> artefact, and watch the trace replay the exact click that failed.
+      Then confirm the <b>Merge</b> button is greyed out until it is green again. That is the whole point
+      of levels 1–3.</div>
   </div>
 </div>

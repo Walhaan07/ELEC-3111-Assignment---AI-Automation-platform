@@ -5,97 +5,338 @@
   <div class="band"></div>
 
   <div class="stack">
+    <div class="where">
+      <span class="wl">Program</span><span class="wv">VS&nbsp;Code — see §1.10 for the window, §1.11 for the loop</span>
+      <span class="wl">Files</span><span class="wv"><code>packages/nodes/core/httpRequest.ts</code>, <code>packages/engine/expressions.js</code>, <code>apps/editor/src/ParameterPanel.tsx</code></span>
+      <span class="wl">Create them</span><span class="wv">In the Explorer, right-click <code>packages/nodes/core and apps/editor/src</code> → <span class="ui">New&nbsp;File</span> → type the name with its extension → paste → <span class="kbd">Ctrl&nbsp;S</span></span>
+    </div>
     <div class="bsteps">
       <div class="bstep"><div class="bn">1</div><div class="bb">
-        <h4>A node describes its own settings</h4>
-        <div class="fwrap"><span class="fname">packages/nodes/httpRequest.ts</span>
-<pre class="code" data-lang="ts"><code>export const httpRequest = {
+        <h4>A node describes its own settings — all of them</h4>
+        <p>This one description is simultaneously the form in the sidebar, the validation rules, and the
+          documentation. Every field you add here appears in the UI with no UI work at all.</p>
+        <div class="fwrap"><span class="fname">packages/nodes/core/httpRequest.ts</span>
+<pre class="code" data-lang="ts"><code>import { WorkflowError } from '../../engine/errors.js';
+
+export const httpRequestNode = {
   description: {
     name: 'httpRequest', displayName: 'HTTP Request', group: 'action',
-    inputs: ['main'], outputs: ['main'],
+    icon: 'globe', colour: '#0d72b4', inputs: ['main'], outputs: ['main'],
     properties: [
-      { displayName: 'Method', name: 'method', type: 'options', default: 'GET',
-        options: [{ name: 'GET', value: 'GET' }, { name: 'POST', value: 'POST' }] },
-      { displayName: 'URL', name: 'url', type: 'string', default: '' },
-      { displayName: 'Timeout (ms)', name: 'timeout', type: 'number', default: 30000 },
+      { displayName: 'Method', name: 'method', type: 'options', default: 'GET', required: true,
+        options: ['GET','POST','PUT','PATCH','DELETE'].map(v =&gt; ({ name: v, value: v })) },
+
+      { displayName: 'URL', name: 'url', type: 'string', default: '', required: true,
+        placeholder: 'https://api.example.com/orders',
+        validate: { pattern: '^https?://', message: 'must start with http:// or https://' } },
+
+      { displayName: 'Send headers', name: 'sendHeaders', type: 'boolean', default: false },
+      { displayName: 'Headers', name: 'headers', type: 'json', default: '{}',
+        displayOptions: { show: { sendHeaders: [true] } } },
+
       { displayName: 'Body', name: 'body', type: 'json', default: '{}',
-        displayOptions: { show: { method: ['POST'] } } },   // hidden unless POST
+        displayOptions: { show: { method: ['POST','PUT','PATCH'] } } },   // hidden otherwise
+
+      { displayName: 'Timeout (ms)', name: 'timeout', type: 'number', default: 30000,
+        validate: { min: 100, max: 120000 } },
+      { displayName: 'Retries', name: 'retries', type: 'number', default: 3,
+        validate: { min: 0, max: 5 } },
+      { displayName: 'Response', name: 'responseFormat', type: 'options', default: 'auto',
+        options: [{ name: 'Auto-detect', value: 'auto' }, { name: 'JSON', value: 'json' },
+                  { name: 'Text', value: 'text' }] },
+      { displayName: 'Continue on failure', name: 'continueOnFail', type: 'boolean',
+        default: false, hint: 'Send the error down the branch instead of stopping the workflow' },
     ],
   },
+
   async execute(ctx) {
     const out = [];
     const items = ctx.getInputData();
+
     for (let i = 0; i &lt; items.length; i++) {
-      const res = await fetch(ctx.getNodeParameter('url', i), {
-        method: ctx.getNodeParameter('method', i),
-        signal: AbortSignal.timeout(ctx.getNodeParameter('timeout', i)),
-      });
-      out.push({ json: await res.json() });
+      const url = String(ctx.getNodeParameter('url', i));
+      if (!/^https?:\/\//i.test(url))
+        throw new WorkflowError(`URL must start with http:// or https:// — got "${url}"`,
+                                { code: 'BAD_PARAMETER' });
+
+      const method  = ctx.getNodeParameter('method', i, 'GET');
+      const headers = ctx.getNodeParameter('sendHeaders', i, false)
+        ? parseJsonParameter(ctx, 'headers', i) : {};
+      const body    = ['POST','PUT','PATCH'].includes(method)
+        ? JSON.stringify(parseJsonParameter(ctx, 'body', i)) : undefined;
+
+      try {
+        const json = await ctx.helpers.httpRequest(url, {
+          method, body,
+          headers: { 'content-type': 'application/json', ...headers },
+          timeoutMs: ctx.getNodeParameter('timeout', i, 30000),
+          retries:   ctx.getNodeParameter('retries', i, 3),
+        });
+        out.push({ json, pairedItem: i });        // remember which input made this output
+      } catch (err) {
+        if (!ctx.getNodeParameter('continueOnFail', i, false)) throw err;
+        out.push({ json: { error: err.message }, pairedItem: i });
+      }
     }
     return [out];
   },
-};</code></pre></div>
+};
+
+// a JSON field the user typed is a string; a bad one must name the field, not throw "Unexpected token"
+function parseJsonParameter(ctx, name, i) {
+  const raw = ctx.getNodeParameter(name, i, '{}');
+  if (typeof raw === 'object') return raw;
+  try { return JSON.parse(raw); }
+  catch { throw new WorkflowError(`The "${name}" field is not valid JSON`, { code: 'BAD_PARAMETER' }); }
+}</code></pre></div>
+        <div class="tbox"><b><code>pairedItem</code></b> — the index of the input item that produced this
+          output. Nobody needs it on day one, and everybody needs it the first time a workflow fans out
+          to fifty items and one of them fails. Recording it costs one property.</div>
       </div></div>
 
       <div class="bstep"><div class="bn">2</div><div class="bb">
         <h4>Hand every description to the editor</h4>
-        <div class="fwrap"><span class="fname">apps/api/server.js</span>
+        <div class="fwrap"><span class="fname">apps/api/server.js — one more route</span>
 <pre class="code" data-lang="js"><code>import { nodeTypes } from '../../packages/nodes/index.js';
-app.get('/rest/node-types', (req, res) =>
-  res.json(Object.values(nodeTypes).map(n => n.description)));</code></pre></div>
+
+app.get('/rest/node-types', (req, res) =&gt; {
+  res.set('cache-control', 'public, max-age=60');       // it changes only when we deploy
+  res.json(Object.values(nodeTypes).map(n =&gt; n.description));
+});</code></pre></div>
       </div></div>
 
       <div class="bstep"><div class="bn">3</div><div class="bb">
-        <h4>One component turns any description into a form</h4>
+        <h4>One component turns any description into a form — and validates it</h4>
         <div class="fwrap"><span class="fname">apps/editor/src/ParameterPanel.tsx</span>
 <pre class="code" data-lang="ts"><code>function isVisible(p, values) {
-  const show = p.displayOptions?.show;
-  if (!show) return true;
-  return Object.entries(show).every(([field, allowed]) => allowed.includes(values[field]));
+  const { show, hide } = p.displayOptions ?? {};
+  const matches = (rules) =&gt; Object.entries(rules)
+    .every(([field, allowed]) =&gt; (allowed as unknown[]).includes(values[field]));
+  if (show &amp;&amp; !matches(show)) return false;
+  if (hide &amp;&amp; matches(hide))  return false;
+  return true;
 }
 
-export function ParameterPanel({ properties, values, onChange }) {
-  return properties.filter(p => isVisible(p, values)).map(p => {
-    const v = values[p.name] ?? p.default;
-    const set = (val) => onChange({ ...values, [p.name]: val });
-    switch (p.type) {
-      case 'string':  return &lt;Field key={p.name} label={p.displayName}&gt;
-                               &lt;input value={v} onChange={e => set(e.target.value)} /&gt;&lt;/Field&gt;;
-      case 'number':  return &lt;Field key={p.name} label={p.displayName}&gt;
-                               &lt;input type="number" value={v} onChange={e => set(+e.target.value)} /&gt;&lt;/Field&gt;;
-      case 'boolean': return &lt;Field key={p.name} label={p.displayName}&gt;
-                               &lt;input type="checkbox" checked={v} onChange={e => set(e.target.checked)} /&gt;&lt;/Field&gt;;
-      case 'options': return &lt;Field key={p.name} label={p.displayName}&gt;
-                               &lt;select value={v} onChange={e => set(e.target.value)}&gt;
-                                 {p.options.map(o => &lt;option key={o.value} value={o.value}&gt;{o.name}&lt;/option&gt;)}
-                               &lt;/select&gt;&lt;/Field&gt;;
-      default: return null;
-    }
+export function validateParameter(p, value): string | null {
+  const isExpression = typeof value === 'string' &amp;&amp; value.includes('{{');
+  if (isExpression) return null;                       // we cannot know the value until it runs
+  if (p.required &amp;&amp; (value === '' || value == null)) return `${p.displayName} is required`;
+  const v = p.validate ?? {};
+  if (v.pattern &amp;&amp; !new RegExp(v.pattern).test(String(value ?? '')))
+    return v.message ?? `${p.displayName} is not in the right format`;
+  if (p.type === 'number') {
+    if (!Number.isFinite(Number(value))) return `${p.displayName} must be a number`;
+    if (v.min != null &amp;&amp; Number(value) &lt; v.min) return `${p.displayName} must be at least ${v.min}`;
+    if (v.max != null &amp;&amp; Number(value) &gt; v.max) return `${p.displayName} must be at most ${v.max}`;
+  }
+  if (p.type === 'json') {
+    try { JSON.parse(typeof value === 'string' ? value : JSON.stringify(value)); }
+    catch { return `${p.displayName} is not valid JSON`; }
+  }
+  return null;
+}
+
+export function ParameterPanel({ properties, values, sampleItem, onChange, onValidity }) {
+  const visible = properties.filter(p =&gt; isVisible(p, values));
+  const errors  = Object.fromEntries(visible
+    .map(p =&gt; [p.name, validateParameter(p, values[p.name] ?? p.default)])
+    .filter(([, e]) =&gt; e));
+
+  useEffect(() =&gt; onValidity(Object.keys(errors).length === 0), [JSON.stringify(errors)]);
+
+  return visible.map(p =&gt; {
+    const v   = values[p.name] ?? p.default;
+    const set = (val) =&gt; onChange({ ...values, [p.name]: val });
+    const common = { id: p.name, 'aria-invalid': !!errors[p.name], value: v ?? '' };
+
+    return (
+      &lt;Field key={p.name} label={p.displayName} hint={p.hint}
+             error={errors[p.name]} preview={previewOf(v, sampleItem)}&gt;
+        {p.type === 'string'  &amp;&amp; &lt;input {...common} placeholder={p.placeholder}
+                                     onChange={e =&gt; set(e.target.value)} /&gt;}
+        {p.type === 'number'  &amp;&amp; &lt;input {...common} type="number"
+                                     onChange={e =&gt; set(e.target.value === '' ? '' : +e.target.value)} /&gt;}
+        {p.type === 'boolean' &amp;&amp; &lt;input id={p.name} type="checkbox" checked={!!v}
+                                     onChange={e =&gt; set(e.target.checked)} /&gt;}
+        {p.type === 'json'    &amp;&amp; &lt;textarea {...common} rows={4}
+                                     onChange={e =&gt; set(e.target.value)} /&gt;}
+        {p.type === 'options' &amp;&amp; &lt;select {...common} onChange={e =&gt; set(e.target.value)}&gt;
+                                     {p.options.map(o =&gt;
+                                       &lt;option key={o.value} value={o.value}&gt;{o.name}&lt;/option&gt;)}
+                                   &lt;/select&gt;}
+      &lt;/Field&gt;
+    );
   });
+}
+
+// show what an expression will actually become, using the last item that ran
+function previewOf(value, sampleItem) {
+  if (typeof value !== 'string' || !value.includes('{{') || !sampleItem) return null;
+  try { return String(resolve(value, sampleItem, {})); }
+  catch (e) { return `⚠ ${e.message}`; }
 }</code></pre></div>
+        <p>Disable the Run button while <code>onValidity</code> is false. A workflow that cannot possibly
+          work should never reach the engine — the user finds out in the sidebar, in red, in the field
+          that is wrong.</p>
       </div></div>
 
       <div class="bstep"><div class="bn">4</div><div class="bb">
-        <h4>Expressions, resolved per item</h4>
+        <h4>Expressions, resolved per item — and unable to reach the server</h4>
         <div class="fwrap"><span class="fname">packages/engine/expressions.js</span>
-<pre class="code" data-lang="js"><code>export function resolve(value, item, results) {
+<pre class="code" data-lang="js"><code>import { WorkflowError } from './errors.js';
+
+// names an expression must never see. They are passed in as parameters with no
+// arguments, so inside the expression each one is simply `undefined`.
+const SHADOWED = ['process', 'require', 'module', 'exports', 'globalThis', 'global',
+                  'fetch', 'eval', 'Function', 'setTimeout', 'setInterval',
+                  'XMLHttpRequest', 'WebSocket', 'import'];
+
+const cache = new Map();                     // compiling is the slow part; do it once per string
+
+function compile(expr) {
+  if (cache.has(expr)) return cache.get(expr);
+  if (expr.length &gt; 2000) throw new WorkflowError('That expression is too long');
+  let fn;
+  try {
+    fn = new Function('$json', '$node', '$now', '$itemIndex', ...SHADOWED,
+                      `"use strict"; return (${expr});`);
+  } catch (e) {
+    throw new WorkflowError(`Expression will not compile: ${e.message}`, { code: 'BAD_EXPRESSION' });
+  }
+  if (cache.size &gt; 500) cache.clear();
+  cache.set(expr, fn);
+  return fn;
+}
+
+export function resolve(value, item, results, itemIndex = 0) {
   if (typeof value !== 'string' || !value.includes('{{')) return value;
-  const evaluate = (expr) => {
-    const $json = item.json;
-    const $node = new Proxy({}, { get: (_, name) => ({ json: results[name]?.[0]?.[0]?.json ?? {} }) });
-    const $now  = new Date();
-    return new Function('$json', '$node', '$now', `"use strict"; return (${expr});`)($json, $node, $now);
+
+  const evaluate = (expr) =&gt; {
+    const $json = item?.json ?? {};
+    const $node = new Proxy({}, {
+      get: (_, name) =&gt; {
+        const branches = results[name];
+        if (!branches) throw new WorkflowError(`$node["${String(name)}"] has not run yet`,
+                                               { code: 'BAD_EXPRESSION' });
+        return { json: branches[0]?.[0]?.json ?? {} };
+      },
+    });
+    try {
+      return compile(expr.trim())($json, $node, new Date(), itemIndex);
+    } catch (e) {
+      if (e instanceof WorkflowError) throw e;
+      throw new WorkflowError(`{{${expr.trim()}}} → ${e.message}`, { code: 'BAD_EXPRESSION' });
+    }
   };
-  const whole = value.match(/^\{\{(.+)\}\}$/s);          // the field is ONE expression
-  if (whole) return evaluate(whole[1]);                   // keep the real type
-  return value.replace(/\{\{(.+?)\}\}/gs, (_, e) => String(evaluate(e)));
+
+  const whole = value.match(/^\s*\{\{([\s\S]+)\}\}\s*$/);   // the field is ONE expression
+  if (whole) return evaluate(whole[1]);                      // …so keep the real type
+  return value.replace(/\{\{([\s\S]+?)\}\}/g, (_, e) =&gt; String(evaluate(e) ?? ''));
 }</code></pre></div>
-        <p>Call it inside <code>getNodeParameter(name, itemIndex)</code> so node authors never see braces.</p>
+        <p>Now wire it into the engine. This is the whole change to §2.1b — three lines, and from
+          this moment every setting of every node supports expressions, forever:</p>
+        <div class="fwrap"><span class="fname">packages/engine/engine.js — inside the ctx object</span>
+<pre class="code" data-lang="js"><code>getNodeParameter(name, i = 0, fallback = undefined) {
+  const raw = node.parameters?.[name] ?? fallback;
+  if (raw === undefined)
+    throw new WorkflowError(`"${nodeName}" needs its "${name}" setting filled in`,
+                            { node: nodeName, code: 'MISSING_PARAMETER' });
+  return resolve(raw, items[i], results, i);        // &lt;- the only new line
+},</code></pre></div>
+        <p>Node authors never see braces. <b>Say plainly in the report</b> that shadowing is a speed
+          bump, not a sandbox — the real isolation story is the Code node in §2.6c.</p>
       </div></div>
     </div>
 
+    <div class="exhead"><b>What you should see</b><i></i></div>
+    <figure>
+      <svg viewBox="0 0 760 288" xmlns="http://www.w3.org/2000/svg">
+        <text x="6" y="12" class="e" style="fill:#0a5f92">METHOD = GET</text>
+        <text x="258" y="12" class="e" style="fill:#0a5f92">METHOD = POST</text>
+        <text x="510" y="12" class="e" style="fill:#a03a35">A FIELD IS WRONG</text>
+
+        <rect x="6" y="20" width="244" height="262" rx="8" fill="#ffffff" stroke="#cfdae2"/>
+        <rect x="6" y="20" width="244" height="28" rx="8" fill="#eef5fa"/>
+        <line x1="6" y1="48" x2="250" y2="48" stroke="#cfdae2"/>
+        <text x="20" y="39" class="t">HTTP Request</text>
+        <text x="20" y="68" class="e" style="fill:#4b5563">METHOD</text>
+        <rect x="20" y="74" width="216" height="22" rx="5" fill="#ffffff" stroke="#cfdae2"/>
+        <text x="30" y="89" class="s2">GET</text><text x="220" y="89" class="s">&#9662;</text>
+        <text x="20" y="116" class="e" style="fill:#4b5563">URL</text>
+        <rect x="20" y="122" width="216" height="22" rx="5" fill="#ffffff" stroke="#cfdae2"/>
+        <text x="30" y="137" class="s2">https://wttr.in/&#8230;</text>
+        <text x="20" y="164" class="e" style="fill:#4b5563">SEND HEADERS</text>
+        <rect x="20" y="170" width="26" height="15" rx="7" fill="#e6ecf2" stroke="#cfdae2"/>
+        <circle cx="28" cy="177" r="5" fill="#8b9aa8"/>
+        <text x="20" y="206" class="e" style="fill:#4b5563">TIMEOUT (MS)</text>
+        <rect x="20" y="212" width="216" height="22" rx="5" fill="#ffffff" stroke="#cfdae2"/>
+        <text x="30" y="227" class="s2">30000</text>
+        <text x="20" y="252" class="s">No Body field &#8212; GET has</text>
+        <text x="20" y="266" class="s">no body. Nobody hid it.</text>
+
+        <rect x="258" y="20" width="244" height="262" rx="8" fill="#ffffff" stroke="#cfdae2"/>
+        <rect x="258" y="20" width="244" height="28" rx="8" fill="#eef5fa"/>
+        <line x1="258" y1="48" x2="502" y2="48" stroke="#cfdae2"/>
+        <text x="272" y="39" class="t">HTTP Request</text>
+        <text x="272" y="68" class="e" style="fill:#4b5563">METHOD</text>
+        <rect x="272" y="74" width="216" height="22" rx="5" fill="#ffffff" stroke="#0d72b4" stroke-width="1.6"/>
+        <text x="282" y="89" class="s2">POST</text><text x="472" y="89" class="s">&#9662;</text>
+        <text x="272" y="116" class="e" style="fill:#4b5563">URL</text>
+        <rect x="272" y="122" width="216" height="22" rx="5" fill="#ffffff" stroke="#cfdae2"/>
+        <text x="282" y="137" class="s2">https://api.example.com/&#8230;</text>
+        <text x="272" y="158" class="e" style="fill:#0a5f92">BODY (JSON)</text>
+        <rect x="272" y="164" width="216" height="34" rx="5" fill="#f7fbfd" stroke="#0d72b4" stroke-width="1.6"/>
+        <text x="282" y="184" class="s2">{"city":"{{ $json.city }}"}</text>
+        <rect x="272" y="204" width="216" height="48" rx="5" fill="#dfeef8" stroke="#8cc0dd"/>
+        <text x="284" y="224" class="s" style="fill:#0a5f92">preview, last item:</text>
+        <text x="284" y="238" class="s2">{"city":"Newcastle"}</text>
+        <text x="272" y="266" class="s">Shown because Method = POST.</text>
+
+        <rect x="510" y="20" width="244" height="262" rx="8" fill="#ffffff" stroke="#cfdae2"/>
+        <rect x="510" y="20" width="244" height="28" rx="8" fill="#eef5fa"/>
+        <line x1="510" y1="48" x2="754" y2="48" stroke="#cfdae2"/>
+        <text x="524" y="39" class="t">HTTP Request</text>
+        <text x="524" y="68" class="e" style="fill:#4b5563">URL</text>
+        <rect x="524" y="74" width="216" height="22" rx="5" fill="#fdf6f5" stroke="#c2413c" stroke-width="1.6"/>
+        <text x="534" y="89" class="s2">wttr.in/Newcastle</text>
+        <text x="524" y="110" class="s" style="fill:#a03a35">must start with https://</text>
+        <text x="524" y="138" class="e" style="fill:#4b5563">TIMEOUT (MS)</text>
+        <rect x="524" y="144" width="216" height="22" rx="5" fill="#fdf6f5" stroke="#c2413c" stroke-width="1.6"/>
+        <text x="534" y="159" class="s2">999999</text>
+        <text x="524" y="180" class="s" style="fill:#a03a35">must be at most 120000</text>
+        <rect x="524" y="196" width="216" height="26" rx="5" fill="#eef1f4" stroke="#cfdae2"/>
+        <text x="586" y="213" class="s" style="fill:#4f5a68">Run  (disabled)</text>
+        <text x="524" y="244" class="s">Two red fields, one disabled</text>
+        <text x="524" y="258" class="s">button. The engine never ran.</text>
+      </svg>
+      <figcaption><b>Figure @.</b> The same component, three times. Nobody wrote a form: each panel is
+        the node's <code>properties</code> array rendered, validated and previewed.</figcaption>
+    </figure>
+    <p class="exnote"><b>Middle panel, bottom half, is the feature to demo.</b> Typing
+      <code>{{ $json.city }}</code> shows what it will become <em>before</em> you run anything —
+      that is what makes expressions feel safe to a first-time user.</p>
+
+    <div class="conn">
+      <h5>How this part connects to the others</h5>
+      <div class="hs">
+        <div class="hsbox"><span class="hsn">§2.2b — /rest/node-types</span><span class="hsd">every description, as JSON</span></div>
+        <div class="hsar"><span>properties[]</span><i></i></div>
+        <div class="hsbox now"><span class="hsn">§2.3b — schema-driven UI</span><span class="hsd">one panel · expressions</span></div>
+        <div class="hsar"><span>parameters{}</span><i></i></div>
+        <div class="hsbox"><span class="hsn">§2.6b / §2.6c — six new nodes</span><span class="hsd">written by six people at once</span></div>
+      </div>
+      <div class="wires">
+      <span class="wl">Receives</span><span class="wv">the <code>description</code> of every registered node. Add a file to <code>packages/nodes</code>, restart, refresh — the form exists. <b>This is the single thing that makes the Week 8 node surge possible.</b></span>
+      <span class="wl">Hands on</span><span class="wv">a filled <code>parameters</code> object into the workflow JSON of §2.2b, saved by the canvas of §2.2c.</span>
+      <span class="wl">Changes the engine</span><span class="wv">by exactly one line: <code>getNodeParameter</code> now calls <code>resolve()</code>. From here, every node in §2.6b and §2.6c gets expressions for free without knowing they exist.</span>
+      <span class="wl">Seam to agree</span><span class="wv">the property <code>type</code> vocabulary — <code>string · number · boolean · options · json</code>. A node author who invents a seventh type gets a blank field, so add it to the panel first.</span>
+      </div>
+    </div>
+
     <div class="chk"><b>Check it works</b>Add a new node file, restart the API, refresh the editor — its
-      whole settings panel is there, and switching Method to POST makes the Body field appear. Nobody
-      touched the editor.</div>
+      whole settings panel is there, and switching Method to POST makes Body appear. Nobody touched the
+      editor. Then type <code>ftp://x</code> into URL and confirm the field turns red and Run greys out;
+      type <code>{{ $json.nothing.here }}</code> and confirm the preview shows a warning instead of
+      crashing the panel.</div>
   </div>
 </div>

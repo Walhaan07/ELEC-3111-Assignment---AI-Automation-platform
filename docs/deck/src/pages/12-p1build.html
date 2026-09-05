@@ -5,24 +5,99 @@
   <div class="band"></div>
 
   <div class="stack">
-    <p class="lede">Everything on this page goes into <b>one file</b>. Type it, run it, and you have a
-      working workflow engine before lunch.</p>
+    <p class="lede">Everything on this page goes into <b>three small files</b>. Type them, run them, and
+      you have a workflow engine that not only works but refuses to lie to you when it breaks — it
+      validates, it times out, it retries, and it tells you which node went wrong.</p>
 
+    <div class="where">
+      <span class="wl">Program</span><span class="wv">VS&nbsp;Code — see §1.10 for the window, §1.11 for the loop</span>
+      <span class="wl">Files</span><span class="wv"><code>packages/engine/errors.js</code>, <code>packages/engine/http.js</code>, <code>packages/engine/engine.js</code></span>
+      <span class="wl">Create them</span><span class="wv">In the Explorer, right-click <code>packages/engine</code> → <span class="ui">New&nbsp;File</span> → type the name with its extension → paste → <span class="kbd">Ctrl&nbsp;S</span></span>
+    </div>
     <div class="bsteps">
       <div class="bstep"><div class="bn">1</div><div class="bb">
         <h4>Create the workspace</h4>
         <div class="cmd"><span class="p">$</span> mkdir ai-automation &amp;&amp; cd ai-automation
 <span class="p">$</span> npm init -y
 <span class="p">$</span> npm pkg set type=module workspaces[0]="packages/*" workspaces[1]="apps/*"
-<span class="p">$</span> mkdir -p packages/engine packages/nodes apps/api apps/editor</div>
+<span class="p">$</span> npm pkg set engines.node="&gt;=22"
+<span class="p">$</span> mkdir -p packages/engine packages/nodes apps/api apps/editor
+<span class="p">$</span> node -v          <span class="c"># must print v22.x — v20 has no AbortSignal.timeout in fetch</span></div>
         <p><code>type=module</code> lets us use <code>import</code>; <code>workspaces</code> is npm's own
-          monorepo support — no extra tool to install.</p>
+          monorepo support — no extra tool to install. <code>engines.node</code> makes npm warn a
+          teammate who is still on an old Node instead of letting them hit strange errors.</p>
       </div></div>
 
       <div class="bstep"><div class="bn">2</div><div class="bb">
+        <h4>One error type, so every failure names its node</h4>
+        <p>The single biggest difference between a toy engine and a usable one is that when something
+          breaks, the message says <em>which box on the canvas</em> broke. That costs eleven lines.</p>
+        <div class="fwrap"><span class="fname">packages/engine/errors.js</span>
+<pre class="code" data-lang="js"><code>export class WorkflowError extends Error {
+  constructor(message, { node = null, code = 'WORKFLOW_ERROR', cause = null } = {}) {
+    super(message);
+    this.name = 'WorkflowError';
+    this.node = node;      // which node on the canvas
+    this.code = code;      // machine-readable: the editor colours the box from this
+    if (cause) this.cause = cause;
+  }
+  toJSON() { return { name: this.name, code: this.code, node: this.node, message: this.message }; }
+}</code></pre></div>
+        <div class="tbox"><b>toJSON()</b> — when you call <code>JSON.stringify(err)</code>, JavaScript
+          quietly returns <code>{}</code> for a plain <code>Error</code>: the message is invisible.
+          Defining <code>toJSON</code> is what lets us store the real failure in the database and show it
+          in the sidebar later.</div>
+      </div></div>
+
+      <div class="bstep"><div class="bn">3</div><div class="bb">
+        <h4>One HTTP helper, with a timeout and a retry, used by every node forever</h4>
+        <p>Write this once now and no node author ever has to think about flaky networks again.</p>
+        <div class="fwrap"><span class="fname">packages/engine/http.js</span>
+<pre class="code" data-lang="js"><code>const sleep = (ms) =&gt; new Promise(r =&gt; setTimeout(r, ms));
+
+export async function httpRequest(url, opts = {}) {
+  const { retries = 3, timeoutMs = 30000, ...init } = opts;
+  let lastError;
+
+  for (let attempt = 0; attempt &lt;= retries; attempt++) {
+    try {
+      const res = await fetch(url, { ...init, signal: AbortSignal.timeout(timeoutMs) });
+
+      // 429 = "you are going too fast", 5xx = "my fault" — both are worth trying again
+      if (res.status === 429 || res.status &gt;= 500) {
+        const after = Number(res.headers.get('retry-after')) * 1000;
+        throw Object.assign(new Error(`HTTP ${res.status}`), { retryAfter: after || 0 });
+      }
+      // 4xx = "your fault" — retrying changes nothing, so stop immediately
+      if (!res.ok) {
+        const body = (await res.text()).slice(0, 300);
+        throw Object.assign(new Error(`HTTP ${res.status}: ${body}`), { fatal: true });
+      }
+      const type = res.headers.get('content-type') || '';
+      return type.includes('json') ? await res.json() : { data: await res.text() };
+
+    } catch (err) {
+      lastError = err;
+      if (err.fatal || attempt === retries) break;
+      // exponential backoff with jitter: 0.5s, 1s, 2s … plus a random nudge so eight
+      // parallel items do not all wake up and hammer the server at the same millisecond
+      await sleep(err.retryAfter || Math.min(8000, 2 ** attempt * 500) + Math.random() * 250);
+    }
+  }
+  throw lastError;
+}</code></pre></div>
+        <div class="tbox"><b>Jitter</b> — the random extra wait. Without it, every retry in a batch fires
+          at exactly the same moment and knocks the far end over a second time. Two words of code, and
+          it is the difference between a demo that works and a demo that does not.</div>
+      </div></div>
+
+      <div class="bstep"><div class="bn">4</div><div class="bb">
         <h4>The workflow, and two node types</h4>
         <div class="fwrap"><span class="fname">packages/engine/engine.js</span>
-<pre class="code" data-lang="js"><code>const workflow = {
+<pre class="code" data-lang="js"><code>import { WorkflowError } from './errors.js';
+import { httpRequest }   from './http.js';
+
+const workflow = {
   nodes: [
     { name: 'Start',   type: 'manualTrigger', parameters: {} },
     { name: 'Weather', type: 'httpRequest',
@@ -41,9 +116,11 @@ const nodeTypes = {
     description: { name: 'httpRequest', group: 'action', properties: [] },
     async execute(ctx) {
       const out = [];
-      for (const item of ctx.getInputData()) {
-        const res = await fetch(ctx.getNodeParameter('url'));
-        out.push({ json: await res.json() });
+      const items = ctx.getInputData();
+      for (let i = 0; i &lt; items.length; i++) {
+        const url = ctx.getNodeParameter('url', i);
+        ctx.logger.info(`GET ${url}`);
+        out.push({ json: await httpRequest(url, { timeoutMs: 15000 }) });
       }
       return [out];              // one branch, containing every item
     },
@@ -51,48 +128,196 @@ const nodeTypes = {
 };</code></pre></div>
       </div></div>
 
-      <div class="bstep"><div class="bn">3</div><div class="bb">
-        <h4>The loop from Figure 5 — the whole engine</h4>
+      <div class="bstep"><div class="bn">5</div><div class="bb">
+        <h4>Check the workflow makes sense <em>before</em> running any of it</h4>
+        <p>A misspelled node name should be a clear sentence, not a crash halfway through a run that has
+          already sent three emails.</p>
         <div class="fwrap"><span class="fname">packages/engine/engine.js — continued</span>
-<pre class="code" data-lang="js"><code>export async function runWorkflow(workflow, nodeTypes) {
-  const byName  = Object.fromEntries(workflow.nodes.map(n => [n.name, n]));
-  const results = {};
-  const trigger = workflow.nodes.find(n => nodeTypes[n.type].description.group === 'trigger');
-  const ready   = [{ nodeName: trigger.name, items: [{ json: {} }] }];
+<pre class="code" data-lang="js"><code>export function validateWorkflow(workflow, nodeTypes) {
+  const problems = [];
+  const nodes = Array.isArray(workflow?.nodes) ? workflow.nodes : [];
+  if (nodes.length === 0) problems.push('the workflow has no nodes');
 
-  while (ready.length > 0) {
-    const { nodeName, items } = ready.shift();          // 3 · take the next node
-    const node = byName[nodeName];
-    const ctx  = {                                       // 4 · what the node may ask for
-      getInputData:     () => items,
-      getNodeParameter: (name) => node.parameters[name],
-    };
-
-    const branches = await nodeTypes[node.type].execute(ctx);   // 5 · run it
-    results[nodeName] = branches;
-    console.log(nodeName, '->', JSON.stringify(branches[0]).slice(0, 80));
-
-    const targets = workflow.connections[nodeName] || [];        // 6 · push what comes next
-    branches.forEach((branchItems, i) => {
-      if (branchItems.length === 0) return;              // an empty branch goes quiet
-      for (const t of targets[i] || []) ready.push({ nodeName: t, items: branchItems });
-    });
+  const names = new Set();
+  for (const n of nodes) {
+    if (!n?.name)            problems.push('a node has no name');
+    else if (names.has(n.name)) problems.push(`two nodes are both called "${n.name}"`);
+    else names.add(n.name);
+    if (n?.name &amp;&amp; !nodeTypes[n.type]) problems.push(`"${n.name}" has unknown type "${n.type}"`);
   }
-  return results;
+
+  for (const [from, branches] of Object.entries(workflow?.connections ?? {})) {
+    if (!names.has(from)) problems.push(`a connection starts at missing node "${from}"`);
+    for (const targets of branches ?? [])
+      for (const to of targets ?? [])
+        if (!names.has(to)) problems.push(`"${from}" points at missing node "${to}"`);
+  }
+
+  const triggers = nodes.filter(n =&gt; nodeTypes[n.type]?.description.group === 'trigger');
+  if (triggers.length !== 1)
+    problems.push(`a workflow needs exactly one trigger — this one has ${triggers.length}`);
+
+  if (problems.length)
+    throw new WorkflowError('This workflow cannot run:\n  · ' + problems.join('\n  · '),
+                            { code: 'INVALID_WORKFLOW' });
+  return triggers[0];
+}</code></pre></div>
+      </div></div>
+
+      <div class="bstep"><div class="bn">6</div><div class="bb">
+        <h4>Two guards the loop cannot do without</h4>
+        <div class="fwrap"><span class="fname">packages/engine/engine.js — continued</span>
+<pre class="code" data-lang="js"><code>// stop a hung node instead of hanging the whole server with it
+function withTimeout(promise, ms, message) {
+  let timer;
+  const bell = new Promise((_, reject) =&gt; {
+    timer = setTimeout(() =&gt; reject(new WorkflowError(message, { code: 'NODE_TIMEOUT' })), ms);
+  });
+  return Promise.race([promise, bell]).finally(() =&gt; clearTimeout(timer));
 }
 
-runWorkflow(workflow, nodeTypes).then(() => console.log('done'));</code></pre></div>
+// a node may return sloppy data; the rest of the engine must never see it
+function normalise(branches, nodeName, maxItems) {
+  if (!Array.isArray(branches))
+    throw new WorkflowError(`"${nodeName}" must return an array of branches`,
+                            { node: nodeName, code: 'BAD_NODE_OUTPUT' });
+  let total = 0;
+  return branches.map((branch, i) =&gt; {
+    if (!Array.isArray(branch))
+      throw new WorkflowError(`branch ${i} of "${nodeName}" is not an array`,
+                              { node: nodeName, code: 'BAD_NODE_OUTPUT' });
+    total += branch.length;
+    if (total &gt; maxItems)
+      throw new WorkflowError(`"${nodeName}" produced more than ${maxItems} items — refusing to go on`,
+                              { node: nodeName, code: 'TOO_MANY_ITEMS' });
+    return branch.map(item =&gt;
+      item &amp;&amp; typeof item === 'object' &amp;&amp; 'json' in item ? item : { json: item ?? {} });
+  });
+}</code></pre></div>
+      </div></div>
+
+      <div class="bstep"><div class="bn">7</div><div class="bb">
+        <h4>The loop from Figure 5 — now with a seatbelt</h4>
+        <div class="fwrap"><span class="fname">packages/engine/engine.js — continued</span>
+<pre class="code" data-lang="js"><code>const DEFAULTS = { maxSteps: 1000, maxItems: 10000, nodeTimeoutMs: 60000 };
+
+export async function runWorkflow(workflow, nodeTypes, options = {}) {
+  const cfg     = { ...DEFAULTS, ...options };
+  const trigger = validateWorkflow(workflow, nodeTypes);        // 1 · refuse bad input early
+  const byName  = Object.fromEntries(workflow.nodes.map(n =&gt; [n.name, n]));
+  const results = {};
+  const log     = [];
+  const ready   = [{ nodeName: trigger.name, items: cfg.triggerItems ?? [{ json: {} }] }];
+  let steps = 0;
+
+  while (ready.length &gt; 0) {
+    if (++steps &gt; cfg.maxSteps)                                  // 2 · a loop cannot run forever
+      throw new WorkflowError(`Stopped after ${cfg.maxSteps} steps — this workflow loops`,
+                              { code: 'STEP_LIMIT' });
+
+    const { nodeName, items } = ready.shift();                   // 3 · take the next node
+    const node    = byName[nodeName];
+    const type    = nodeTypes[node.type];
+    const startedAt = Date.now();
+
+    const ctx = {                                                // 4 · what the node may ask for
+      getInputData: () =&gt; items,
+      getNodeParameter(name, i = 0, fallback = undefined) {
+        const value = node.parameters?.[name] ?? fallback;
+        if (value === undefined)
+          throw new WorkflowError(`"${nodeName}" needs its "${name}" setting filled in`,
+                                  { node: nodeName, code: 'MISSING_PARAMETER' });
+        return value;
+      },
+      helpers: { httpRequest },
+      logger:  { info: (msg) =&gt; log.push({ node: nodeName, level: 'info', msg }) },
+    };
+
+    let branches;
+    try {                                                        // 5 · run it, safely
+      branches = await withTimeout(Promise.resolve(type.execute(ctx)), cfg.nodeTimeoutMs,
+                                   `"${nodeName}" ran longer than ${cfg.nodeTimeoutMs} ms`);
+      branches = normalise(branches, nodeName, cfg.maxItems);
+    } catch (err) {
+      log.push({ node: nodeName, level: 'error', ms: Date.now() - startedAt, msg: err.message });
+      if (!node.continueOnFail)
+        throw err instanceof WorkflowError
+          ? err
+          : new WorkflowError(`"${nodeName}" failed: ${err.message}`,
+                              { node: nodeName, code: 'NODE_FAILED', cause: err });
+      branches = [[{ json: {}, error: err.message }]];           // carry the failure downstream
+    }
+
+    results[nodeName] = branches;
+    log.push({ node: nodeName, level: 'done', ms: Date.now() - startedAt,
+               items: branches.reduce((n, b) =&gt; n + b.length, 0) });
+
+    const targets = workflow.connections[nodeName] ?? [];        // 6 · push what comes next
+    branches.forEach((branchItems, i) =&gt; {
+      if (branchItems.length === 0) return;                      // an empty branch goes quiet
+      for (const to of targets[i] ?? []) ready.push({ nodeName: to, items: branchItems });
+    });
+  }
+  return { results, log, steps };
+}</code></pre></div>
+      </div></div>
+
+      <div class="bstep"><div class="bn">8</div><div class="bb">
+        <h4>Run it</h4>
+        <div class="fwrap"><span class="fname">packages/engine/engine.js — last three lines</span>
+<pre class="code" data-lang="js"><code>const { results, log } = await runWorkflow(workflow, nodeTypes);
+for (const l of log) console.log(`${l.level.padEnd(5)} ${l.node.padEnd(8)}`,
+                                 l.msg ?? `${l.items} item(s) in ${l.ms} ms`);
+console.log('Weather →', JSON.stringify(results.Weather[0][0].json).slice(0, 60), '…');</code></pre></div>
+        <div class="cmd"><span class="p">$</span> node packages/engine/engine.js</div>
       </div></div>
     </div>
 
-    <div class="twocol">
-      <div class="cmd"><span class="p">$</span> node packages/engine/engine.js
-Start   -&gt; [{}]
-Weather -&gt; [{"current_condition":[{"temp_C":"18"…
-done</div>
-      <div class="chk"><b>Check it works</b>Real weather appears. Then break it on purpose: make
-        <code>httpRequest</code> return <code>[[]]</code> instead of <code>[out]</code> and confirm nothing
-        after it runs. That is branch pruning, and you have just tested it.</div>
+    <div class="exhead"><b>What you should see</b><i></i></div>
+    <div class="expect two">
+      <div class="screen dark">
+        <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="ttl">Terminal — node packages/engine/engine.js</span></div>
+        <div class="body">done  Start    1 item(s) in 0 ms
+info  Weather  GET https://wttr.in/Newcastle?format=j1
+done  Weather  <span class="g">1 item(s) in 412 ms</span>
+Weather → {"current_condition":[{"temp_C":"18",…}]} …
+<span class="d">$</span> <span class="d">_</span></div>
+      </div>
+      <div class="screen dark">
+        <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="ttl">Terminal — after you misspell a node name</span></div>
+        <div class="body"><span class="er">WorkflowError: This workflow cannot run:</span>
+  · "Start" points at missing node "Wether"
+  · a workflow needs exactly one trigger — this one has 0
+    at validateWorkflow (engine.js:41:11)
+<span class="d">code: 'INVALID_WORKFLOW'</span></div>
+      </div>
     </div>
+    <p class="exnote"><b>Read the left screen as a receipt.</b> One line per node, in the order the loop
+      chose them, with a millisecond count you can quote in the report. The right screen is the whole
+      point of step&nbsp;5: nothing ran, nothing was sent, and the message names the exact typo.</p>
+
+    <div class="conn">
+      <h5>How this part connects to the others</h5>
+      <div class="hs">
+        <div class="hsbox"><span class="hsn">Nothing yet</span><span class="hsd">a workflow object typed by hand</span></div>
+        <div class="hsar"><span>hard-coded<br>workflow</span><i></i></div>
+        <div class="hsbox now"><span class="hsn">§2.1b — the engine</span><span class="hsd">runWorkflow(wf, nodeTypes)</span></div>
+        <div class="hsar"><span>{ results, log,<br>steps }</span><i></i></div>
+        <div class="hsbox"><span class="hsn">§2.2b — the server</span><span class="hsd">stores it, runs it, records it</span></div>
+      </div>
+      <div class="wires">
+      <span class="wl">Hands out</span><span class="wv">the <code>ctx</code> object — <b>every node ever written depends on these four names</b>: <code>getInputData</code>, <code>getNodeParameter</code>, <code>helpers</code>, <code>logger</code>. Freeze it in Week 3 and nobody is ever blocked waiting for anybody.</span>
+      <span class="wl">Hands on</span><span class="wv">a plain object <code>{ results, log, steps }</code>. §2.2b writes <code>results</code> into <code>executions.data</code> and <code>log</code> into <code>executions.log</code> — no translation step in between.</span>
+      <span class="wl">Shared by all</span><span class="wv"><code>errors.js</code> and <code>http.js</code>. Every later part imports these two rather than writing its own retry loop or its own error class.</span>
+      <span class="wl">Seam to agree</span><span class="wv">a node returns <b>an array of branches, each an array of items</b>. §2.2c draws one edge handle per branch; §2.4b prunes on an empty one. Change this and four people rewrite code.</span>
+      </div>
+    </div>
+
+    <div class="chk"><b>Check it works</b>Real weather appears, and each line of the log names a node.
+      Then break it on purpose, three ways, and confirm each guard fires: (a) make <code>httpRequest</code>
+      return <code>[[]]</code> and everything after it goes quiet — that is branch pruning;
+      (b) point the URL at <code>https://httpstat.us/503</code> and watch three retries then a clean
+      failure; (c) add <code>connections: { Weather: [['Start']] }</code> to make a loop and confirm the
+      step limit stops it instead of your laptop's fan.</div>
   </div>
 </div>

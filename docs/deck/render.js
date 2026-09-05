@@ -1,7 +1,9 @@
 const { chromium } = require('playwright');
+// set CHROMIUM_PATH when Playwright's bundled browser is not where it expects it
+const EXE = process.env.CHROMIUM_PATH || undefined;
 (async () => {
   const dir = process.argv[2];
-  const browser = await chromium.launch();
+  const browser = await chromium.launch(EXE ? { executablePath: EXE } : {});
   const page = await browser.newPage();
   await page.goto('file://' + dir + '/plan-print.html', { waitUntil: 'networkidle' });
   try { await page.evaluate(() => document.fonts.ready); } catch (e) {}

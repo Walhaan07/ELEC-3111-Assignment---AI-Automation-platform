@@ -5,37 +5,88 @@
   <div class="band"></div>
 
   <div class="stack">
+    <div class="where">
+      <span class="wl">Program</span><span class="wv">VS&nbsp;Code locally, then a terminal over SSH on the server</span>
+      <span class="wl">Files</span><span class="wv"><code>Dockerfile</code>, <code>docker-compose.prod.yml</code>, <code>Caddyfile</code>, <code>benchmarks/k6/w1.js</code></span>
+      <span class="wl">Create them</span><span class="wv">In the Explorer, right-click <code>the project root, then benchmarks/k6</code> → <span class="ui">New&nbsp;File</span> → type the name with its extension → paste → <span class="kbd">Ctrl&nbsp;S</span></span>
+    </div>
     <div class="bsteps">
       <div class="bstep"><div class="bn">1</div><div class="bb">
+        <h4>The image — small, and not running as root</h4>
+        <div class="fwrap"><span class="fname">Dockerfile</span>
+<pre class="code" data-lang="bash"><code>FROM node:22-alpine AS build
+WORKDIR /app
+COPY package*.json ./
+COPY apps/api/package*.json      apps/api/
+COPY packages/engine/package*.json packages/engine/
+RUN npm ci --omit=dev             # deterministic install from the lockfile, no dev tools
+COPY . .
+RUN npm run build --workspace apps/editor
+
+FROM node:22-alpine
+WORKDIR /app
+ENV NODE_ENV=production
+COPY --from=build /app /app
+USER node                         # a container escape lands on an unprivileged account
+EXPOSE 5678
+HEALTHCHECK --interval=30s --timeout=3s --retries=3 \
+  CMD wget -qO- http://localhost:5678/healthz || exit 1
+CMD ["node", "apps/api/server.js"]</code></pre></div>
+        <div class="tbox"><b>Multi-stage build</b> — the first <code>FROM</code> compiles, the second
+          copies only the result. The shipped image has no compilers and no dev dependencies in it, so
+          it is smaller and there is less inside it to attack.</div>
+      </div></div>
+
+      <div class="bstep"><div class="bn">2</div><div class="bb">
         <h4>The production stack — three containers and a certificate</h4>
         <div class="fwrap"><span class="fname">docker-compose.prod.yml</span>
 <pre class="code" data-lang="yaml"><code>services:
   caddy:
     image: caddy:2
+    restart: unless-stopped
     ports: ["80:80", "443:443"]
-    volumes: ["./Caddyfile:/etc/caddy/Caddyfile", "caddy_data:/data"]
+    volumes: ["./Caddyfile:/etc/caddy/Caddyfile:ro", "caddy_data:/data"]
+    depends_on: { api: { condition: service_healthy } }
   api:
     build: .
+    restart: unless-stopped
     env_file: .env
     environment:
       DATABASE_URL: postgres://postgres:${DB_PASSWORD}@postgres:5432/automation
-    depends_on: [postgres]
+      NODE_ENV: production
+    depends_on: { postgres: { condition: service_healthy } }
+    deploy: { resources: { limits: { cpus: "1.0", memory: 1G } } }
+    logging: { driver: json-file, options: { max-size: "10m", max-file: "3" } }
   postgres:
     image: postgres:16
+    restart: unless-stopped
     environment:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: automation
     volumes: ["pgdata:/var/lib/postgresql/data"]
+    # NO ports: — the database is reachable only from the other containers
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d automation"]
+      interval: 10s
+      retries: 5
 volumes:
   caddy_data: {}
   pgdata: {}</code></pre></div>
-        <div class="fwrap"><span class="fname">Caddyfile — the entire TLS configuration</span>
+        <div class="fwrap"><span class="fname">Caddyfile — TLS, headers and compression in nine lines</span>
 <pre class="code" data-lang="conf"><code>your-domain.com {
+  encode gzip
+  header {
+    Strict-Transport-Security "max-age=31536000"
+    X-Content-Type-Options    "nosniff"
+    Referrer-Policy           "strict-origin-when-cross-origin"
+    -Server
+  }
   reverse_proxy api:5678
 }</code></pre></div>
+        <p>Caddy obtains and renews the Let's Encrypt certificate by itself. There is no step 2.</p>
       </div></div>
 
-      <div class="bstep"><div class="bn">2</div><div class="bb">
+      <div class="bstep"><div class="bn">3</div><div class="bb">
         <h4>Rent the machine — the AWS console, click by click</h4>
         <div class="clicks">
           <div class="click"><span class="cn">1</span><span><span class="path">console.aws.amazon.com</span> → search <span class="ui">EC2</span> → <span class="ui">Instances</span> → <span class="ui">Launch instances</span></span></div>
@@ -53,17 +104,31 @@ volumes:
 <span class="p">$</span> exit &amp;&amp; ssh -i automation-prod.pem ubuntu@your-domain.com   <span class="c"># re-login for the group</span></div>
       </div></div>
 
-      <div class="bstep"><div class="bn">3</div><div class="bb">
-        <h4>Put the project on it</h4>
-        <div class="cmd"><span class="p">$</span> ssh ubuntu@your-server
-<span class="p">$</span> git clone https://github.com/&lt;org&gt;/ai-automation &amp;&amp; cd ai-automation
+      <div class="bstep"><div class="bn">4</div><div class="bb">
+        <h4>Put the project on it — and take a backup before you ever need one</h4>
+        <div class="cmd"><span class="p">$</span> git clone https://github.com/&lt;org&gt;/ai-automation &amp;&amp; cd ai-automation
 <span class="p">$</span> cp .env.example .env &amp;&amp; nano .env        <span class="c"># real keys go here only</span>
 <span class="p">$</span> docker compose -f docker-compose.prod.yml up -d --build
+<span class="p">$</span> docker compose -f docker-compose.prod.yml ps   <span class="c"># all three must say healthy</span>
 <span class="c"># later deploys:</span>
-<span class="p">$</span> git pull &amp;&amp; docker compose -f docker-compose.prod.yml up -d --build</code></pre></div>
+<span class="p">$</span> git pull &amp;&amp; docker compose -f docker-compose.prod.yml up -d --build</div>
+        <div class="fwrap"><span class="fname">infra/backup.sh — add to crontab, 03:00 daily</span>
+<pre class="code" data-lang="bash"><code>#!/usr/bin/env bash
+set -euo pipefail                      # stop on the first error, not after it
+cd "$(dirname "$0")/.."
+mkdir -p backups
+STAMP=$(date +%F-%H%M)
+docker compose -f docker-compose.prod.yml exec -T postgres \
+  pg_dump -U postgres automation | gzip &gt; "backups/automation-$STAMP.sql.gz"
+find backups -name '*.sql.gz' -mtime +14 -delete    # keep a fortnight
+echo "backup ok: backups/automation-$STAMP.sql.gz"</code></pre></div>
+        <div class="cmd"><span class="p">$</span> chmod +x infra/backup.sh
+<span class="p">$</span> (crontab -l 2&gt;/dev/null; echo "0 3 * * * $PWD/infra/backup.sh &gt;&gt; $PWD/backups/cron.log 2&gt;&amp;1") | crontab -
+<span class="c"># then RESTORE one into a scratch database this week — a backup you have never</span>
+<span class="c"># restored is not a backup, and "we tested our restore path" is a report sentence</span></div>
       </div></div>
 
-      <div class="bstep"><div class="bn">4</div><div class="bb">
+      <div class="bstep"><div class="bn">5</div><div class="bb">
         <h4>Stand n8n up beside it, configured the same way</h4>
         <div class="fwrap"><span class="fname">benchmarks/n8n/docker-compose.yml</span>
 <pre class="code" data-lang="yaml"><code>services:
@@ -74,6 +139,7 @@ volumes:
       DB_POSTGRESDB_HOST: n8n-db
       EXECUTIONS_MODE: queue
       QUEUE_BULL_REDIS_HOST: redis
+      GENERIC_TIMEZONE: Australia/Sydney
     ports: ["5679:5678"]
     deploy: { resources: { limits: { cpus: "1.0", memory: 1G } } }
   n8n-worker:
@@ -81,29 +147,134 @@ volumes:
     command: worker
     deploy: { replicas: 2, resources: { limits: { cpus: "1.0", memory: 1G } } }</code></pre></div>
         <p>Give our own containers the identical <code>cpus</code> and <code>memory</code> limits, or the
-          comparison is not a comparison.</p>
+          comparison is not a comparison. Say in the report that n8n ran two workers and we ran one
+          process — that difference <em>is</em> the finding, not a flaw in the method.</p>
       </div></div>
 
-      <div class="bstep"><div class="bn">5</div><div class="bb">
+      <div class="bstep"><div class="bn">6</div><div class="bb">
         <h4>Measure both with the same script</h4>
         <div class="fwrap"><span class="fname">benchmarks/k6/w1.js</span>
 <pre class="code" data-lang="js"><code>import http from 'k6/http';
+import { check } from 'k6';
+import { Trend, Rate } from 'k6/metrics';
+
+const e2e    = new Trend('workflow_end_to_end_ms');
+const failed = new Rate('workflow_failed');
+
 export const options = {
-  scenarios: { load: { executor: 'constant-vus', vus: 10, duration: '60s', gracefulStop: '10s' } },
-  thresholds: { http_req_duration: ['p(95)&lt;1000'] },
+  scenarios: {
+    warmup: { executor: 'constant-vus', vus: 2,  duration: '20s', tags: { phase: 'warmup' } },
+    load:   { executor: 'constant-vus', vus: 10, duration: '60s', startTime: '25s',
+              gracefulStop: '10s', tags: { phase: 'load' } },
+  },
+  // the run FAILS if these are missed, so a bad result cannot be quietly reported as good
+  thresholds: {
+    'http_req_duration{phase:load}': ['p(95)&lt;1000', 'p(99)&lt;2500'],
+    'workflow_failed':              ['rate&lt;0.01'],
+    'http_req_failed':              ['rate&lt;0.01'],
+  },
+  summaryTrendStats: ['avg', 'min', 'med', 'p(95)', 'p(99)', 'max'],
 };
+
 export default function () {
-  http.post(`${__ENV.TARGET}/webhook/bench-w1`, JSON.stringify({ id: __VU, ts: Date.now() }),
-            { headers: { 'content-type': 'application/json' } });
+  const started = Date.now();
+  const res = http.post(`${__ENV.TARGET}/webhook/bench-w1`,
+    JSON.stringify({ id: __VU, iteration: __ITER, ts: started }),
+    { headers: { 'content-type': 'application/json' }, timeout: '30s' });
+
+  const ok = check(res, {
+    'status is 200':      (r) =&gt; r.status === 200,
+    'body has a row id':  (r) =&gt; String(r.body).includes('sheetRow'),
+  });
+  failed.add(!ok);
+  e2e.add(Date.now() - started);
 }</code></pre></div>
-        <div class="cmd"><span class="p">$</span> k6 run -e TARGET=http://localhost:5678 --summary-export=ours-w1.json benchmarks/k6/w1.js
-<span class="p">$</span> k6 run -e TARGET=http://localhost:5679 --summary-export=n8n-w1.json  benchmarks/k6/w1.js
+        <div class="cmd"><span class="p">$</span> k6 run -e TARGET=http://localhost:5678 --summary-export=ours-w1-run1.json benchmarks/k6/w1.js
+<span class="p">$</span> k6 run -e TARGET=http://localhost:5679 --summary-export=n8n-w1-run1.json  benchmarks/k6/w1.js
 <span class="c"># three runs each, commit every JSON file — the raw data is what makes it credible</span></div>
       </div></div>
     </div>
 
+    <div class="exhead"><b>What you should see</b><i></i></div>
+    <div class="expect">
+      <div class="screen dark">
+        <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="ttl">Terminal — k6 run, ours</span></div>
+        <div class="body">     scenarios: (100.00%) 2 scenarios, 12 max VUs, 1m25s max duration
+
+     <span class="g">✓ status is 200</span>
+     <span class="g">✓ body has a row id</span>
+
+     checks.........................: <span class="g">100.00%</span>  ✓ 4318  ✗ 0
+     http_req_duration{phase:load}..: avg=182ms med=161ms <span class="b">p(95)=337ms</span> p(99)=612ms
+     http_req_failed................: <span class="g">0.00%</span>    ✓ 0     ✗ 2159
+     iterations.....................: 2159    35.9/s
+     workflow_end_to_end_ms.........: avg=184ms med=163ms <span class="b">p(95)=340ms</span>
+
+<span class="g">     ✓ THRESHOLDS PASSED</span>  ·  summary written to ours-w1-run1.json</div>
+      </div>
+    </div>
+    <div class="expect two">
+      <div class="screen dark">
+        <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="ttl">Terminal — the stack, healthy</span></div>
+        <div class="body"><span class="pr">$</span> docker compose -f docker-compose.prod.yml ps
+NAME       STATUS
+caddy      Up 6 min          <span class="d">80,443</span>
+api        Up 6 min <span class="g">(healthy)</span>
+postgres   Up 6 min <span class="g">(healthy)</span>  <span class="d">— no host port</span>
+
+<span class="pr">$</span> curl -sI https://your-domain.com/healthz
+<span class="g">HTTP/2 200</span>
+strict-transport-security: max-age=31536000
+x-content-type-options: nosniff</div>
+      </div>
+      <div class="screen">
+        <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="url">🔒 https://your-domain.com</span></div>
+        <div class="body" style="padding:0">
+          <svg viewBox="0 0 360 126" xmlns="http://www.w3.org/2000/svg">
+            <rect x="0" y="0" width="360" height="126" fill="#f7fafc"/>
+            <rect x="0" y="0" width="360" height="24" fill="#ffffff"/>
+            <line x1="0" y1="24" x2="360" y2="24" stroke="#e2e9ee"/>
+            <rect x="12" y="7" width="11" height="11" rx="3" fill="#14624f"/>
+            <text x="32" y="17" class="s2">AI Automation Platform</text>
+            <rect x="16" y="38" width="150" height="42" rx="8" fill="#ffffff" stroke="#dfe7ec"/>
+            <text x="28" y="55" class="s2">New order handler</text>
+            <rect x="28" y="59" width="66" height="17" rx="8" fill="#e6f2ea" stroke="#1f7a4d"/>
+            <text x="38" y="71" class="s" style="fill:#186340">Active</text>
+            <rect x="180" y="38" width="150" height="42" rx="8" fill="#ffffff" stroke="#dfe7ec"/>
+            <text x="192" y="55" class="s2">Daily digest</text>
+            <rect x="192" y="59" width="66" height="17" rx="8" fill="#e6f2ea" stroke="#1f7a4d"/>
+            <text x="202" y="71" class="s" style="fill:#186340">Active</text>
+            <text x="16" y="102" class="s" style="fill:#14624f">Real certificate. Works on a phone,</text>
+            <text x="16" y="114" class="s" style="fill:#14624f">on mobile data, from anywhere.</text>
+          </svg>
+        </div>
+      </div>
+    </div>
+    <p class="exnote"><b>The line that matters in the report is <code>p(95)</code>.</b> Quote it beside
+      n8n's, from three runs each, with the container limits stated. An honest number that loses to n8n
+      is worth more marks than a flattering number nobody can reproduce.</p>
+
+    <div class="conn">
+      <h5>How this part connects to the others</h5>
+      <div class="hs">
+        <div class="hsbox"><span class="hsn">All of Part 2</span><span class="hsd">one repository, one image</span></div>
+        <div class="hsar"><span>docker build</span><i></i></div>
+        <div class="hsbox now"><span class="hsn">§2.7b — production</span><span class="hsd">Caddy · api · postgres</span></div>
+        <div class="hsar"><span>https + p(95)</span><i></i></div>
+        <div class="hsbox"><span class="hsn">§3.3 — the report</span><span class="hsd">the n8n comparison chapter</span></div>
+      </div>
+      <div class="wires">
+      <span class="wl">Receives</span><span class="wv">everything above as a single <code>Dockerfile</code>. If <code>npm run dev</code> works on a laptop (§3.1b) and CI is green (§3.2c), this step is configuration, not programming.</span>
+      <span class="wl">Hands on</span><span class="wv">a public HTTPS address. §2.4b&#8217;s webhooks only become <em>real</em> here — a phone on mobile data hitting your own domain is the moment the project stops being a demo.</span>
+      <span class="wl">Feeds</span><span class="wv">the report. The k6 numbers, the container limits and the pinned n8n version are the evidence for the comparison chapter; the raw JSON files are the appendix.</span>
+      <span class="wl">Seam to agree</span><span class="wv">deploys come <b>only from <code>main</code></b>, and <code>main</code> is protected by §3.2c. That one rule is what stops a Week 13 deploy quietly undoing a Week 12 fix.</span>
+      </div>
+    </div>
+
     <div class="chk"><b>Check it works</b>The editor and a webhook address both work from a phone on
       mobile data, and you have six JSON result files for workflow&nbsp;1. Then repeat for workflows 2
-      and 3.</div>
+      and 3. Reboot the EC2 instance from the AWS console and confirm all three containers come back by
+      themselves and the schedules re-register — <code>restart: unless-stopped</code> plus
+      <code>restoreAll()</code> is what makes that true.</div>
   </div>
 </div>

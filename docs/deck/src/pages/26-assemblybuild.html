@@ -5,6 +5,11 @@
   <div class="band" style="background:linear-gradient(90deg,#4b46c0,#2a5fce,#0d72b4,#087f99,#0a7a70,#14624f)"></div>
 
   <div class="stack">
+    <div class="where">
+      <span class="wl">Program</span><span class="wv">VS&nbsp;Code — see §1.10 for the window, §1.11 for the loop</span>
+      <span class="wl">Files</span><span class="wv"><code>package.json</code>, <code>.env.example</code>, <code>seed.sql</code>, <code>scripts/doctor.js</code></span>
+      <span class="wl">Create them</span><span class="wv">In the Explorer, right-click <code>the project root</code> → <span class="ui">New&nbsp;File</span> → type the name with its extension → paste → <span class="kbd">Ctrl&nbsp;S</span></span>
+    </div>
     <div class="bsteps">
       <div class="bstep"><div class="bn">1</div><div class="bb">
         <h4>The layout everyone clones</h4>
@@ -14,15 +19,18 @@
 │   ├── api/          # Express, the five routes, webhooks, schedules, OAuth   C1 C2
 │   └── editor/       # React + React Flow + the parameter panel               B1 B2
 ├── packages/
-│   ├── engine/       # the loop, items, expressions                           A1
+│   ├── engine/       # the loop, items, expressions, errors, http helper      A1
 │   └── nodes/
-│       ├── core/     # IF, Set, Merge, Code                                   A2
+│       ├── core/     # IF, Set, Merge, Code, HTTP Request                     A2
 │       ├── google/   # Sheets, Drive, Docs, Gmail                             D1
-│       └── ai/       # the LLM node                                           A1
+│       └── ai/       # the LLM node                                          A1
 ├── benchmarks/       # k6 scripts, the n8n stack, raw results                 D2
-├── infra/            # Caddyfile, docker-compose.prod.yml, deploy notes       D2
+├── infra/            # Caddyfile, docker-compose.prod.yml, backup.sh          D2
+├── scripts/          # doctor.js — the "why won't it start" answer machine    C1
 ├── docs/             # this guide, ADRs, the report as it is written          D2
+├── e2e/              # the one Playwright test                                B2
 ├── docker-compose.yml
+├── .nvmrc            # 22 — so nvm picks the right Node with no arguing
 └── .env.example</code></pre></div>
       </div></div>
 
@@ -32,12 +40,17 @@
 <pre class="code" data-lang="json"><code>{
   "type": "module",
   "workspaces": ["apps/*", "packages/*"],
+  "engines": { "node": "&gt;=22" },
   "scripts": {
-    "dev":     "docker compose up -d && npm run dev --workspaces --if-present",
-    "migrate": "psql $DATABASE_URL -f schema.sql && psql $DATABASE_URL -f seed.sql",
-    "test":    "vitest run",
+    "doctor":  "node scripts/doctor.js",
+    "predev":  "npm run doctor",
+    "dev":     "docker compose up -d --wait &amp;&amp; npm run dev --workspaces --if-present",
+    "migrate": "psql $DATABASE_URL -f schema.sql &amp;&amp; psql $DATABASE_URL -f seed.sql",
+    "test":    "vitest run --coverage",
     "e2e":     "playwright test",
-    "lint":    "eslint . && tsc --noEmit"
+    "lint":    "eslint . &amp;&amp; tsc --noEmit",
+    "format":  "prettier --write .",
+    "secrets": "gitleaks detect --no-git --redact"
   }
 }</code></pre></div>
         <div class="cmd"><span class="p">$</span> git clone … &amp;&amp; cd ai-automation
@@ -45,38 +58,170 @@
 <span class="p">$</span> npm install
 <span class="p">$</span> npm run migrate
 <span class="p">$</span> npm run dev          <span class="c"># editor 5173 · api 5678 · postgres 5432</span></div>
-        <p>Five commands, ten minutes, no questions asked of anybody. That is the target.</p>
+        <p>Five commands, ten minutes, no questions asked of anybody. That is the target.
+          <code>--wait</code> makes docker block until the healthcheck passes, and <code>predev</code>
+          makes npm run the doctor first, automatically, every single time.</p>
       </div></div>
 
       <div class="bstep"><div class="bn">3</div><div class="bb">
+        <h4>The doctor — forty lines that answer "why won't it start?"</h4>
+        <p>Eight people on four operating systems will hit the same six problems. Write the answers down
+          once, in code, and stop answering them in the group chat.</p>
+        <div class="fwrap"><span class="fname">scripts/doctor.js</span>
+<pre class="code" data-lang="js"><code>import { execSync } from 'node:child_process';
+import fs from 'node:fs';
+import pg from 'pg';
+
+const GREEN = '\x1b[32m', RED = '\x1b[31m', OFF = '\x1b[0m';
+const results = [];
+
+const check = (name, fn, fix) =&gt; {
+  try { results.push(['ok', name, fn() ?? '']); }
+  catch (e) { results.push(['fail', name, `${e.message}  →  ${fix}`]); }
+};
+
+check('Node 22 or newer', () =&gt; {
+  const major = Number(process.versions.node.split('.')[0]);
+  if (major &lt; 22) throw new Error(`found v${process.versions.node}`);
+  return `v${process.versions.node}`;
+}, 'install Node 22 (nvm install 22), then reopen the terminal');
+
+check('Docker is running',
+  () =&gt; execSync('docker info --format "{{.ServerVersion}}"',
+                 { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim(),
+  'start Docker Desktop and wait for the whale to stop animating');
+
+check('.env exists',
+  () =&gt; { if (!fs.existsSync('.env')) throw new Error('missing'); return ''; },
+  'run: cp .env.example .env');
+
+for (const key of ['DATABASE_URL', 'BASE_URL', 'ENCRYPTION_KEY']) {
+  check(`${key} is set`, () =&gt; {
+    if (!process.env[key]) throw new Error('empty');
+    if (key === 'ENCRYPTION_KEY' &amp;&amp; !/^[0-9a-f]{64}$/i.test(process.env[key]))
+      throw new Error('must be 64 hex characters');
+    return '';
+  }, `fill ${key} in .env — see .env.example`);
+}
+
+const db = new pg.Pool({ connectionString: process.env.DATABASE_URL,
+                         connectionTimeoutMillis: 3000 });
+try {
+  const { rows } = await db.query("SELECT count(*)::int AS n FROM information_schema.tables "
+                                + "WHERE table_name IN ('workflows','executions')");
+  results.push(rows[0].n === 2
+    ? ['ok',   'Tables exist', 'workflows, executions']
+    : ['fail', 'Tables exist', 'not migrated  →  run: npm run migrate']);
+} catch (e) {
+  results.push(['fail', 'Postgres answers', `${e.message}  →  run: docker compose up -d`]);
+} finally {
+  await db.end();
+}
+
+for (const [state, name, detail] of results)
+  console.log(`${state === 'ok' ? `${GREEN} ok ${OFF}` : `${RED}FAIL${OFF}`} `
+            + `${name.padEnd(22)} ${detail}`);
+
+const failed = results.filter(r =&gt; r[0] === 'fail').length;
+console.log(failed ? `\n${failed} problem(s) — fix the arrows above.` : '\nEverything is ready.');
+process.exit(failed ? 1 : 0);      // a non-zero exit is what stops `npm run dev` continuing</code></pre></div>
+      </div></div>
+
+      <div class="bstep"><div class="bn">4</div><div class="bb">
         <h4>Every key the project needs, with fake values</h4>
         <div class="fwrap"><span class="fname">.env.example — committed; .env is never committed</span>
 <pre class="code" data-lang="bash"><code>DATABASE_URL=postgres://postgres:dev@localhost:5432/automation
 BASE_URL=http://localhost:5678
+EDITOR_ORIGIN=http://localhost:5173
 ENCRYPTION_KEY=0000000000000000000000000000000000000000000000000000000000000000
 GOOGLE_CLIENT_ID=replace-me.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=replace-me
 ANTHROPIC_API_KEY=replace-me</code></pre></div>
-        <div class="cmd"><span class="p">$</span> echo ".env" &gt;&gt; .gitignore
-<span class="p">$</span> npx gitleaks detect --no-git   <span class="c"># run it once a week; a leaked key costs marks</span></div>
+        <div class="cmd"><span class="p">$</span> printf '.env\nnode_modules\nbackups\n*.pem\n' &gt;&gt; .gitignore
+<span class="p">$</span> npm run secrets     <span class="c"># run it once a week; a leaked key costs marks</span></div>
       </div></div>
 
-      <div class="bstep"><div class="bn">4</div><div class="bb">
+      <div class="bstep"><div class="bn">5</div><div class="bb">
         <h4>A starter workflow, so a fresh clone shows something</h4>
         <div class="fwrap"><span class="fname">seed.sql</span>
 <pre class="code" data-lang="sql"><code>INSERT INTO workflows (name, nodes, connections) VALUES (
   'Hello weather',
   '[{"name":"Start","type":"manualTrigger","parameters":{},"position":{"x":80,"y":80}},
     {"name":"Weather","type":"httpRequest",
-     "parameters":{"url":"https://wttr.in/Newcastle?format=j1"},"position":{"x":360,"y":80}}]',
+     "parameters":{"url":"https://wttr.in/Newcastle?format=j1","method":"GET","timeout":15000},
+     "position":{"x":360,"y":80}}]',
   '{"Start":[["Weather"]]}'
-);</code></pre></div>
+) ON CONFLICT DO NOTHING;</code></pre></div>
         <p>The difference between a new teammate being productive in ten minutes or in two days.</p>
       </div></div>
     </div>
 
+    <div class="exhead"><b>What you should see</b><i></i></div>
+    <div class="expect two">
+      <div class="screen dark">
+        <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="ttl">Terminal — npm run dev, everything ready</span></div>
+        <div class="body"><span class="pr">$</span> npm run dev
+
+<span class="g"> ok </span> Node 22 or newer       v22.11.0
+<span class="g"> ok </span> Docker is running      27.3.1
+<span class="g"> ok </span> .env exists
+<span class="g"> ok </span> DATABASE_URL is set
+<span class="g"> ok </span> BASE_URL is set
+<span class="g"> ok </span> ENCRYPTION_KEY is set
+<span class="g"> ok </span> Tables exist           workflows, executions
+
+Everything is ready.
+
+ ✔ Container automation-postgres  <span class="g">Healthy</span>
+api on http://localhost:5678
+restored <span class="b">0</span> schedule(s)
+  VITE v6.0.1  ready in 431 ms
+  ➜  Local: <span class="b">http://localhost:5173/</span></div>
+      </div>
+      <div class="screen dark">
+        <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="ttl">Terminal — a teammate's first clone</span></div>
+        <div class="body"><span class="pr">$</span> npm run dev
+
+<span class="g"> ok </span> Node 22 or newer       v22.11.0
+<span class="er">FAIL</span> Docker is running      not found
+     <span class="d">→ start Docker Desktop and wait for
+       the whale to stop animating</span>
+<span class="er">FAIL</span> .env exists            missing
+     <span class="d">→ run: cp .env.example .env</span>
+<span class="er">FAIL</span> ENCRYPTION_KEY is set  empty
+     <span class="d">→ fill ENCRYPTION_KEY in .env</span>
+<span class="er">FAIL</span> Postgres answers       ECONNREFUSED
+     <span class="d">→ run: docker compose up -d</span>
+
+<span class="y">4 problem(s) — fix the arrows above.</span>
+
+<span class="d">npm ERR! code 1   (dev never started)</span></div>
+      </div>
+    </div>
+    <p class="exnote"><b>The right-hand screen is the point of this page.</b> Nobody had to ask anybody
+      anything. Every line names the problem <em>and</em> the exact command that fixes it — and because
+      <code>predev</code> runs it, a broken start can never happen silently.</p>
+
+    <div class="conn">
+      <h5>How this part connects to the others</h5>
+      <div class="hs">
+        <div class="hsbox"><span class="hsn">Four areas, four folders</span><span class="hsd">engine · editor · api · integrations</span></div>
+        <div class="hsar"><span>npm workspaces</span><i></i></div>
+        <div class="hsbox now"><span class="hsn">§3.1b — one repository</span><span class="hsd">npm run dev · doctor</span></div>
+        <div class="hsar"><span>the same five<br>commands</span><i></i></div>
+        <div class="hsbox"><span class="hsn">§3.2c — CI, and §2.7b — deploy</span><span class="hsd">run exactly what you run</span></div>
+      </div>
+      <div class="wires">
+      <span class="wl">Receives</span><span class="wv">the four areas as workspace folders. npm links them for you, so <code>import { runWorkflow } from '../../packages/engine/engine.js'</code> works with no build step and nothing published anywhere.</span>
+      <span class="wl">Hands on</span><span class="wv">one command. CI (§3.2c) runs <code>npm run lint / test / e2e</code> and the server (§2.7b) builds the same <code>Dockerfile</code> — so &#8220;works on my machine&#8221; and &#8220;works in CI&#8221; stop being different questions.</span>
+      <span class="wl">Binds together</span><span class="wv">the <code>.env</code> contract. Every part above reads its keys from the same file, and <code>doctor.js</code> is the one place that knows which keys must exist.</span>
+      <span class="wl">Seam to agree</span><span class="wv">nobody adds a dependency without saying so in the group chat. A lockfile conflict at 11 p.m. in Week 13 is the most avoidable disaster available to this project.</span>
+      </div>
+    </div>
+
     <div class="chk"><b>Check it works</b>Every Thursday, one of the eight — a different one each week —
       clones the repository into a brand-new folder and runs those five commands. Whatever breaks is
-      that week's first priority.</div>
+      that week's first priority, and the fix goes into <code>doctor.js</code> so it can never cost
+      anybody an hour twice.</div>
   </div>
 </div>

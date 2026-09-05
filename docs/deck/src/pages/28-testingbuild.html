@@ -5,78 +5,219 @@
   <div class="band" style="background:linear-gradient(90deg,#4b46c0,#0d72b4,#087f99,#0a7a70)"></div>
 
   <div class="stack">
-    <div class="cmd"><span class="p">$</span> npm i -D vitest @playwright/test
+    <div class="cmd"><span class="p">$</span> npm i -D vitest @vitest/coverage-v8 @playwright/test
 <span class="p">$</span> npx playwright install chromium</div>
 
+    <div class="where">
+      <span class="wl">Program</span><span class="wv">VS&nbsp;Code — see §1.10 for the window, §1.11 for the loop</span>
+      <span class="wl">Files</span><span class="wv"><code>packages/engine/engine.test.js</code>, <code>convert.test.ts</code>, <code>google/sheets.test.js</code></span>
+      <span class="wl">Create them</span><span class="wv">In the Explorer, right-click <code>beside the file each one tests</code> → <span class="ui">New&nbsp;File</span> → type the name with its extension → paste → <span class="kbd">Ctrl&nbsp;S</span></span>
+    </div>
     <div class="bsteps">
       <div class="bstep"><div class="bn">1</div><div class="bb">
         <h4>Level 1 — the engine, in milliseconds</h4>
+        <p>Test the happy path once, then test <b>every guard you wrote in §2.1b</b>. Those six tests are
+          the proof that "robust" is not just a word in the report.</p>
         <div class="fwrap"><span class="fname">packages/engine/engine.test.js</span>
 <pre class="code" data-lang="js"><code>import { test, expect } from 'vitest';
-import { runWorkflow } from './engine.js';
+import { runWorkflow, validateWorkflow } from './engine.js';
+import { WorkflowError } from './errors.js';
 
-const fake = (name, out) => ({ description: { name, group: 'action', properties: [] },
-                               async execute() { return out; } });
+const fake = (name, out, group = 'action') =&gt; ({
+  description: { name, group, properties: [] },
+  async execute() { return typeof out === 'function' ? out() : out; },
+});
+const wf = (nodes, connections) =&gt; ({ nodes, connections });
 
-test('runs nodes in order and passes items along', async () => {
-  const types = { start: fake('start', [[{ json: { a: 1 } }]]),
+test('runs nodes in order and passes items along', async () =&gt; {
+  const types = { start: fake('start', [[{ json: { a: 1 } }]], 'trigger'),
                   next:  fake('next',  [[{ json: { b: 2 } }]]) };
-  types.start.description.group = 'trigger';
-  const wf = { nodes: [{ name: 'S', type: 'start', parameters: {} },
-                       { name: 'N', type: 'next',  parameters: {} }],
-               connections: { S: [['N']] } };
-  const r = await runWorkflow(wf, types);
-  expect(r.N[0][0].json).toEqual({ b: 2 });
+  const { results, log } = await runWorkflow(
+    wf([{ name: 'S', type: 'start', parameters: {} },
+        { name: 'N', type: 'next',  parameters: {} }], { S: [['N']] }), types);
+  expect(results.N[0][0].json).toEqual({ b: 2 });
+  expect(log.filter(l =&gt; l.level === 'done')).toHaveLength(2);
 });
 
-test('an empty branch stops everything after it', async () => {
-  const types = { start: fake('start', [[]]), never: fake('never', [[{ json: {} }]]) };
-  types.start.description.group = 'trigger';
-  const wf = { nodes: [{ name: 'S', type: 'start', parameters: {} },
-                       { name: 'X', type: 'never', parameters: {} }],
-               connections: { S: [['X']] } };
-  const r = await runWorkflow(wf, types);
-  expect(r.X).toBeUndefined();          // it never ran — and that is correct
+test('an empty branch stops everything after it', async () =&gt; {
+  const types = { start: fake('start', [[]], 'trigger'), never: fake('never', [[{ json: {} }]]) };
+  const { results } = await runWorkflow(
+    wf([{ name: 'S', type: 'start', parameters: {} },
+        { name: 'X', type: 'never', parameters: {} }], { S: [['X']] }), types);
+  expect(results.X).toBeUndefined();          // it never ran — and that is correct
+});
+
+test('a misspelled target is refused before anything runs', () =&gt; {
+  const types = { start: fake('start', [[{ json: {} }]], 'trigger') };
+  expect(() =&gt; validateWorkflow(
+    wf([{ name: 'S', type: 'start', parameters: {} }], { S: [['Wether']] }), types))
+    .toThrow(/missing node "Wether"/);
+});
+
+test('a loop is stopped by the step limit, not by the laptop', async () =&gt; {
+  const types = { start: fake('start', [[{ json: {} }]], 'trigger'),
+                  echo:  fake('echo',  [[{ json: {} }]]) };
+  await expect(runWorkflow(
+    wf([{ name: 'S', type: 'start', parameters: {} },
+        { name: 'E', type: 'echo',  parameters: {} }], { S: [['E']], E: [['E']] }),
+    types, { maxSteps: 25 })).rejects.toThrow(/loops/);
+});
+
+test('a hanging node is cut off and names itself', async () =&gt; {
+  const types = { start: fake('start', [[{ json: {} }]], 'trigger'),
+                  slow:  { description: { name: 'slow', group: 'action', properties: [] },
+                           execute: () =&gt; new Promise(() =&gt; {}) } };     // never resolves
+  await expect(runWorkflow(
+    wf([{ name: 'S', type: 'start', parameters: {} },
+        { name: 'Slow', type: 'slow', parameters: {} }], { S: [['Slow']] }),
+    types, { nodeTimeoutMs: 40 })).rejects.toThrow(/"Slow" ran longer than/);
+});
+
+test('continueOnFail carries the error downstream instead of stopping', async () =&gt; {
+  const types = { start: fake('start', [[{ json: {} }]], 'trigger'),
+                  boom:  { description: { name: 'boom', group: 'action', properties: [] },
+                           execute() { throw new Error('kaboom'); } },
+                  after: fake('after', [[{ json: { reached: true } }]]) };
+  const { results } = await runWorkflow(
+    wf([{ name: 'S', type: 'start', parameters: {} },
+        { name: 'B', type: 'boom',  parameters: {}, continueOnFail: true },
+        { name: 'A', type: 'after', parameters: {} }],
+       { S: [['B']], B: [['A']] }), types);
+  expect(results.B[0][0].error).toMatch(/kaboom/);
+  expect(results.A[0][0].json.reached).toBe(true);
 });</code></pre></div>
       </div></div>
 
       <div class="bstep"><div class="bn">2</div><div class="bb">
+        <h4>The one test that will save the editor team a week</h4>
+        <div class="fwrap"><span class="fname">apps/editor/src/convert.test.ts</span>
+<pre class="code" data-lang="ts"><code>import { test, expect } from 'vitest';
+import { toReactFlow, fromReactFlow } from './convert';
+
+const sample = {
+  name: 'demo',
+  nodes: [{ name: 'A', type: 'x', parameters: {}, position: { x: 0, y: 0 } },
+          { name: 'B', type: 'y', parameters: {}, position: { x: 200, y: 0 } },
+          { name: 'C', type: 'y', parameters: {}, position: { x: 200, y: 120 } }],
+  connections: { A: [['B'], ['C']] },        // branch 0 → B, branch 1 → C (an IF node)
+};
+
+test('a workflow survives a round trip through React Flow unchanged', () =&gt; {
+  const { nodes, edges } = toReactFlow(sample);
+  expect(fromReactFlow(nodes, edges).connections).toEqual(sample.connections);
+});
+
+test('an edge to a deleted node is dropped, not crashed on', () =&gt; {
+  const broken = { ...sample, connections: { A: [['B'], ['GHOST']] } };
+  expect(toReactFlow(broken).edges).toHaveLength(1);
+});</code></pre></div>
+      </div></div>
+
+      <div class="bstep"><div class="bn">3</div><div class="bb">
         <h4>Level 2 — a node against a fake Google, with no internet</h4>
         <div class="fwrap"><span class="fname">packages/nodes/google/sheets.test.js</span>
 <pre class="code" data-lang="js"><code>import { test, expect, beforeAll, afterAll } from 'vitest';
 import http from 'node:http';
 
-let server, received;
-beforeAll(() => new Promise(done => {
-  server = http.createServer((req, res) => {
-    let body = ''; req.on('data', c => body += c);
-    req.on('end', () => {
-      received = { url: req.url, method: req.method, body: JSON.parse(body || '{}') };
+let server, calls = [], nextStatus = 200;
+
+beforeAll(() =&gt; new Promise(done =&gt; {
+  server = http.createServer((req, res) =&gt; {
+    let body = ''; req.on('data', c =&gt; body += c);
+    req.on('end', () =&gt; {
+      calls.push({ url: req.url, method: req.method, body: JSON.parse(body || '{}') });
+      if (nextStatus !== 200) {                       // let a test ask for a failure
+        res.writeHead(nextStatus, { 'retry-after': '0' }); return res.end('{}');
+      }
       res.writeHead(200, { 'content-type': 'application/json' });
-      res.end(JSON.stringify({ updates: { updatedRows: 1 } }));
+      res.end(JSON.stringify({ values: [['name', 'email']],
+                               updates: { updatedRows: 1, updatedRange: 'Orders!A18' } }));
     });
   }).listen(4010, done);
 }));
-afterAll(() => server.close());
+afterAll(() =&gt; server.close());
 
-test('append sends one row, in order, to the right range', async () => {
-  await sheetsNode.execute(makeCtx({
+test('append sends one row, in header order, to the right range', async () =&gt; {
+  await sheetsAppend.execute(makeCtx({
     base: 'http://localhost:4010',
     documentId: 'https://docs.google.com/spreadsheets/d/ABC123/edit',
-    sheetName: 'Orders', columns: { name: 'Alice', email: 'a@example.com' },
+    sheetName: 'Orders', columns: { email: 'a@example.com', name: 'Alice' },
   }));
-  expect(received.method).toBe('POST');
-  expect(received.url).toContain('/ABC123/values/');
-  expect(received.body.values).toEqual([['Alice', 'a@example.com']]);
+  const write = calls.at(-1);
+  expect(write.method).toBe('POST');
+  expect(write.url).toContain('/ABC123/values/');
+  expect(write.body.values).toEqual([['Alice', 'a@example.com']]);   // sheet order, not object order
+});
+
+test('three items become ONE append request', async () =&gt; {
+  calls = [];
+  await sheetsAppend.execute(makeCtx({ base: 'http://localhost:4010', items: 3, /* … */ }));
+  expect(calls.filter(c =&gt; c.method === 'POST')).toHaveLength(1);
+});
+
+test('a 429 is retried, not thrown', async () =&gt; {
+  calls = []; nextStatus = 429;
+  setTimeout(() =&gt; { nextStatus = 200; }, 30);        // recover after the first retry
+  await expect(sheetsAppend.execute(makeCtx({ base: 'http://localhost:4010' })))
+    .resolves.toBeDefined();
+  expect(calls.length).toBeGreaterThan(1);
+});
+
+test('a sheet name with an apostrophe is quoted properly', () =&gt; {
+  expect(quoteSheetName("Bob's list")).toBe("'Bob''s list'");
 });</code></pre></div>
         <p>Thirty lines, and every Google node gets the same treatment. No credentials, no quota, no
           network — so it runs on every push in about two seconds.</p>
       </div></div>
+    </div>
 
+    <div class="exhead"><b>What you should see</b><i></i></div>
+    <div class="expect">
+      <div class="screen dark">
+        <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="ttl">Terminal — npm test</span></div>
+        <div class="body"> <span class="g">✓</span> packages/engine/engine.test.js        <span class="d">(6 tests)</span>   41 ms
+ <span class="g">✓</span> apps/editor/src/convert.test.ts      <span class="d">(2 tests)</span>    9 ms
+ <span class="g">✓</span> packages/nodes/google/sheets.test.js <span class="d">(4 tests)</span>  118 ms
+ <span class="g">✓</span> packages/nodes/core/code.test.js     <span class="d">(3 tests)</span>  612 ms
+
+ Test Files  <span class="g">4 passed (4)</span>
+      Tests  <span class="g">15 passed (15)</span>
+   Duration  <span class="b">2.14 s</span>  <span class="d">(transform 340ms, tests 780ms)</span>
+
+ % Coverage report from v8
+------------------|---------|----------|---------|
+File              | % Stmts | % Branch | % Funcs |
+------------------|---------|----------|---------|
+ engine.js        |   <span class="g">94.1</span>  |   <span class="g">88.0</span>   |  <span class="g">100</span>    |
+ http.js          |   <span class="g">91.6</span>  |   <span class="g">85.7</span>   |  <span class="g">100</span>    |
+ google/request.js|   <span class="y">78.2</span>  |   <span class="y">70.5</span>   |  <span class="g">100</span>    |
+------------------|---------|----------|---------|</div>
+      </div>
+    </div>
+    <p class="exnote"><b>Two numbers to quote in the report:</b> the duration (under three seconds, so
+      nobody is tempted to skip it) and the branch coverage on <code>engine.js</code>. Branch coverage is
+      the honest one — it says the <em>error</em> paths were executed, not just the happy path.</p>
+
+    <div class="conn">
+      <h5>How this part connects to the others</h5>
+      <div class="hs">
+        <div class="hsbox"><span class="hsn">§2.1b engine · §2.2c convert · §2.6b nodes</span><span class="hsd">the three riskiest files</span></div>
+        <div class="hsar"><span>imported<br>directly</span><i></i></div>
+        <div class="hsbox now"><span class="hsn">§3.2b — levels 1 and 2</span><span class="hsd">vitest, no network</span></div>
+        <div class="hsar"><span>green or red</span><i></i></div>
+        <div class="hsbox"><span class="hsn">§3.2c — CI</span><span class="hsd">which blocks the merge button</span></div>
+      </div>
+      <div class="wires">
+      <span class="wl">Receives</span><span class="wv">the real modules, not copies. A test that imports <code>engine.js</code> is the reason a refactor in Week 11 cannot quietly break Week 3&#8217;s branch pruning.</span>
+      <span class="wl">Hands on</span><span class="wv">an exit code. That is the whole interface to §3.2c: zero means the pull request may merge, non-zero means it may not.</span>
+      <span class="wl">Protects the seams</span><span class="wv">each frozen contract above gets exactly one test — the ctx shape, the branch-array shape, the convert round trip, the trigger item shape. <b>Those four tests are how eight people stay in sync without meetings.</b></span>
+      <span class="wl">Seam to agree</span><span class="wv">a test lives beside the file it tests, and whoever writes the file writes the test. Not &#8220;the testing person&#8221; — there isn&#8217;t one, and there should not be.</span>
+      </div>
     </div>
 
     <div class="chk"><b>Check levels 1 and 2</b><code>npm test</code> finishes in under five seconds, with
       no internet connection and no Google credentials. If it needs either, the fake server is not being
-      used.</div>
+      used. Then delete one guard from <code>engine.js</code> — say the step limit — and confirm a test
+      goes red. A test suite that stays green when you break the code is worse than no test suite.</div>
   </div>
 </div>

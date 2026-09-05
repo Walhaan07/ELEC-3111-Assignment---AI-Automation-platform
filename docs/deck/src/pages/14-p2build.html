@@ -5,6 +5,11 @@
   <div class="band"></div>
 
   <div class="stack">
+    <div class="where">
+      <span class="wl">Program</span><span class="wv">VS&nbsp;Code — see §1.10 for the window, §1.11 for the loop</span>
+      <span class="wl">Files</span><span class="wv"><code>docker-compose.yml</code>, <code>schema.sql</code>, <code>apps/api/db.js</code>, <code>apps/api/server.js</code></span>
+      <span class="wl">Create them</span><span class="wv">In the Explorer, right-click <code>the project root, then apps/api</code> → <span class="ui">New&nbsp;File</span> → type the name with its extension → paste → <span class="kbd">Ctrl&nbsp;S</span></span>
+    </div>
     <div class="bsteps">
       <div class="bstep"><div class="bn">1</div><div class="bb">
         <h4>Start Postgres in a container</h4>
@@ -17,84 +22,328 @@
       POSTGRES_DB: automation
     ports: ["5432:5432"]
     volumes: ["pgdata:/var/lib/postgresql/data"]
+    # docker will not report the container "ready" until Postgres actually answers,
+    # so `npm run dev` never races ahead of the database on a cold laptop
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d automation"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 volumes:
   pgdata: {}</code></pre></div>
         <div class="cmd"><span class="p">$</span> docker compose up -d
+<span class="p">$</span> docker compose ps            <span class="c"># wait until STATUS says (healthy)</span>
 <span class="p">$</span> psql postgresql://postgres:dev@localhost:5432/automation -f schema.sql</div>
       </div></div>
 
       <div class="bstep"><div class="bn">2</div><div class="bb">
-        <h4>Two tables</h4>
+        <h4>Two tables — with the constraints that stop bad rows existing at all</h4>
         <div class="fwrap"><span class="fname">schema.sql</span>
-<pre class="code" data-lang="sql"><code>CREATE TABLE workflows (
+<pre class="code" data-lang="sql"><code>CREATE TABLE IF NOT EXISTS workflows (
   id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  name        text NOT NULL,
+  name        text NOT NULL CHECK (length(trim(name)) BETWEEN 1 AND 120),
   active      boolean NOT NULL DEFAULT false,
-  nodes       jsonb NOT NULL DEFAULT '[]',      -- the boxes
-  connections jsonb NOT NULL DEFAULT '{}',      -- the lines
-  created_at  timestamptz NOT NULL DEFAULT now()
+  nodes       jsonb NOT NULL DEFAULT '[]' CHECK (jsonb_typeof(nodes) = 'array'),
+  connections jsonb NOT NULL DEFAULT '{}' CHECK (jsonb_typeof(connections) = 'object'),
+  version     integer NOT NULL DEFAULT 1,        -- bumped on every save; stops silent overwrites
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  updated_at  timestamptz NOT NULL DEFAULT now()
 );
 
-CREATE TABLE executions (
+CREATE TABLE IF NOT EXISTS executions (
   id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  workflow_id uuid REFERENCES workflows(id) ON DELETE CASCADE,
-  status      text NOT NULL,                    -- running | success | error
-  data        jsonb,                            -- what each node produced
+  workflow_id uuid NOT NULL REFERENCES workflows(id) ON DELETE CASCADE,
+  mode        text NOT NULL DEFAULT 'manual'
+              CHECK (mode IN ('manual','webhook','schedule')),
+  status      text NOT NULL CHECK (status IN ('running','success','error','cancelled')),
+  data        jsonb,                              -- what each node produced
+  log         jsonb NOT NULL DEFAULT '[]',        -- the receipt from the engine
   error       jsonb,
   started_at  timestamptz NOT NULL DEFAULT now(),
   finished_at timestamptz
-);</code></pre></div>
+);
+
+-- the executions list is the most-hit query in the whole product: index it now
+CREATE INDEX IF NOT EXISTS executions_by_workflow
+  ON executions (workflow_id, started_at DESC);
+CREATE INDEX IF NOT EXISTS executions_running
+  ON executions (status) WHERE status = 'running';
+
+-- keep updated_at honest without every route remembering to set it
+CREATE OR REPLACE FUNCTION touch_updated_at() RETURNS trigger AS $$
+BEGIN NEW.updated_at = now(); NEW.version = OLD.version + 1; RETURN NEW; END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS workflows_touch ON workflows;
+CREATE TRIGGER workflows_touch BEFORE UPDATE ON workflows
+  FOR EACH ROW EXECUTE FUNCTION touch_updated_at();</code></pre></div>
+        <div class="tbox"><b>CHECK constraint</b> — a rule the database itself enforces. Any code path,
+          any teammate, any hand-typed <code>psql</code> command: a row that breaks the rule is simply
+          rejected. It is the cheapest bug prevention in the project.</div>
       </div></div>
 
       <div class="bstep"><div class="bn">3</div><div class="bb">
-        <h4>The five routes</h4>
-        <div class="cmd"><span class="p">$</span> npm i express pg --workspace apps/api</div>
+        <h4>One connection pool, configured, in its own file</h4>
+        <div class="cmd"><span class="p">$</span> npm i express pg helmet cors express-rate-limit --workspace apps/api</div>
+        <div class="fwrap"><span class="fname">apps/api/db.js</span>
+<pre class="code" data-lang="js"><code>import pg from 'pg';
+
+if (!process.env.DATABASE_URL) {
+  console.error('DATABASE_URL is not set — copy .env.example to .env first');
+  process.exit(1);
+}
+
+export const db = new pg.Pool({
+  connectionString: process.env.DATABASE_URL,
+  max: 10,                          // never open more than 10 sockets to Postgres
+  idleTimeoutMillis: 30_000,
+  connectionTimeoutMillis: 5_000,   // fail fast instead of hanging a request forever
+});
+
+// a dead pooled socket fires 'error' with nobody listening → Node kills the process.
+// One line stops the whole API dying because Postgres restarted.
+db.on('error', (err) =&gt; console.error('[db] idle client error:', err.message));
+
+export async function withTransaction(fn) {
+  const client = await db.connect();
+  try {
+    await client.query('BEGIN');
+    const out = await fn(client);
+    await client.query('COMMIT');
+    return out;
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();               // ALWAYS — a leaked client is a frozen server at demo time
+  }
+}</code></pre></div>
+      </div></div>
+
+      <div class="bstep"><div class="bn">4</div><div class="bb">
+        <h4>The five routes, with validation and a single error handler</h4>
         <div class="fwrap"><span class="fname">apps/api/server.js</span>
 <pre class="code" data-lang="js"><code>import express from 'express';
-import pg from 'pg';
+import helmet from 'helmet';
+import cors from 'cors';
+import rateLimit from 'express-rate-limit';
+import { db, withTransaction } from './db.js';
 import { runWorkflow } from '../../packages/engine/engine.js';
+import { WorkflowError } from '../../packages/engine/errors.js';
+import { nodeTypes } from '../../packages/nodes/index.js';
 
-const db  = new pg.Pool({ connectionString: process.env.DATABASE_URL });
 const app = express();
-app.use(express.json());
+app.use(helmet());                                     // sane security headers, free
+app.use(cors({ origin: process.env.EDITOR_ORIGIN ?? 'http://localhost:5173' }));
+app.use(express.json({ limit: '2mb' }));               // a 900 MB body must not eat the server
+app.use('/rest', rateLimit({ windowMs: 60_000, limit: 300 }));
 
-app.get('/rest/workflows', async (req, res) =>
-  res.json((await db.query('SELECT id, name, active FROM workflows ORDER BY name')).rows));
+// ---- small helpers -------------------------------------------------------
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-app.get('/rest/workflows/:id', async (req, res) =>
-  res.json((await db.query('SELECT * FROM workflows WHERE id = $1', [req.params.id])).rows[0]));
+class HttpError extends Error {
+  constructor(status, message) { super(message); this.status = status; }
+}
 
-app.post('/rest/workflows', async (req, res) => {
-  const { name, nodes, connections } = req.body;
-  const q = 'INSERT INTO workflows (name, nodes, connections) VALUES ($1, $2, $3) RETURNING *';
-  res.json((await db.query(q, [name, nodes, connections])).rows[0]);
-});
+// every route is wrapped: a rejected promise becomes a clean 500, never a crash
+const route = (fn) =&gt; (req, res, next) =&gt; Promise.resolve(fn(req, res, next)).catch(next);
 
-app.patch('/rest/workflows/:id', async (req, res) => {
-  const { nodes, connections } = req.body;
-  const q = 'UPDATE workflows SET nodes = $1, connections = $2 WHERE id = $3 RETURNING *';
-  res.json((await db.query(q, [nodes, connections, req.params.id])).rows[0]);
-});
+function requireId(req) {
+  if (!UUID.test(req.params.id)) throw new HttpError(400, 'That is not a valid workflow id');
+  return req.params.id;
+}
 
-app.post('/rest/workflows/:id/run', async (req, res) => {
-  const wf  = (await db.query('SELECT * FROM workflows WHERE id = $1', [req.params.id])).rows[0];
-  const run = await db.query("INSERT INTO executions (workflow_id, status) VALUES ($1,'running') RETURNING id", [wf.id]);
-  try {
-    const data = await runWorkflow(wf, nodeTypes);
-    await db.query("UPDATE executions SET status='success', data=$1, finished_at=now() WHERE id=$2", [data, run.rows[0].id]);
-    res.json(data);
-  } catch (e) {
-    await db.query("UPDATE executions SET status='error', error=$1, finished_at=now() WHERE id=$2", [{ message: e.message }, run.rows[0].id]);
-    res.status(500).json({ message: e.message });
+function validateWorkflowBody(body, { partial = false } = {}) {
+  const out = {};
+  if (!partial || body.name !== undefined) {
+    if (typeof body.name !== 'string' || !body.name.trim())
+      throw new HttpError(400, 'name is required');
+    if (body.name.length &gt; 120) throw new HttpError(400, 'name must be 120 characters or fewer');
+    out.name = body.name.trim();
   }
+  if (!partial || body.nodes !== undefined) {
+    if (!Array.isArray(body.nodes)) throw new HttpError(400, 'nodes must be an array');
+    out.nodes = body.nodes;
+  }
+  if (!partial || body.connections !== undefined) {
+    if (typeof body.connections !== 'object' || body.connections === null
+        || Array.isArray(body.connections))
+      throw new HttpError(400, 'connections must be an object');
+    out.connections = body.connections;
+  }
+  return out;
+}
+
+// ---- the routes ----------------------------------------------------------
+app.get('/healthz', route(async (req, res) =&gt; {
+  await db.query('SELECT 1');
+  res.json({ ok: true, uptime: Math.round(process.uptime()) });
+}));
+
+app.get('/rest/workflows', route(async (req, res) =&gt; {
+  const limit  = Math.min(Number(req.query.limit) || 50, 200);
+  const offset = Math.max(Number(req.query.offset) || 0, 0);
+  const { rows } = await db.query(
+    'SELECT id, name, active, updated_at FROM workflows ORDER BY updated_at DESC LIMIT $1 OFFSET $2',
+    [limit, offset]);
+  res.json({ data: rows, limit, offset });
+}));
+
+app.get('/rest/workflows/:id', route(async (req, res) =&gt; {
+  const { rows } = await db.query('SELECT * FROM workflows WHERE id = $1', [requireId(req)]);
+  if (!rows[0]) throw new HttpError(404, 'No workflow with that id');
+  res.json(rows[0]);
+}));
+
+app.post('/rest/workflows', route(async (req, res) =&gt; {
+  const wf = validateWorkflowBody(req.body);
+  const { rows } = await db.query(
+    'INSERT INTO workflows (name, nodes, connections) VALUES ($1, $2, $3) RETURNING *',
+    [wf.name, JSON.stringify(wf.nodes ?? []), JSON.stringify(wf.connections ?? {})]);
+  res.status(201).json(rows[0]);
+}));
+
+app.patch('/rest/workflows/:id', route(async (req, res) =&gt; {
+  const id = requireId(req);
+  const wf = validateWorkflowBody(req.body, { partial: true });
+  // optimistic locking: the editor sends the version it loaded. If somebody else saved
+  // in between, the UPDATE matches nothing and we say so instead of eating their work.
+  const { rows } = await db.query(
+    `UPDATE workflows SET name        = COALESCE($2, name),
+                          nodes       = COALESCE($3, nodes),
+                          connections = COALESCE($4, connections),
+                          active      = COALESCE($5, active)
+     WHERE id = $1 AND ($6::int IS NULL OR version = $6) RETURNING *`,
+    [id, wf.name ?? null,
+     wf.nodes ? JSON.stringify(wf.nodes) : null,
+     wf.connections ? JSON.stringify(wf.connections) : null,
+     typeof req.body.active === 'boolean' ? req.body.active : null,
+     req.body.version ?? null]);
+  if (!rows[0]) throw new HttpError(409, 'Somebody else saved this workflow — reload before saving');
+  res.json(rows[0]);
+}));
+
+app.post('/rest/workflows/:id/run', route(async (req, res) =&gt; {
+  const id = requireId(req);
+  const { rows: [wf] } = await db.query('SELECT * FROM workflows WHERE id = $1', [id]);
+  if (!wf) throw new HttpError(404, 'No workflow with that id');
+
+  const { rows: [run] } = await db.query(
+    "INSERT INTO executions (workflow_id, status, mode) VALUES ($1,'running',$2) RETURNING id",
+    [wf.id, req.body?.mode ?? 'manual']);
+
+  try {
+    const { results, log } = await runWorkflow(wf, nodeTypes, { nodeTimeoutMs: 60_000 });
+    await db.query(
+      "UPDATE executions SET status='success', data=$1, log=$2, finished_at=now() WHERE id=$3",
+      [JSON.stringify(results), JSON.stringify(log), run.id]);
+    res.json({ executionId: run.id, status: 'success', data: results, log });
+  } catch (err) {
+    const payload = err instanceof WorkflowError ? err.toJSON() : { message: String(err.message) };
+    await db.query(
+      "UPDATE executions SET status='error', error=$1, finished_at=now() WHERE id=$2",
+      [JSON.stringify(payload), run.id]);
+    res.status(422).json({ executionId: run.id, status: 'error', error: payload });
+  }
+}));
+
+// ---- the two middlewares every Express app should end with ---------------
+app.use((req, res) =&gt; res.status(404).json({ message: `No route for ${req.method} ${req.path}` }));
+
+app.use((err, req, res, next) =&gt; {
+  const status = err.status ?? 500;
+  if (status &gt;= 500) console.error('[api]', err);      // log the stack, show the user nothing
+  res.status(status).json({ message: status &gt;= 500 ? 'Internal error' : err.message });
 });
 
-app.listen(5678, () => console.log('api on http://localhost:5678'));</code></pre></div>
+// ---- start, and stop politely -------------------------------------------
+const server = app.listen(process.env.PORT ?? 5678,
+  () =&gt; console.log(`api on http://localhost:${process.env.PORT ?? 5678}`));
+
+for (const signal of ['SIGINT', 'SIGTERM']) {
+  process.on(signal, () =&gt; {
+    console.log(`\n${signal} — finishing in-flight requests…`);
+    server.close(async () =&gt; { await db.end(); process.exit(0); });
+    setTimeout(() =&gt; process.exit(1), 10_000).unref();   // but never hang forever
+  });
+}</code></pre></div>
+        <div class="tbox"><b>Error middleware</b> — an Express function with <em>four</em> arguments
+          (<code>err, req, res, next</code>). Express treats the four-argument shape as special and sends
+          every thrown error here. Miss the fourth argument and it silently becomes an ordinary route.</div>
       </div></div>
     </div>
 
-    <div class="chk"><b>Check it works</b><code>curl -X POST localhost:5678/rest/workflows -H
-      'content-type: application/json' -d '{"name":"first","nodes":[],"connections":{}}'</code> — then
-      restart the container and fetch it back. If it survives, Phase 2's hardest half is done.</div>
+    <div class="exhead"><b>What you should see</b><i></i></div>
+    <div class="expect">
+      <div class="screen dark">
+        <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="ttl">Terminal — bringing the database up</span></div>
+        <div class="body"><span class="pr">$</span> docker compose ps
+NAME                IMAGE         STATUS                    PORTS
+ai-automation-db    postgres:16   Up 12 seconds <span class="g">(healthy)</span>   0.0.0.0:5432-&gt;5432/tcp
+
+<span class="pr">$</span> psql $DATABASE_URL -c '\dt'
+          List of relations
+ Schema |    Name    | Type  |  Owner
+--------+------------+-------+----------
+ public | executions | table | postgres
+ public | workflows  | table | postgres
+<span class="d">(2 rows)</span></div>
+      </div>
+    </div>
+    <div class="expect two">
+      <div class="screen dark">
+        <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="ttl">Terminal — a good request</span></div>
+        <div class="body"><span class="pr">$</span> curl -s -X POST localhost:5678/rest/workflows \
+    -H 'content-type: application/json' \
+    -d '{"name":"first","nodes":[],"connections":{}}'
+
+<span class="g">HTTP/1.1 201 Created</span>
+{
+  "id": "<span class="b">3f9a…c1</span>", "name": "first",
+  "active": false, "version": <span class="b">1</span>,
+  "nodes": [], "connections": {}
+}</div>
+      </div>
+      <div class="screen dark">
+        <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="ttl">Terminal — every guard, in order</span></div>
+        <div class="body"><span class="d"># no name</span>
+<span class="er">400</span> {"message":"name is required"}
+<span class="d"># id is not a uuid</span>
+<span class="er">400</span> {"message":"That is not a valid workflow id"}
+<span class="d"># unknown id</span>
+<span class="er">404</span> {"message":"No workflow with that id"}
+<span class="d"># stale version — somebody else saved</span>
+<span class="er">409</span> {"message":"Somebody else saved this
+      workflow — reload before saving"}
+<span class="d"># the engine refused the workflow</span>
+<span class="er">422</span> {"status":"error","error":{"code":
+      "INVALID_WORKFLOW","node":null,…}}</div>
+      </div>
+    </div>
+    <p class="exnote"><b>Those five numbers are the deliverable</b>, not the 201. Anyone can make a route
+      that works; a marker looks for what happens when it does not. Screenshot this pane for the report.</p>
+
+    <div class="conn">
+      <h5>How this part connects to the others</h5>
+      <div class="hs">
+        <div class="hsbox"><span class="hsn">§2.1b — the engine</span><span class="hsd">runWorkflow()</span></div>
+        <div class="hsar"><span>imported<br>directly</span><i></i></div>
+        <div class="hsbox now"><span class="hsn">§2.2b — server + database</span><span class="hsd">5 routes · 2 tables</span></div>
+        <div class="hsar"><span>HTTP + JSON</span><i></i></div>
+        <div class="hsbox"><span class="hsn">§2.2c — the canvas</span><span class="hsd">fetch('/rest/workflows/…')</span></div>
+      </div>
+      <div class="wires">
+      <span class="wl">Receives</span><span class="wv">the engine as a normal <code>import</code> — same process, no queue. §2.4b later reuses the very same <code>runById()</code> wrapper for webhooks and schedules.</span>
+      <span class="wl">Hands on</span><span class="wv">the workflow JSON <code>{ id, name, nodes[], connections{}, version }</code>. That object is the single shared vocabulary between the server, the canvas and the engine.</span>
+      <span class="wl">Shared by all</span><span class="wv"><code>db.js</code> — one pool, one <code>withTransaction()</code>. §2.4b, §2.5b and §2.6b all import it instead of opening connections of their own.</span>
+      <span class="wl">Seam to agree</span><span class="wv"><code>version</code>. The canvas sends the number it loaded; the server refuses a stale save with 409. Agree it in Week 5, or two people overwrite each other in Week 11.</span>
+      </div>
+    </div>
+
+    <div class="chk"><b>Check it works</b>Create a workflow, restart the container with
+      <code>docker compose restart</code>, fetch it back — it survived. Then run each failing request
+      above and confirm the status code matches. Finally press <span class="kbd">Ctrl&nbsp;C</span> in the
+      API terminal: it should print <code>SIGINT — finishing in-flight requests…</code> and exit within a
+      second, not die mid-query. That is Phase 2's hardest half done.</div>
   </div>
 </div>

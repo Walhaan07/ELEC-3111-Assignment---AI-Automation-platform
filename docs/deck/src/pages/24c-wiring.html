@@ -1,0 +1,114 @@
+<!-- ============================== 2.8 THE SEAMS ============================== -->
+<div class="page" style="--acc:#2a5fce;--accs:#e3ebfb">
+  <div class="rh"><span>Part 2 · Building it</span><span class="r">2.8 — every seam in one picture</span></div>
+  <div class="h-wrap"><span class="secno">2.8</span><h2>How all the parts connect to each other</h2></div>
+  <div class="partline" style="background:linear-gradient(90deg,#4b46c0,#2a5fce,#0d72b4,#087f99,#0a7a70,#14624f)"></div>
+  <div class="band-meta">
+    <div class="bm"><span class="lbl">Who this page is for</span>
+      <div class="who-chips"><span class="wc">A1</span><span class="wc">A2</span><span class="wc">B1</span><span class="wc">B2</span><span class="wc">C1</span><span class="wc">C2</span><span class="wc">D1</span><span class="wc">D2</span></div></div>
+    <div class="bm"><span class="lbl">What it is</span>
+      <p class="sk">Every arrow below is a promise one pair makes to another. Print this page, put it on the wall, and settle arguments with it.</p></div>
+  </div>
+
+  <div class="stack">
+    <p class="lede">Each section of Part 2 ended with a small strip showing what it receives and what it
+      hands on. This is all of them at once. <b>Nothing crosses a box boundary except the labelled
+      arrows</b> — that single rule is what lets four pairs work in four folders without waiting for
+      each other.</p>
+
+    <figure>
+      <svg viewBox="0 0 760 452" xmlns="http://www.w3.org/2000/svg">
+        <rect x="150" y="24" width="460" height="76" rx="10" fill="#dfeef8" stroke="#0d72b4" stroke-width="1.6"/>
+        <text x="166" y="48" class="t">The editor &#183; apps/editor</text>
+        <text x="166" y="68" class="s2">canvas (React Flow) &#183; settings panel &#183; executions list</text>
+        <text x="166" y="86" class="s" style="fill:#0a5f92">B1 B2 &#8212; TypeScript, React, CSS &#183; &#167;2.2c and &#167;2.3b</text>
+
+        <path d="M380 100 L380 148" stroke="#7d8f9d" stroke-width="1.4" fill="none"/>
+        <path d="M376 143 L380 150 L384 143 Z" fill="#7d8f9d"/>
+        <path d="M376 105 L380 98 L384 105 Z" fill="#7d8f9d"/>
+        <text x="396" y="118" class="s" style="fill:#1d4ba8">down: workflow JSON { nodes[], connections{}, version }</text>
+        <text x="396" y="134" class="s" style="fill:#1d4ba8">up: node descriptions, execution rows, run results</text>
+
+        <rect x="20" y="148" width="720" height="118" rx="10" fill="#e3ebfb" stroke="#2a5fce" stroke-width="1.6"/>
+        <text x="34" y="172" class="t">The server &#183; apps/api &#8212; C1 C2</text>
+
+        <rect x="34" y="180" width="165" height="74" rx="7" fill="#ffffff" stroke="#b9c9ea"/>
+        <text x="46" y="200" class="s2">REST routes</text>
+        <text x="46" y="216" class="s">5 routes &#183; validation</text>
+        <text x="46" y="232" class="s">409 on stale saves</text>
+
+        <rect x="209" y="180" width="165" height="74" rx="7" fill="#ffffff" stroke="#b9c9ea"/>
+        <text x="221" y="200" class="s2">Webhooks</text>
+        <text x="221" y="216" class="s">/webhook/:path</text>
+        <text x="221" y="232" class="s">HMAC &#183; idempotency</text>
+
+        <rect x="384" y="180" width="165" height="74" rx="7" fill="#ffffff" stroke="#b9c9ea"/>
+        <text x="396" y="200" class="s2">Scheduler</text>
+        <text x="396" y="216" class="s">croner &#183; protect</text>
+        <text x="396" y="232" class="s">restoreAll() on boot</text>
+
+        <rect x="559" y="180" width="165" height="74" rx="7" fill="#ffffff" stroke="#b9c9ea"/>
+        <text x="571" y="200" class="s2">OAuth + crypto</text>
+        <text x="571" y="216" class="s">AES-256-GCM</text>
+        <text x="571" y="232" class="s">credentials table</text>
+
+        <path d="M132 266 L132 306" stroke="#7d8f9d" stroke-width="1.4" fill="none"/>
+        <path d="M128 301 L132 308 L136 301 Z" fill="#7d8f9d"/>
+        <path d="M128 271 L132 264 L136 271 Z" fill="#7d8f9d"/>
+        <text x="146" y="284" class="s" style="fill:#066476">db.js &#8212; one pool,</text>
+        <text x="146" y="298" class="s" style="fill:#066476">one withTransaction()</text>
+
+        <path d="M612 266 L612 306" stroke="#7d8f9d" stroke-width="1.4" fill="none"/>
+        <path d="M608 301 L612 308 L616 301 Z" fill="#7d8f9d"/>
+        <path d="M608 271 L612 264 L616 271 Z" fill="#7d8f9d"/>
+        <text x="380" y="284" class="s" style="fill:#3b37a3">runWorkflow(wf, nodeTypes)</text>
+        <text x="380" y="298" class="s" style="fill:#3b37a3">returns { results, log, steps }</text>
+
+        <rect x="20" y="306" width="224" height="98" rx="10" fill="#ddf0f4" stroke="#087f99" stroke-width="1.6"/>
+        <text x="34" y="330" class="t">PostgreSQL</text>
+        <text x="34" y="352" class="s2">workflows &#183; executions</text>
+        <text x="34" y="370" class="s2">credentials &#183; webhooks</text>
+        <text x="34" y="388" class="s2">schedules &#183; deliveries</text>
+
+        <rect x="268" y="306" width="224" height="98" rx="10" fill="#e8e7f9" stroke="#4b46c0" stroke-width="1.6"/>
+        <text x="282" y="330" class="t">The engine</text>
+        <text x="282" y="352" class="s2">packages/engine &#8212; A1</text>
+        <text x="282" y="370" class="s2">ready-list loop &#183; items</text>
+        <text x="282" y="388" class="s2">errors.js &#183; http.js</text>
+
+        <rect x="516" y="306" width="224" height="98" rx="10" fill="#e8e7f9" stroke="#4b46c0" stroke-width="1.6"/>
+        <text x="530" y="330" class="t">The nodes</text>
+        <text x="530" y="352" class="s2">packages/nodes &#8212; A2 D1</text>
+        <text x="530" y="370" class="s2">description.properties[]</text>
+        <text x="530" y="388" class="s2">out to Google &#183; AI &#183; HTTP</text>
+
+        <path d="M494 356 L514 356" stroke="#7d8f9d" stroke-width="1.4" fill="none"/>
+        <path d="M509 352 L516 356 L509 360 Z" fill="#7d8f9d"/>
+        <path d="M499 352 L492 356 L499 360 Z" fill="#7d8f9d"/>
+
+        <text x="268" y="424" class="s" style="fill:#3b37a3">engine to node &#8212; ctx: getInputData &#183; getNodeParameter &#183; helpers &#183; logger</text>
+        <text x="268" y="440" class="s" style="fill:#3b37a3">node to engine &#8212; branches: [[{ json: {…} }]], one array per output</text>
+      </svg>
+      <figcaption><b>Figure @.</b> Every seam in the system. Four boxes, four owners, eight labelled
+        promises. If a change would add a ninth arrow, it needs a conversation first — that is the whole
+        governance rule for the semester.</figcaption>
+    </figure>
+
+    <div class="conn">
+      <h5>Reading the picture as a work plan</h5>
+      <div class="wires">
+        <span class="wl">Week 3–4</span><span class="wv">Only the two purple boxes exist. A1 freezes <code>ctx</code> and the branch shape; <b>everybody else writes against a written promise, not against code that exists yet.</b></span>
+        <span class="wl">Week 5</span><span class="wv">The blue and cyan boxes join, and the top arrow becomes real. This is the hard gate: the editor can save and reload a workflow.</span>
+        <span class="wl">Week 8</span><span class="wv">The right-hand purple box grows six new files at once. Nothing else changes — that is the payoff for §2.3b.</span>
+        <span class="wl">Week 9–10</span><span class="wv">The OAuth sub-box and the outward arrows from the nodes. D1 owns <code>request.js</code>; D2, A1 and A2 write nodes against it in parallel.</span>
+        <span class="wl">Week 12</span><span class="wv">The whole picture is put on one server (§2.7b) and measured against n8n running the same three workflows.</span>
+      </div>
+    </div>
+
+    <div class="chk"><b>Use it like this</b>When two people disagree about where code should live, find the
+      arrow it crosses. Code that translates between two boxes belongs to <em>one</em> of them, never
+      both — that is what <code>convert.ts</code>, <code>runner.js</code> and <code>request.js</code>
+      each are. If a new idea needs a new arrow, that is a ten-minute group conversation, not a pull
+      request somebody discovers on Thursday.</div>
+  </div>
+</div>

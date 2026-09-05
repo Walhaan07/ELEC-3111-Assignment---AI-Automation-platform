@@ -1,0 +1,111 @@
+<!-- ============================== 1.10 VS CODE ============================== -->
+<div class="page" style="--acc:#2a5fce;--accs:#e3ebfb">
+  <div class="rh"><span>Part 1 · The big picture</span><span class="r">1.10 — The program you will live in</span></div>
+  <div class="h-wrap"><span class="secno">1.10</span><h2>VS Code: the program every line of this book is pasted into</h2></div>
+  <div class="partline" style="background:linear-gradient(90deg,#4b46c0,#2a5fce,#0d72b4)"></div>
+  <div class="band-meta">
+    <div class="bm"><span class="lbl">Who needs this page</span>
+      <div class="who-chips"><span class="wc">all eight</span><span class="wc ghost">read it once, then forget it</span></div></div>
+    <div class="bm"><span class="lbl">What you need to know</span>
+      <p class="sk">Nothing at all. Every code block in Parts 2 and 3 is pasted into this one program, and this page is how it works.</p></div>
+  </div>
+
+  <div class="stack">
+    <p class="lede">Whenever this book shows a file name above a block of code, it means: <b>open that
+      file in VS Code and put this in it</b>. Whenever it shows a <span class="cmd" style="display:inline;padding:1px 6px;border-left-width:2px"><span class="p">$</span></span>
+      prompt, it means: <b>type that into the terminal at the bottom of VS Code</b>. That is the whole
+      convention.</p>
+
+    <figure>
+      <svg viewBox="0 0 760 322" xmlns="http://www.w3.org/2000/svg">
+        <rect x="10" y="26" width="740" height="286" rx="7" fill="#fbfcfe" stroke="#9fb2d6" stroke-width="1.6"/>
+        <rect x="10" y="26" width="740" height="20" rx="7" fill="#dde5f4"/>
+        <circle cx="26" cy="36" r="3.4" fill="#9fb2d6"/><circle cx="37" cy="36" r="3.4" fill="#9fb2d6"/><circle cx="48" cy="36" r="3.4" fill="#9fb2d6"/>
+        <text x="330" y="40" class="s">ai-automation — Visual Studio Code</text>
+
+        <rect x="10" y="46" width="36" height="246" fill="#e3ebfb"/>
+        <rect x="19" y="58" width="18" height="15" rx="3" fill="#2a5fce"/>
+        <rect x="19" y="82" width="18" height="15" rx="3" fill="#b7c7e8"/>
+        <rect x="19" y="106" width="18" height="15" rx="3" fill="#b7c7e8"/>
+        <rect x="19" y="130" width="18" height="15" rx="3" fill="#b7c7e8"/>
+        <rect x="19" y="154" width="18" height="15" rx="3" fill="#b7c7e8"/>
+
+        <rect x="46" y="46" width="158" height="246" fill="#f2f6fc"/>
+        <text x="58" y="62" class="e" style="fill:#1f4aa8">EXPLORER</text>
+        <text x="58" y="82" class="s2">ai-automation</text>
+        <text x="66" y="98" class="s2">apps</text>
+        <text x="74" y="114" class="s2">api</text>
+        <text x="74" y="130" class="s2">editor</text>
+        <text x="66" y="146" class="s2">packages</text>
+        <text x="74" y="162" class="s2">engine</text>
+        <text x="82" y="178" class="s2">engine.js</text>
+        <text x="74" y="194" class="s2">nodes</text>
+        <text x="66" y="210" class="s2">docker-compose.yml</text>
+        <text x="66" y="226" class="s2">.env</text>
+
+        <rect x="204" y="46" width="546" height="20" fill="#e8eef8"/>
+        <rect x="210" y="47" width="86" height="18" rx="3" fill="#fbfcfe"/>
+        <text x="220" y="60" class="s2">engine.js</text>
+        <text x="308" y="60" class="s">server.js</text>
+
+        <rect x="204" y="66" width="546" height="144" fill="#fbfcfe"/>
+        <text x="216" y="82" class="s" style="fill:#667081">1</text><text x="238" y="82" class="s2" style="fill:#4b46c0">const</text><text x="282" y="82" class="s2">workflow = {</text>
+        <text x="216" y="98" class="s" style="fill:#667081">2</text><text x="252" y="98" class="s2">nodes: [</text>
+        <text x="216" y="114" class="s" style="fill:#667081">3</text><text x="266" y="114" class="s2">{ name: </text><text x="330" y="114" class="s2" style="fill:#0b6b63">'Start'</text><text x="382" y="114" class="s2">, … },</text>
+        <text x="216" y="130" class="s" style="fill:#667081">4</text><text x="252" y="130" class="s2">],</text>
+        <text x="216" y="146" class="s" style="fill:#667081">5</text><text x="238" y="146" class="s2">};</text>
+        <text x="216" y="178" class="s" style="fill:#667081">6</text>
+        <text x="216" y="194" class="s" style="fill:#667081">7</text>
+
+        <rect x="204" y="210" width="546" height="82" fill="#14161a"/>
+        <rect x="204" y="210" width="546" height="16" fill="#22262e"/>
+        <text x="216" y="222" class="e" style="fill:#9fb2d6">PROBLEMS   OUTPUT   DEBUG   TERMINAL</text>
+        <text x="216" y="244" class="s2" style="fill:#7fd39a">$ node packages/engine/engine.js</text>
+        <text x="216" y="262" class="s2" style="fill:#e8eaed">Weather -&gt; [ { "temp_C": "18" } ]</text>
+        <text x="216" y="280" class="s2" style="fill:#7fd39a">$ </text>
+
+        <rect x="10" y="292" width="740" height="20" fill="#2a5fce"/>
+        <text x="24" y="306" class="s" style="fill:#ffffff">main*</text>
+        <text x="86" y="306" class="s" style="fill:#e2eaf9">0 errors  0 warnings</text>
+        <text x="640" y="306" class="s" style="fill:#e2eaf9">JavaScript</text>
+
+        <rect x="19" y="254" width="18" height="18" rx="9" fill="#2a5fce"/><text x="25" y="267" class="s" style="fill:#ffffff">1</text>
+        <rect x="111" y="53" width="18" height="18" rx="9" fill="#2a5fce"/><text x="117" y="66" class="s" style="fill:#ffffff">2</text>
+        <rect x="716" y="47" width="18" height="18" rx="9" fill="#2a5fce"/><text x="722" y="60" class="s" style="fill:#ffffff">3</text>
+        <rect x="461" y="91" width="18" height="18" rx="9" fill="#2a5fce"/><text x="467" y="104" class="s" style="fill:#ffffff">4</text>
+        <rect x="461" y="231" width="18" height="18" rx="9" fill="#2a5fce"/><text x="467" y="244" class="s" style="fill:#ffffff">5</text>
+        <rect x="461" y="293" width="18" height="18" rx="9" fill="#2a5fce"/><text x="467" y="306" class="s" style="fill:#ffffff">6</text>
+      </svg>
+      <figcaption><b>Figure @.</b> The only six parts of VS Code you need. Everything this book asks you
+        to do happens in region 3 (the editor) or region 5 (the terminal).</figcaption>
+    </figure>
+
+    <div class="tgrid2">
+      <div class="tbox"><span class="tname">1 · Activity bar</span>
+        <p>Five icons down the left. Top to bottom: <b>Explorer</b> (files), Search, <b>Source Control</b>
+          (git), Run, <b>Extensions</b>. Click one to change what the panel beside it shows.</p></div>
+      <div class="tbox"><span class="tname">2 · Explorer</span>
+        <p>Your project's folders. This is where you create files: <b>right-click a folder → New File</b>,
+          type the name with its extension, press Enter.</p></div>
+      <div class="tbox"><span class="tname">3 · Editor</span>
+        <p>Where the code goes. Each open file is a tab. Click into it, select all with
+          <span class="kbd">Ctrl A</span>, paste with <span class="kbd">Ctrl V</span>, save with
+          <span class="kbd">Ctrl S</span>.</p></div>
+      <div class="tbox"><span class="tname">4 · Line numbers</span>
+        <p>When somebody says “line 42 is broken”, this is what they mean. Red squiggles under code are
+          ESLint telling you something before you run it.</p></div>
+      <div class="tbox"><span class="tname">5 · Terminal</span>
+        <p>Open it with <span class="kbd">Ctrl `</span> (the key above Tab). Every
+          <code>$</code> line in this book is typed here — without the <code>$</code>.</p></div>
+      <div class="tbox"><span class="tname">6 · Status bar</span>
+        <p>Left: the git branch you are on — check it before you type. Right: errors and warnings. If it
+          says <code>main</code>, stop and make a branch first.</p></div>
+    </div>
+
+    <div class="call why"><b>The three shortcuts worth memorising</b>
+      <span class="kbd">Ctrl S</span> save · <span class="kbd">Ctrl `</span> show or hide the terminal ·
+      <span class="kbd">Ctrl P</span> jump to any file by typing part of its name. On a Mac use
+      <span class="kbd">Cmd</span> instead of <span class="kbd">Ctrl</span>. Everything else you can
+      click for.</div>
+  </div>
+</div>

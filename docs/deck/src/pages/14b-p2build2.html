@@ -5,77 +5,278 @@
   <div class="band"></div>
 
   <div class="stack">
+    <div class="where">
+      <span class="wl">Program</span><span class="wv">VS&nbsp;Code — see §1.10 for the window, §1.11 for the loop</span>
+      <span class="wl">Files</span><span class="wv"><code>apps/editor/src/convert.ts</code>, <code>api.ts</code>, <code>Editor.tsx</code></span>
+      <span class="wl">Create them</span><span class="wv">In the Explorer, right-click <code>apps/editor/src</code> → <span class="ui">New&nbsp;File</span> → type the name with its extension → paste → <span class="kbd">Ctrl&nbsp;S</span></span>
+    </div>
     <div class="bsteps">
       <div class="bstep"><div class="bn">4</div><div class="bb">
         <h4>Start the editor</h4>
         <div class="cmd"><span class="p">$</span> npm create vite@latest apps/editor -- --template react-ts
 <span class="p">$</span> cd apps/editor &amp;&amp; npm i reactflow
 <span class="p">$</span> npm run dev            <span class="c"># http://localhost:5173</span></div>
+        <p>Add the proxy line to <code>vite.config.ts</code> now, before anything else, or every request
+          will fail with a cross-origin error that looks like a bug in your code:</p>
+        <div class="fwrap"><span class="fname">apps/editor/vite.config.ts</span>
+<pre class="code" data-lang="ts"><code>export default defineConfig({
+  plugins: [react()],
+  server: { proxy: { '/rest': 'http://localhost:5678' } },
+});</code></pre></div>
       </div></div>
 
       <div class="bstep"><div class="bn">5</div><div class="bb">
         <h4>Our format → React Flow's, and back</h4>
         <p>These two functions are where <em>every</em> canvas bug will live for the rest of the
-          semester. Write them once, carefully, and give them a test.</p>
+          semester. Write them once, carefully, defensively, and give them a test.</p>
         <div class="fwrap"><span class="fname">apps/editor/src/convert.ts</span>
 <pre class="code" data-lang="ts"><code>import type { Node as RfNode, Edge } from 'reactflow';
 
-export function toReactFlow(wf) {
-  const nodes: RfNode[] = wf.nodes.map(n => ({
-    id: n.name, type: 'workflowNode', position: n.position ?? { x: 0, y: 0 }, data: { node: n },
+export type WorkflowNode = {
+  name: string; type: string;
+  parameters: Record&lt;string, unknown&gt;;
+  position?: { x: number; y: number };
+  disabled?: boolean; continueOnFail?: boolean; notes?: string;
+};
+export type Workflow = { id?: string; name: string; version?: number;
+                         nodes: WorkflowNode[]; connections: Record&lt;string, string[][]&gt; };
+
+// laid out in a diagonal so a workflow with no saved positions is still readable
+const fallbackPosition = (i: number) =&gt; ({ x: 80 + i * 240, y: 80 + (i % 2) * 120 });
+
+export function toReactFlow(wf: Workflow) {
+  const nodes: RfNode[] = (wf.nodes ?? []).map((n, i) =&gt; ({
+    id: n.name,
+    type: 'workflowNode',
+    position: n.position ?? fallbackPosition(i),
+    data: { node: n },
   }));
-  const edges: Edge[] = Object.entries(wf.connections).flatMap(([from, branches]) =>
-    (branches as string[][]).flatMap((targets, branchIndex) =>
-      targets.map(to => ({
-        id: `${from}:${branchIndex}->${to}`,
-        source: from, target: to, sourceHandle: String(branchIndex),
-      }))));
+  const known = new Set(nodes.map(n =&gt; n.id));
+
+  const edges: Edge[] = Object.entries(wf.connections ?? {}).flatMap(([from, branches]) =&gt;
+    (branches ?? []).flatMap((targets, branchIndex) =&gt;
+      (targets ?? [])
+        // a connection to a deleted node would crash React Flow — drop it quietly
+        .filter(to =&gt; known.has(to) &amp;&amp; known.has(from))
+        .map(to =&gt; ({
+          id: `${from}:${branchIndex}-&gt;${to}`,
+          source: from, target: to,
+          sourceHandle: String(branchIndex), targetHandle: 'in',
+        }))));
+
   return { nodes, edges };
 }
 
-export function fromReactFlow(nodes: RfNode[], edges: Edge[]) {
+export function fromReactFlow(nodes: RfNode[], edges: Edge[]): Pick&lt;Workflow,'nodes'|'connections'&gt; {
   const connections: Record&lt;string, string[][]&gt; = {};
   for (const e of edges) {
-    const branch = Number(e.sourceHandle ?? 0);
+    const branch = Number.isFinite(Number(e.sourceHandle)) ? Number(e.sourceHandle) : 0;
     connections[e.source] ??= [];
-    connections[e.source][branch] ??= [];
-    connections[e.source][branch].push(e.target);
+    for (let b = 0; b &lt;= branch; b++) connections[e.source][b] ??= [];   // no holes in the array
+    if (!connections[e.source][branch].includes(e.target))               // no duplicate edges
+      connections[e.source][branch].push(e.target);
   }
   return {
-    nodes: nodes.map(n => ({ ...n.data.node, position: n.position })),
+    nodes: nodes.map(n =&gt; ({
+      ...(n.data.node as WorkflowNode),
+      position: { x: Math.round(n.position.x), y: Math.round(n.position.y) },
+    })),
     connections,
   };
+}
+
+// round-trip guard — call it in a test, and in dev after every save
+export function isLossless(wf: Workflow) {
+  const { nodes, edges } = toReactFlow(wf);
+  const back = fromReactFlow(nodes, edges);
+  return JSON.stringify(back.connections) === JSON.stringify(wf.connections);
 }</code></pre></div>
+        <div class="tbox"><b><code>??=</code></b> — "assign only if this is null or undefined". It is what
+          lets us build a nested array without four lines of <code>if</code> checks. <b><code>Pick&lt;…&gt;</code></b>
+          is TypeScript for "the same type, but only these two fields" — so the compiler stops us
+          returning a half-built workflow by accident.</div>
       </div></div>
 
       <div class="bstep"><div class="bn">6</div><div class="bb">
-        <h4>Wire the canvas to the server</h4>
+        <h4>One place that talks to the server, so errors are handled once</h4>
+        <div class="fwrap"><span class="fname">apps/editor/src/api.ts</span>
+<pre class="code" data-lang="ts"><code>export class ApiError extends Error {
+  constructor(public status: number, message: string) { super(message); }
+}
+
+export async function api&lt;T&gt;(path: string, init: RequestInit = {}): Promise&lt;T&gt; {
+  const res = await fetch(path, {
+    ...init,
+    headers: { 'content-type': 'application/json', ...init.headers },
+    signal: init.signal ?? AbortSignal.timeout(20_000),
+  });
+  const text = await res.text();
+  const body = text ? JSON.parse(text) : null;
+  if (!res.ok) throw new ApiError(res.status, body?.message ?? `Request failed (${res.status})`);
+  return body as T;
+}</code></pre></div>
+      </div></div>
+
+      <div class="bstep"><div class="bn">7</div><div class="bb">
+        <h4>Wire the canvas to the server — load, autosave, run</h4>
         <div class="fwrap"><span class="fname">apps/editor/src/Editor.tsx — the parts that matter</span>
 <pre class="code" data-lang="ts"><code>const [nodes, setNodes, onNodesChange] = useNodesState([]);
 const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+const [status, setStatus] = useState&lt;'idle'|'saving'|'saved'|'error'&gt;('idle');
+const [message, setMessage] = useState('');
+const version = useRef&lt;number&gt;(1);
+const dirty   = useRef(false);
 
-useEffect(() => {                                   // load
-  fetch(`/rest/workflows/${id}`).then(r => r.json()).then(wf => {
-    const { nodes, edges } = toReactFlow(wf);
-    setNodes(nodes); setEdges(edges);
-  });
+useEffect(() =&gt; {                                     // load
+  const stop = new AbortController();
+  api&lt;Workflow&gt;(`/rest/workflows/${id}`, { signal: stop.signal })
+    .then(wf =&gt; {
+      version.current = wf.version ?? 1;
+      const { nodes, edges } = toReactFlow(wf);
+      setNodes(nodes); setEdges(edges);
+    })
+    .catch(e =&gt; { if (e.name !== 'AbortError') { setStatus('error'); setMessage(e.message); } });
+  return () =&gt; stop.abort();                          // React 18 mounts twice in dev — this matters
 }, [id]);
 
-const save = () => fetch(`/rest/workflows/${id}`, {  // save
-  method: 'PATCH',
-  headers: { 'content-type': 'application/json' },
-  body: JSON.stringify(fromReactFlow(nodes, edges)),
-});
+const save = useCallback(async () =&gt; {
+  setStatus('saving');
+  try {
+    const saved = await api&lt;Workflow&gt;(`/rest/workflows/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ ...fromReactFlow(nodes, edges), version: version.current }),
+    });
+    version.current = saved.version ?? version.current + 1;
+    dirty.current = false;
+    setStatus('saved'); setMessage('');
+  } catch (e) {
+    setStatus('error');
+    setMessage(e instanceof ApiError &amp;&amp; e.status === 409
+      ? 'Someone else saved this workflow. Reload to get their changes.'
+      : (e as Error).message);
+  }
+}, [id, nodes, edges]);
 
-const run = () => fetch(`/rest/workflows/${id}/run`, { method: 'POST' })
-  .then(r => r.json()).then(setRunResult);</code></pre></div>
-        <p>Add <code>server: { proxy: { '/rest': 'http://localhost:5678' } }</code> to
-          <code>vite.config.ts</code> so the browser can call the API without cross-origin trouble.</p>
+useEffect(() =&gt; {                                     // autosave, 1.2 s after you stop moving things
+  if (!dirty.current) return;
+  const t = setTimeout(save, 1200);
+  return () =&gt; clearTimeout(t);
+}, [nodes, edges, save]);
+
+useEffect(() =&gt; {                                     // Ctrl/Cmd-S, and a browser-close warning
+  const onKey = (e: KeyboardEvent) =&gt; {
+    if ((e.ctrlKey || e.metaKey) &amp;&amp; e.key === 's') { e.preventDefault(); save(); }
+  };
+  const onLeave = (e: BeforeUnloadEvent) =&gt; { if (dirty.current) e.preventDefault(); };
+  window.addEventListener('keydown', onKey);
+  window.addEventListener('beforeunload', onLeave);
+  return () =&gt; { window.removeEventListener('keydown', onKey);
+                 window.removeEventListener('beforeunload', onLeave); };
+}, [save]);
+
+const run = async () =&gt; {
+  if (dirty.current) await save();                    // never run a version the server has not got
+  setStatus('saving'); setMessage('Running…');
+  try {
+    const r = await api&lt;RunResult&gt;(`/rest/workflows/${id}/run`, { method: 'POST' });
+    setRunResult(r); setStatus('saved'); setMessage(`Finished in ${totalMs(r.log)} ms`);
+  } catch (e) {
+    setStatus('error');
+    setMessage((e as ApiError).message);
+    if ((e as any).error?.node) highlightFailedNode((e as any).error.node);   // colour the box red
+  }
+};</code></pre></div>
+        <p>Set <code>dirty.current = true</code> inside your <code>onNodesChange</code> and
+          <code>onEdgesChange</code> wrappers. Those eleven characters are what turn a Save button into an
+          editor nobody can lose work in.</p>
       </div></div>
     </div>
 
-    <div class="chk"><b>Check it works</b>Drag two nodes out, connect them, press Save, refresh the
-      browser — they are still there. Press Run and the result of each node appears. That is Phase 2
-      finished and the Week 5 hard gate met.</div>
+    <div class="exhead"><b>What you should see</b><i></i></div>
+    <figure>
+      <div class="screen">
+        <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="url">localhost:5173/workflow/3f9a…c1</span></div>
+        <div class="body" style="padding:0">
+          <svg viewBox="0 0 760 250" xmlns="http://www.w3.org/2000/svg">
+            <rect x="0" y="0" width="760" height="250" fill="#f7fafc"/>
+            <rect x="0" y="0" width="760" height="30" fill="#ffffff"/>
+            <line x1="0" y1="30" x2="760" y2="30" stroke="#e2e9ee"/>
+            <text x="16" y="20" class="t">Hello weather</text>
+            <rect x="540" y="7" width="74" height="17" rx="9" fill="#e6f2ea" stroke="#1f7a4d"/>
+            <text x="551" y="19" class="s" style="fill:#1f7a4d">✓ Saved</text>
+            <rect x="624" y="7" width="52" height="17" rx="4" fill="#ffffff" stroke="#c6d5dd"/>
+            <text x="636" y="19" class="s">Save</text>
+            <rect x="686" y="7" width="58" height="17" rx="4" fill="#2a5fce"/>
+            <text x="700" y="19" class="s" style="fill:#ffffff">Run</text>
+
+            <rect x="40" y="70" width="160" height="54" rx="10" fill="#ffffff" stroke="#dfe7ec" stroke-width="1.4"/>
+            <rect x="40" y="70" width="5" height="54" rx="2" fill="#4b46c0"/>
+            <text x="58" y="93" class="t">Start</text>
+            <text x="58" y="110" class="s">manual trigger</text>
+            <rect x="52" y="129" width="104" height="18" rx="9" fill="#e6f2ea" stroke="#1f7a4d"/>
+            <text x="62" y="142" class="s" style="fill:#1f7a4d">1 item · 0 ms</text>
+            <circle cx="200" cy="97" r="4" fill="#2a5fce"/>
+            <path d="M206 97 L274 97" stroke="#8fa3b0" fill="none" stroke-width="1.4"/>
+            <path d="M268 93 L276 97 L268 101 Z" fill="#8fa3b0"/>
+
+            <rect x="280" y="70" width="160" height="54" rx="10" fill="#ffffff" stroke="#dfe7ec" stroke-width="1.4"/>
+            <rect x="280" y="70" width="5" height="54" rx="2" fill="#2a5fce"/>
+            <text x="298" y="93" class="t">Weather</text>
+            <text x="298" y="110" class="s">httpRequest</text>
+            <circle cx="280" cy="97" r="4" fill="#8fa3b0"/>
+            <rect x="292" y="129" width="116" height="18" rx="9" fill="#e6f2ea" stroke="#1f7a4d"/>
+            <text x="302" y="142" class="s" style="fill:#1f7a4d">1 item · 412 ms</text>
+
+            <rect x="486" y="52" width="252" height="150" rx="8" fill="#ffffff" stroke="#dfe7ec"/>
+            <rect x="486" y="52" width="252" height="24" rx="8" fill="#eef3f8"/>
+            <line x1="486" y1="76" x2="738" y2="76" stroke="#dfe7ec"/>
+            <text x="500" y="69" class="e" style="fill:#334155">OUTPUT · Weather</text>
+            <text x="500" y="95" class="s2">{</text>
+            <text x="512" y="111" class="s2">"current_condition": [</text>
+            <text x="526" y="127" class="s2">{ "temp_C": "18",</text>
+            <text x="540" y="143" class="s2">"humidity": "71" }</text>
+            <text x="512" y="159" class="s2">]</text>
+            <text x="500" y="175" class="s2">}</text>
+            <rect x="500" y="180" width="130" height="17" rx="8" fill="#e3ebfb" stroke="#2a5fce"/>
+            <text x="510" y="192" class="s" style="fill:#1d4ba8">JSON · 1 item</text>
+
+            <rect x="0" y="222" width="760" height="28" fill="#ffffff"/>
+            <line x1="0" y1="222" x2="760" y2="222" stroke="#e2e9ee"/>
+            <text x="16" y="240" class="s" style="fill:#1f7a4d">Finished in 412 ms</text>
+            <text x="586" y="240" class="s">version 7 · autosaved</text>
+          </svg>
+        </div>
+      </div>
+      <figcaption><b>Figure @.</b> The Week 5 hard gate, on screen. Two nodes, one connection, a green
+        item count under each box, the last node's output on the right, and an autosave that already
+        happened — no Save button was pressed.</figcaption>
+    </figure>
+    <p class="exnote"><b>The three things a marker looks for</b> are all visible here: the item count
+      under each node (the engine reported it), the millisecond timing (the log carried it), and the
+      version number in the status bar (optimistic locking is real). If a save collides, the green pill
+      turns into a red one reading <em>“Someone else saved this workflow.”</em></p>
+
+    <div class="conn">
+      <h5>How this part connects to the others</h5>
+      <div class="hs">
+        <div class="hsbox"><span class="hsn">§2.2b — the server</span><span class="hsd">GET / PATCH /rest/workflows/:id</span></div>
+        <div class="hsar"><span>workflow<br>JSON</span><i></i></div>
+        <div class="hsbox now"><span class="hsn">§2.2c — the canvas</span><span class="hsd">toReactFlow ⇄ fromReactFlow</span></div>
+        <div class="hsar"><span>node.parameters</span><i></i></div>
+        <div class="hsbox"><span class="hsn">§2.3b — the settings panel</span><span class="hsd">renders properties[]</span></div>
+      </div>
+      <div class="wires">
+      <span class="wl">Receives</span><span class="wv">exactly the row §2.2b returns. Nothing is reshaped on the way in — <code>toReactFlow</code> is the only translator in the project, and §3.2b tests it both ways.</span>
+      <span class="wl">Hands on</span><span class="wv">each node object to the panel of §2.3b, which writes straight into <code>node.parameters</code>. The canvas never needs to know what a setting <em>means</em>.</span>
+      <span class="wl">Talks to</span><span class="wv">§2.4b: the executions list is the same <code>api()</code> helper pointed at <code>/rest/executions</code>, so error handling and timeouts were written once.</span>
+      <span class="wl">Seam to agree</span><span class="wv">branch index = React Flow <code>sourceHandle</code>, and branch&nbsp;0 is the IF node&#8217;s <em>true</em> output. B1/B2 and A2 must write this down in Week 6.</span>
+      </div>
+    </div>
+
+    <div class="chk"><b>Check it works</b>Drag two nodes out, connect them, wait 1.2 seconds without
+      touching anything — the pill flicks to <b>Saving…</b> then <b>Saved</b>. Refresh the browser: they
+      are still there, in the same positions. Press Run and each box grows its item count. Then open the
+      same workflow in a second browser tab, save in one, save in the other — the second gets the red
+      conflict message instead of silently destroying the first person's work.</div>
   </div>
 </div>

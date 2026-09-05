@@ -8,100 +8,331 @@
     <p class="lede">D1 writes the helper first. After that each node is a settings description plus one
       request, and six people can work in parallel without talking to each other.</p>
 
+    <div class="where">
+      <span class="wl">Program</span><span class="wv">VS&nbsp;Code — see §1.10 for the window, §1.11 for the loop</span>
+      <span class="wl">Files</span><span class="wv"><code>packages/nodes/google/request.js</code>, <code>sheets.js</code>, <code>docs.js</code>, <code>drive.js</code></span>
+      <span class="wl">Create them</span><span class="wv">In the Explorer, right-click <code>packages/nodes/google</code> → <span class="ui">New&nbsp;File</span> → type the name with its extension → paste → <span class="kbd">Ctrl&nbsp;S</span></span>
+    </div>
     <div class="bsteps">
-      <div class="bstep"><div class="bn">1</div><div class="bb">
-        <h4>The shared helper — refresh-on-401, written once</h4>
-        <div class="fwrap"><span class="fname">packages/nodes/google/request.js</span>
-<pre class="code" data-lang="js"><code>export async function googleRequest(credentialId, url, options = {}) {
-  let token = await getAccessToken(credentialId);
-  const send = () => fetch(url, { ...options,
-    headers: { 'content-type': 'application/json', ...options.headers,
-               Authorization: `Bearer ${token}` } });
+      <div class="bstep"><div class="bn">0</div><div class="bb">
+        <h4>First: let the engine hand a node its credential</h4>
+        <p>Two more lines in the <code>ctx</code> object from §2.1b, and every node from here on can ask
+          for the key it was configured with. Nothing else in the engine changes.</p>
+        <div class="fwrap"><span class="fname">packages/engine/engine.js — inside the ctx object</span>
+<pre class="code" data-lang="js"><code>credentialId: node.credentials?.id ?? null,
+async getCredentials() {
+  if (!node.credentials?.id)
+    throw new WorkflowError(`"${nodeName}" has no credential selected — pick one in the sidebar`,
+                            { node: nodeName, code: 'NO_CREDENTIAL' });
+  return loadDecryptedCredential(node.credentials.id);   // apps/api/credentials.js
+},</code></pre></div>
+      </div></div>
 
-  let res = await send();
-  if (res.status === 401) {                    // the hour is up — refresh once, then retry
-    token = await refreshAccessToken(credentialId);
-    res = await send();
+      <div class="bstep"><div class="bn">1</div><div class="bb">
+        <h4>The shared helper — refresh, retry and rate limits, written once</h4>
+        <p>Every Google node calls this and nothing else. Get it right and the other four files are
+          twenty lines each.</p>
+        <div class="fwrap"><span class="fname">packages/nodes/google/request.js</span>
+<pre class="code" data-lang="js"><code>import { db } from '../../../apps/api/db.js';
+import { encrypt, decrypt } from '../../../apps/api/crypto.js';
+
+const cache    = new Map();   // credentialId → { token, expiresAt }
+const inFlight = new Map();   // credentialId → Promise, so eight items refresh ONCE
+
+const sleep = (ms) =&gt; new Promise(r =&gt; setTimeout(r, ms));
+
+export async function googleRequest(credentialId, url, options = {}) {
+  const { retries = 4, timeoutMs = 30_000, ...init } = options;
+  let token = await getAccessToken(credentialId);
+
+  for (let attempt = 0; attempt &lt;= retries; attempt++) {
+    const res = await fetch(url, { ...init,
+      signal: AbortSignal.timeout(timeoutMs),
+      headers: { 'content-type': 'application/json', ...init.headers,
+                 Authorization: `Bearer ${token}` } });
+
+    if (res.ok) return res.status === 204 ? {} : res.json();
+
+    // 401 — the hour is up. Refresh once and try the same request again.
+    if (res.status === 401 &amp;&amp; attempt === 0) { token = await refresh(credentialId); continue; }
+
+    // 403 with reason "insufficient permissions" is a SCOPE problem, and no amount of
+    // retrying fixes it. Say the real cause instead of "Google 403".
+    const body = await res.text();
+    if (res.status === 403 &amp;&amp; /insufficient|scope/i.test(body))
+      throw new Error('This credential was not granted the scope this node needs. '
+                    + 'Reconnect it and tick the missing permission.');
+
+    // 429 / 5xx — back off and try again, honouring Retry-After when Google sends it
+    if ((res.status === 429 || res.status &gt;= 500) &amp;&amp; attempt &lt; retries) {
+      const after = Number(res.headers.get('retry-after')) * 1000;
+      await sleep(after || Math.min(16_000, 2 ** attempt * 1000) + Math.random() * 400);
+      continue;
+    }
+    throw new Error(`Google ${res.status}: ${body.slice(0, 300)}`);
   }
-  if (!res.ok) throw new Error(`Google ${res.status}: ${(await res.text()).slice(0, 300)}`);
-  return res.json();
+  throw new Error('Google kept refusing after every retry');
 }
 
-async function refreshAccessToken(credentialId) {
-  const { refresh_token } = JSON.parse(decrypt(await loadCredential(credentialId)));
-  const r = await fetch('https://oauth2.googleapis.com/token', {
-    method: 'POST',
-    headers: { 'content-type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      refresh_token, grant_type: 'refresh_token',
-      client_id: process.env.GOOGLE_CLIENT_ID, client_secret: process.env.GOOGLE_CLIENT_SECRET }),
-  });
-  const t = await r.json();
-  await cacheAccessToken(credentialId, t.access_token, t.expires_in);
-  return t.access_token;
+async function getAccessToken(credentialId) {
+  const hit = cache.get(credentialId);
+  if (hit &amp;&amp; hit.expiresAt &gt; Date.now() + 60_000) return hit.token;   // 60 s safety margin
+  return refresh(credentialId);
+}
+
+function refresh(credentialId) {
+  // single-flight: if a refresh is already running, everybody waits for that one
+  if (inFlight.has(credentialId)) return inFlight.get(credentialId);
+
+  const p = (async () =&gt; {
+    const { rows: [row] } = await db.query('SELECT data FROM credentials WHERE id = $1',
+                                           [credentialId]);
+    if (!row) throw new Error('That credential has been deleted');
+    const saved = JSON.parse(decrypt(row.data));
+    if (!saved.refresh_token) throw new Error('This credential has no refresh token — reconnect it');
+
+    const r = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST', signal: AbortSignal.timeout(15_000),
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        refresh_token: saved.refresh_token, grant_type: 'refresh_token',
+        client_id: process.env.GOOGLE_CLIENT_ID,
+        client_secret: process.env.GOOGLE_CLIENT_SECRET }),
+    });
+    const t = await r.json();
+    if (!r.ok) {
+      if (t.error === 'invalid_grant')
+        throw new Error('Google has expired this connection (Testing mode lasts 7 days). '
+                      + 'Open Credentials and press Connect again.');
+      throw new Error(`Refresh failed: ${t.error_description ?? t.error}`);
+    }
+    const merged = { ...saved, ...t, refresh_token: t.refresh_token ?? saved.refresh_token };
+    await db.query('UPDATE credentials SET data = $1, expires_at = $2 WHERE id = $3',
+                   [encrypt(JSON.stringify(merged)),
+                    new Date(Date.now() + t.expires_in * 1000), credentialId]);
+    cache.set(credentialId, { token: t.access_token,
+                              expiresAt: Date.now() + t.expires_in * 1000 });
+    return t.access_token;
+  })().finally(() =&gt; inFlight.delete(credentialId));
+
+  inFlight.set(credentialId, p);
+  return p;
 }</code></pre></div>
+        <div class="tbox"><b>Single-flight</b> — when ten items all discover the token has expired at the
+          same millisecond, ten refresh requests go to Google, nine of them invalidate each other, and
+          the node fails for no visible reason. Holding one shared promise in a Map fixes it in three
+          lines and is worth a paragraph in the report.</div>
       </div></div>
 
       <div class="bstep"><div class="bn">2</div><div class="bb">
-        <h4>Google Sheets — append a row</h4>
+        <h4>Google Sheets — append every item in <em>one</em> request</h4>
+        <p>The obvious version sends one request per item. Fifty items is fifty round trips and a rate
+          limit. Collect first, send once — this is measurable, so measure it for the report.</p>
         <div class="fwrap"><span class="fname">packages/nodes/google/sheets.js</span>
-<pre class="code" data-lang="js"><code>async execute(ctx) {
-  const out = [];
-  const items = ctx.getInputData();
-  for (let i = 0; i &lt; items.length; i++) {
-    const id    = parseSheetId(ctx.getNodeParameter('documentId', i));   // URL or bare id
-    const range = ctx.getNodeParameter('sheetName', i) + '!A:Z';
-    const row   = ctx.getNodeParameter('columns', i);                    // { name, email, … }
+<pre class="code" data-lang="js"><code>// "Sheet1" is fine; "Q3 Orders" and "Bob's list" are not, until they are quoted
+const quoteSheetName = (name) =&gt; `'${String(name).replace(/'/g, "''")}'`;
 
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${id}/values/`
-              + `${encodeURIComponent(range)}:append?valueInputOption=USER_ENTERED`;
-
-    const body = await googleRequest(ctx.credentialId, url, {
-      method: 'POST', body: JSON.stringify({ values: [Object.values(row)] }) });
-    out.push({ json: body });
-  }
-  return [out];
+// accepts a full URL or a bare id, and says so clearly when it is neither
+export function parseSheetId(value) {
+  const s = String(value ?? '').trim();
+  const fromUrl = s.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/)?.[1];
+  const id = fromUrl ?? s;
+  if (!/^[a-zA-Z0-9-_]{20,}$/.test(id))
+    throw new Error(`"${s}" is not a spreadsheet id or URL`);
+  return id;
 }
 
-const parseSheetId = (s) => s.match(/\/d\/([a-zA-Z0-9-_]+)/)?.[1] ?? s;</code></pre></div>
+export const sheetsAppend = {
+  async execute(ctx) {
+    const items = ctx.getInputData();
+    if (items.length === 0) return [[]];
+
+    const id    = parseSheetId(ctx.getNodeParameter('documentId', 0));
+    const range = `${quoteSheetName(ctx.getNodeParameter('sheetName', 0))}!A:Z`;
+
+    // read the header row once, so column order follows the sheet, not the object
+    const header = await googleRequest(ctx.credentialId,
+      `https://sheets.googleapis.com/v4/spreadsheets/${id}/values/`
+      + `${encodeURIComponent(range.replace(':Z', '1:Z1'))}`);
+    const columns = header.values?.[0] ?? null;
+
+    const values = items.map((_, i) =&gt; {
+      const row = ctx.getNodeParameter('columns', i);       // { name, email, … }
+      return columns ? columns.map(c =&gt; row[c] ?? '') : Object.values(row);
+    });
+
+    // Sheets caps a write at 10 MB / ~10 000 rows; chunk so a big run cannot fail as a whole
+    const results = [];
+    for (let start = 0; start &lt; values.length; start += 500) {
+      const chunk = values.slice(start, start + 500);
+      results.push(await googleRequest(ctx.credentialId,
+        `https://sheets.googleapis.com/v4/spreadsheets/${id}/values/`
+        + `${encodeURIComponent(range)}:append`
+        + `?valueInputOption=USER_ENTERED&amp;insertDataOption=INSERT_ROWS`,
+        { method: 'POST', body: JSON.stringify({ values: chunk }) }));
+    }
+
+    ctx.logger.info(`appended ${values.length} row(s) in ${results.length} request(s)`);
+    return [items.map((item, i) =&gt; ({ json: { ...item.json,
+      updatedRange: results[0]?.updates?.updatedRange }, pairedItem: i }))];
+  },
+};</code></pre></div>
       </div></div>
 
       <div class="bstep"><div class="bn">3</div><div class="bb">
-        <h4>Google Docs — a mail merge in one request</h4>
+        <h4>Google Docs — copy the template, then mail-merge the copy</h4>
         <div class="fwrap"><span class="fname">packages/nodes/google/docs.js</span>
-<pre class="code" data-lang="js"><code>const requests = Object.entries(ctx.getNodeParameter('replacements', i)).map(([k, v]) => ({
-  replaceAllText: { containsText: { text: `{{${k}}}`, matchCase: true }, replaceText: String(v) },
-}));
+<pre class="code" data-lang="js"><code>// 1 · never write into the template itself — copy it with Drive first
+const copy = await googleRequest(ctx.credentialId,
+  `https://www.googleapis.com/drive/v3/files/${templateId}/copy`,
+  { method: 'POST', body: JSON.stringify({ name: `${docName} — ${new Date().toISOString().slice(0,10)}` }) });
 
-await googleRequest(ctx.credentialId,
-  `https://docs.googleapis.com/v1/documents/${docId}:batchUpdate`,
-  { method: 'POST', body: JSON.stringify({ requests }) });</code></pre></div>
-        <p>Make a template document containing <code>{{customer_name}}</code> and friends, copy it with
-          Drive first, then run this on the copy — otherwise you overwrite the template.</p>
+// 2 · one batchUpdate replaces every placeholder atomically: all of them, or none
+const replacements = ctx.getNodeParameter('replacements', i);   // { customer_name: 'Alice', … }
+const requests = Object.entries(replacements).map(([k, v]) =&gt; ({
+  replaceAllText: { containsText: { text: `{{${k}}}`, matchCase: true },
+                    replaceText: String(v ?? '') },
+}));
+if (requests.length === 0) throw new Error('No replacements were given — the copy would be blank');
+
+const result = await googleRequest(ctx.credentialId,
+  `https://docs.googleapis.com/v1/documents/${copy.id}:batchUpdate`,
+  { method: 'POST', body: JSON.stringify({ requests }) });
+
+// 3 · tell the user how many placeholders actually matched — a zero here means a typo
+const replaced = result.replies.reduce((n, r) =&gt; n + (r.replaceAllText?.occurrencesChanged ?? 0), 0);
+ctx.logger.info(`replaced ${replaced} placeholder(s) in ${copy.id}`);
+out.push({ json: { documentId: copy.id, replaced,
+                   url: `https://docs.google.com/document/d/${copy.id}/edit` }, pairedItem: i });</code></pre></div>
       </div></div>
 
       <div class="bstep"><div class="bn">4</div><div class="bb">
         <h4>Google Drive — upload, which is multipart and slightly odd</h4>
         <div class="fwrap"><span class="fname">packages/nodes/google/drive.js</span>
-<pre class="code" data-lang="js"><code>const boundary = 'b' + crypto.randomUUID();
-const meta = { name: fileName, parents: folderId ? [folderId] : undefined };
+<pre class="code" data-lang="js"><code>const MAX_SIMPLE_UPLOAD = 5 * 1024 * 1024;      // above this, Google wants a resumable upload
 
-const body = Buffer.concat([
-  Buffer.from(`--${boundary}\r\ncontent-type: application/json\r\n\r\n`),
-  Buffer.from(JSON.stringify(meta)),
-  Buffer.from(`\r\n--${boundary}\r\ncontent-type: ${mimeType}\r\n\r\n`),
-  fileBuffer,
-  Buffer.from(`\r\n--${boundary}--`),
-]);
+export async function uploadFile(ctx, { fileName, mimeType, fileBuffer, folderId }) {
+  if (!Buffer.isBuffer(fileBuffer)) throw new Error('The file must arrive as binary data');
+  if (fileBuffer.length &gt; MAX_SIMPLE_UPLOAD)
+    throw new Error(`${fileName} is ${(fileBuffer.length / 1e6).toFixed(1)} MB — use the `
+                  + 'resumable endpoint for files over 5 MB');
 
-await googleRequest(ctx.credentialId,
-  'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
-  { method: 'POST', body, headers: { 'content-type': `multipart/related; boundary=${boundary}` } });</code></pre></div>
+  const boundary = 'b' + crypto.randomUUID();
+  const meta = { name: fileName, ...(folderId ? { parents: [folderId] } : {}) };
+
+  const body = Buffer.concat([
+    Buffer.from(`--${boundary}\r\ncontent-type: application/json; charset=UTF-8\r\n\r\n`),
+    Buffer.from(JSON.stringify(meta)),
+    Buffer.from(`\r\n--${boundary}\r\ncontent-type: ${mimeType}\r\n\r\n`),
+    fileBuffer,
+    Buffer.from(`\r\n--${boundary}--\r\n`),      // the trailing CRLF matters; without it: 400
+  ]);
+
+  return googleRequest(ctx.credentialId,
+    'https://www.googleapis.com/upload/drive/v3/files'
+    + '?uploadType=multipart&amp;fields=id,name,webViewLink,size',
+    { method: 'POST', body,
+      headers: { 'content-type': `multipart/related; boundary=${boundary}` } });
+}</code></pre></div>
+        <p><code>drive.file</code> scope only ever sees files <em>our app created</em> — that is why it
+          does not trigger Google's restricted-scope review, and it is a good sentence for the report's
+          security section.</p>
       </div></div>
     </div>
 
+    <div class="exhead"><b>What you should see</b><i></i></div>
+    <figure>
+      <div class="screen">
+        <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="url">docs.google.com/spreadsheets/d/1aB…/edit</span></div>
+        <div class="body" style="padding:0">
+          <svg viewBox="0 0 760 156" xmlns="http://www.w3.org/2000/svg">
+            <rect x="0" y="0" width="760" height="156" fill="#ffffff"/>
+            <rect x="0" y="0" width="760" height="20" fill="#eef2f5"/>
+            <text x="10" y="14" class="e" style="fill:#3a4450">A</text>
+            <text x="190" y="14" class="e" style="fill:#3a4450">B</text>
+            <text x="390" y="14" class="e" style="fill:#3a4450">C</text>
+            <text x="560" y="14" class="e" style="fill:#3a4450">D</text>
+            <line x1="180" y1="0" x2="180" y2="156" stroke="#e3e9ee"/>
+            <line x1="380" y1="0" x2="380" y2="156" stroke="#e3e9ee"/>
+            <line x1="550" y1="0" x2="550" y2="156" stroke="#e3e9ee"/>
+            <line x1="0" y1="20" x2="760" y2="20" stroke="#d6dee5"/>
+
+            <rect x="0" y="20" width="760" height="24" fill="#dcf0ee"/>
+            <text x="10" y="37" class="s2">customer</text>
+            <text x="190" y="37" class="s2">email</text>
+            <text x="390" y="37" class="s2">total</text>
+            <text x="560" y="37" class="s2">received_at</text>
+            <line x1="0" y1="44" x2="760" y2="44" stroke="#d6dee5"/>
+
+            <text x="10" y="61" class="s2">Alice Nguyen</text>
+            <text x="190" y="61" class="s2">alice@example.com</text>
+            <text x="390" y="61" class="s2">42.00</text>
+            <text x="560" y="61" class="s2">14:32:07</text>
+            <line x1="0" y1="68" x2="760" y2="68" stroke="#eef2f6"/>
+            <text x="10" y="85" class="s2">Bilal Rahman</text>
+            <text x="190" y="85" class="s2">bilal@example.com</text>
+            <text x="390" y="85" class="s2">17.50</text>
+            <text x="560" y="85" class="s2">14:32:07</text>
+            <line x1="0" y1="92" x2="760" y2="92" stroke="#eef2f6"/>
+            <text x="10" y="109" class="s2">Chen Wu</text>
+            <text x="190" y="109" class="s2">chen@example.com</text>
+            <text x="390" y="109" class="s2">88.20</text>
+            <text x="560" y="109" class="s2">14:32:07</text>
+            <line x1="0" y1="116" x2="760" y2="116" stroke="#eef2f6"/>
+
+            <rect x="0" y="120" width="760" height="36" fill="#f4f9f8"/>
+            <line x1="0" y1="120" x2="760" y2="120" stroke="#cfe4e0"/>
+            <text x="10" y="136" class="s" style="fill:#0a5f58">3 rows arrived together, in one request, in column order taken from the header row.</text>
+            <text x="10" y="150" class="s" style="fill:#0a5f58">The timestamps are identical because it was a single append, not three.</text>
+          </svg>
+        </div>
+      </div>
+      <figcaption><b>Figure @.</b> What batching looks like from the user's side. Three items in, one
+        API call out, identical timestamps — and the same code handles five hundred.</figcaption>
+    </figure>
+    <div class="expect two">
+      <div class="screen dark">
+        <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="ttl">Engine log — the happy path</span></div>
+        <div class="body">info  Webhook  3 item(s) received
+info  Sheets   appended <span class="b">3</span> row(s) in <span class="b">1</span> request(s)
+done  Sheets   <span class="g">3 item(s) in 241 ms</span>
+info  Docs     replaced <span class="b">6</span> placeholder(s)
+done  Docs     <span class="g">1 item(s) in 890 ms</span></div>
+      </div>
+      <div class="screen dark">
+        <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="ttl">Engine log — under pressure, and wrong</span></div>
+        <div class="body"><span class="y">warn  Sheets   429 — retrying in 1.2 s (1/4)</span>
+<span class="y">warn  Sheets   429 — retrying in 2.3 s (2/4)</span>
+done  Sheets   <span class="g">3 item(s) in 3 780 ms</span>
+<span class="d"># wrong scope:</span>
+<span class="er">error Gmail    This credential was not granted
+      the scope this node needs.
+      Reconnect it and tick the
+      missing permission.</span></div>
+      </div>
+    </div>
+
+    <div class="conn">
+      <h5>How this part connects to the others</h5>
+      <div class="hs">
+        <div class="hsbox"><span class="hsn">§2.5b credentials · §2.3b properties</span><span class="hsd">decrypt() · description</span></div>
+        <div class="hsar"><span>googleRequest()</span><i></i></div>
+        <div class="hsbox now"><span class="hsn">§2.6b — the Google nodes</span><span class="hsd">Sheets · Docs · Drive</span></div>
+        <div class="hsar"><span>items with json{}</span><i></i></div>
+        <div class="hsbox"><span class="hsn">§2.4b triggers · §2.6c Gmail</span><span class="hsd">and the Week 14 demo workflow</span></div>
+      </div>
+      <div class="wires">
+      <span class="wl">Receives</span><span class="wv">a credential id from the workflow JSON, and the property vocabulary of §2.3b. It never touches OAuth itself — that is entirely §2.5b&#8217;s job.</span>
+      <span class="wl">Hands out</span><span class="wv"><code>googleRequest(credentialId, url, options)</code> — the only function any Google node calls. Refresh, retry, rate limits and scope errors live inside it, once, for all four nodes.</span>
+      <span class="wl">Hands on</span><span class="wv">ordinary items <code>{ json, pairedItem }</code> to the next node, exactly as §2.1b requires. A Sheets node and an HTTP node are indistinguishable to the engine.</span>
+      <span class="wl">Seam to agree</span><span class="wv">who owns <code>request.js</code>. D1 writes it in Week 9 and freezes it; D2, A1 and A2 then write four nodes against it in parallel without one merge conflict.</span>
+      </div>
+    </div>
+
     <div class="chk"><b>Check it works</b>Webhook → Sheets append puts a row into a spreadsheet you have
-      open on screen, within about a second. Then Sheets read → Docs replace produces a filled document
-      in Drive.</div>
+      open on screen, within about a second. Send <b>three</b> items and confirm the log says
+      <code>1 request(s)</code>, not three — that is the batching working. Then rename a column in the
+      sheet and confirm the new order is followed without touching any code. Finally, connect a
+      Sheets-only credential to the Gmail node and confirm you get the scope sentence, not a bare 403.</div>
   </div>
 </div>

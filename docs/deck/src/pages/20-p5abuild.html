@@ -5,6 +5,11 @@
   <div class="band"></div>
 
   <div class="stack">
+    <div class="where">
+      <span class="wl">Program</span><span class="wv">VS&nbsp;Code — see §1.10 for the window, §1.11 for the loop</span>
+      <span class="wl">Files</span><span class="wv"><code>apps/api/oauth.js</code>, <code>apps/api/crypto.js</code>, <code>schema.sql</code></span>
+      <span class="wl">Create them</span><span class="wv">In the Explorer, right-click <code>apps/api</code> → <span class="ui">New&nbsp;File</span> → type the name with its extension → paste → <span class="kbd">Ctrl&nbsp;S</span></span>
+    </div>
     <div class="bsteps">
       <div class="bstep"><div class="bn">1</div><div class="bb">
         <h4>Create the project and switch on the four APIs</h4>
@@ -41,69 +46,268 @@ https://your-domain.com/rest/oauth2-credential/callback   <span class="c"># add 
       </div></div>
 
       <div class="bstep"><div class="bn">4</div><div class="bb">
-        <h4>Send the user to Google</h4>
-        <div class="fwrap"><span class="fname">apps/api/oauth.js</span>
-<pre class="code" data-lang="js"><code>const SCOPES = {
-  googleSheets: 'https://www.googleapis.com/auth/spreadsheets',
-  googleDrive:  'https://www.googleapis.com/auth/drive.file',
-  googleDocs:   'https://www.googleapis.com/auth/documents',
-  gmail:        'https://www.googleapis.com/auth/gmail.send',
-};
+        <h4>Where the keys live</h4>
+        <div class="fwrap"><span class="fname">schema.sql — additions</span>
+<pre class="code" data-lang="sql"><code>CREATE TABLE IF NOT EXISTS credentials (
+  id         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name       text NOT NULL,
+  type       text NOT NULL,                 -- googleSheets | googleDrive | googleDocs | gmail
+  data       jsonb NOT NULL,                -- the ENCRYPTED envelope, never plain tokens
+  scopes     text[] NOT NULL DEFAULT '{}',
+  expires_at timestamptz,                   -- when the short-lived access token dies
+  created_at timestamptz NOT NULL DEFAULT now()
+);
 
-app.get('/rest/oauth2-credential/auth', (req, res) => {
-  const url = 'https://accounts.google.com/o/oauth2/v2/auth?' + new URLSearchParams({
-    client_id:     process.env.GOOGLE_CLIENT_ID,
-    redirect_uri:  `${process.env.BASE_URL}/rest/oauth2-credential/callback`,
-    response_type: 'code',
-    scope:         SCOPES[req.query.type],
-    access_type:   'offline',   // REQUIRED, or no long-lived key comes back
-    prompt:        'consent',   // REQUIRED when re-authorising
-    state:         req.query.credentialId,
-  });
-  res.redirect(url);
-});</code></pre></div>
+-- a one-use, short-lived note proving the browser that comes back is the one we sent
+CREATE TABLE IF NOT EXISTS oauth_states (
+  state         text PRIMARY KEY,
+  credential_id uuid NOT NULL REFERENCES credentials(id) ON DELETE CASCADE,
+  expires_at    timestamptz NOT NULL
+);</code></pre></div>
       </div></div>
 
       <div class="bstep"><div class="bn">5</div><div class="bb">
-        <h4>Trade the code for keys, and store them scrambled</h4>
-        <div class="fwrap"><span class="fname">apps/api/oauth.js — continued</span>
-<pre class="code" data-lang="js"><code>app.get('/rest/oauth2-credential/callback', async (req, res) => {
-  const r = await fetch('https://oauth2.googleapis.com/token', {
-    method: 'POST',
-    headers: { 'content-type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      code:          req.query.code,
-      client_id:     process.env.GOOGLE_CLIENT_ID,
-      client_secret: process.env.GOOGLE_CLIENT_SECRET,
-      redirect_uri:  `${process.env.BASE_URL}/rest/oauth2-credential/callback`,
-      grant_type:    'authorization_code',
-    }),
-  });
-  const tokens = await r.json();          // { access_token, refresh_token, expires_in }
-  await saveCredential(req.query.state, encrypt(JSON.stringify(tokens)));
-  res.send('&lt;p&gt;Connected. You can close this window.&lt;/p&gt;');
-});</code></pre></div>
-        <div class="fwrap"><span class="fname">apps/api/crypto.js — no library needed</span>
+        <h4>Encryption you can trust, in twenty-five lines</h4>
+        <div class="fwrap"><span class="fname">apps/api/crypto.js</span>
 <pre class="code" data-lang="js"><code>import crypto from 'node:crypto';
-const key = Buffer.from(process.env.ENCRYPTION_KEY, 'hex');    // 32 bytes
 
+const raw = process.env.ENCRYPTION_KEY ?? '';
+if (!/^[0-9a-f]{64}$/i.test(raw)) {
+  console.error('ENCRYPTION_KEY must be exactly 64 hex characters (32 bytes).');
+  console.error("Generate one:  node -e \\"console.log(crypto.randomBytes(32).toString('hex'))\\"");
+  process.exit(1);                      // fail at boot, not at 2 a.m. during the demo
+}
+const key = Buffer.from(raw, 'hex');
+
+// version the envelope: if we ever change algorithm, old rows still decrypt
 export function encrypt(text) {
   const iv = crypto.randomBytes(12);
   const c  = crypto.createCipheriv('aes-256-gcm', key, iv);
-  return { data: Buffer.concat([c.update(text, 'utf8'), c.final()]), iv, tag: c.getAuthTag() };
+  const data = Buffer.concat([c.update(String(text), 'utf8'), c.final()]);
+  return { v: 1, iv: iv.toString('base64'), tag: c.getAuthTag().toString('base64'),
+           data: data.toString('base64') };
 }
-export function decrypt({ data, iv, tag }) {
-  const d = crypto.createDecipheriv('aes-256-gcm', key, iv);
-  d.setAuthTag(tag);
-  return Buffer.concat([d.update(data), d.final()]).toString('utf8');
+
+export function decrypt(envelope) {
+  if (!envelope || envelope.v !== 1) throw new Error('Unknown credential format');
+  const d = crypto.createDecipheriv('aes-256-gcm', key, Buffer.from(envelope.iv, 'base64'));
+  d.setAuthTag(Buffer.from(envelope.tag, 'base64'));
+  try {
+    return Buffer.concat([d.update(Buffer.from(envelope.data, 'base64')), d.final()]).toString('utf8');
+  } catch {
+    throw new Error('Credential could not be decrypted — has ENCRYPTION_KEY changed?');
+  }
 }</code></pre></div>
+        <div class="tbox"><b>GCM</b> — the "authenticated" mode of AES. It does not only hide the token,
+          it detects tampering: change one byte in the database and <code>final()</code> throws instead of
+          quietly returning rubbish. That is the whole reason for the <code>tag</code> field.</div>
+      </div></div>
+
+      <div class="bstep"><div class="bn">6</div><div class="bb">
+        <h4>Send the user to Google — with a state nobody can forge</h4>
+        <div class="fwrap"><span class="fname">apps/api/oauth.js</span>
+<pre class="code" data-lang="js"><code>import crypto from 'node:crypto';
+import { db } from './db.js';
+import { encrypt, decrypt } from './crypto.js';
+
+const SCOPES = {
+  googleSheets: ['https://www.googleapis.com/auth/spreadsheets'],
+  googleDrive:  ['https://www.googleapis.com/auth/drive.file'],
+  googleDocs:   ['https://www.googleapis.com/auth/documents'],
+  gmail:        ['https://www.googleapis.com/auth/gmail.send'],
+};
+const REDIRECT = () =&gt; `${process.env.BASE_URL}/rest/oauth2-credential/callback`;
+
+app.get('/rest/oauth2-credential/auth', route(async (req, res) =&gt; {
+  const { type, credentialId } = req.query;
+  if (!SCOPES[type]) throw new HttpError(400, `Unknown credential type "${type}"`);
+
+  // one-use random state, stored with a 10-minute life. This is the CSRF defence:
+  // a callback carrying a state we did not issue is thrown away.
+  const state = crypto.randomBytes(24).toString('base64url');
+  await db.query("INSERT INTO oauth_states (state, credential_id, expires_at) "
+               + "VALUES ($1,$2, now() + interval '10 minutes')", [state, credentialId]);
+
+  res.redirect('https://accounts.google.com/o/oauth2/v2/auth?' + new URLSearchParams({
+    client_id:     process.env.GOOGLE_CLIENT_ID,
+    redirect_uri:  REDIRECT(),
+    response_type: 'code',
+    scope:         SCOPES[type].join(' '),
+    access_type:   'offline',   // REQUIRED, or no long-lived key comes back
+    prompt:        'consent',   // REQUIRED when re-authorising
+    include_granted_scopes: 'true',
+    state,
+  }));
+}));</code></pre></div>
+      </div></div>
+
+      <div class="bstep"><div class="bn">7</div><div class="bb">
+        <h4>Trade the code for keys, and store them scrambled</h4>
+        <div class="fwrap"><span class="fname">apps/api/oauth.js — continued</span>
+<pre class="code" data-lang="js"><code>app.get('/rest/oauth2-credential/callback', route(async (req, res) =&gt; {
+  // the user pressed Cancel, or Google refused — say so in words, not a stack trace
+  if (req.query.error)
+    return res.status(400).send(page('Not connected',
+      req.query.error === 'access_denied'
+        ? 'You pressed Cancel on Google’s screen. Nothing was saved.'
+        : `Google said: ${req.query.error}`));
+
+  const { rows: [note] } = await db.query(
+    'DELETE FROM oauth_states WHERE state = $1 AND expires_at &gt; now() RETURNING credential_id',
+    [String(req.query.state ?? '')]);            // DELETE…RETURNING makes it one-use, atomically
+  if (!note) return res.status(400).send(page('Not connected',
+    'This link has expired or was not started here. Press Connect again.'));
+
+  const r = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded' },
+    signal: AbortSignal.timeout(15_000),
+    body: new URLSearchParams({
+      code:          String(req.query.code ?? ''),
+      client_id:     process.env.GOOGLE_CLIENT_ID,
+      client_secret: process.env.GOOGLE_CLIENT_SECRET,
+      redirect_uri:  REDIRECT(),
+      grant_type:    'authorization_code',
+    }),
+  });
+  const tokens = await r.json();     // { access_token, refresh_token, expires_in, scope }
+
+  if (!r.ok) return res.status(502).send(page('Google refused',
+    `${tokens.error}: ${tokens.error_description ?? ''}`));
+
+  // the single most common Phase 5 bug, caught here instead of in three days' time
+  if (!tokens.refresh_token) return res.status(400).send(page('Half-connected',
+    'Google did not send a refresh token. Remove this app at myaccount.google.com/permissions '
+    + 'and press Connect again — access_type=offline only returns one on a fresh consent.'));
+
+  await db.query('UPDATE credentials SET data = $1, scopes = $2, expires_at = $3 WHERE id = $4',
+    [encrypt(JSON.stringify(tokens)), (tokens.scope ?? '').split(' '),
+     new Date(Date.now() + tokens.expires_in * 1000), note.credential_id]);
+
+  res.send(page('Connected', 'You can close this window.'));
+}));
+
+const page = (title, body) =&gt;
+  `&lt;!doctype html&gt;&lt;meta charset="utf-8"&gt;&lt;title&gt;${title}&lt;/title&gt;
+   &lt;body style="font:16px system-ui;padding:3rem;max-width:34rem"&gt;
+   &lt;h1 style="font-size:1.3rem"&gt;${title}&lt;/h1&gt;&lt;p&gt;${body}&lt;/p&gt;&lt;/body&gt;`;</code></pre></div>
         <div class="cmd"><span class="p">$</span> node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 <span class="c"># put the result in .env as ENCRYPTION_KEY — never commit it</span></div>
+        <div class="warn"><b>Testing-mode refresh tokens expire after seven days.</b> Put a reminder in
+          the group chat for the morning of the demo: press Connect once on each credential. It takes
+          forty seconds and it has ended more student demos than any bug.</div>
       </div></div>
     </div>
 
+    <div class="exhead"><b>What you should see</b><i></i></div>
+    <figure>
+      <svg viewBox="0 0 760 210" xmlns="http://www.w3.org/2000/svg">
+        <rect x="4" y="18" width="240" height="184" rx="8" fill="#ffffff" stroke="#cfdae2"/>
+        <text x="4" y="12" class="e" style="fill:#0a6a62">1 · GOOGLE&#8217;S WARNING</text>
+        <rect x="4" y="18" width="240" height="24" rx="8" fill="#f1f5f8"/>
+        <text x="18" y="35" class="s2">accounts.google.com</text>
+        <text x="18" y="64" class="t">Google hasn&#8217;t verified</text>
+        <text x="18" y="80" class="t">this app</text>
+        <text x="18" y="102" class="s">You are a test user, so this is</text>
+        <text x="18" y="116" class="s">expected. Click Advanced, then</text>
+        <text x="18" y="130" class="s">&#8220;Go to AI Automation Platform&#8221;.</text>
+        <rect x="18" y="144" width="80" height="22" rx="4" fill="#ffffff" stroke="#b9c6d2"/>
+        <text x="34" y="159" class="s2">Advanced</text>
+        <rect x="108" y="144" width="80" height="22" rx="4" fill="#0a7a70"/>
+        <text x="134" y="159" class="s" style="fill:#ffffff">Back</text>
+        <text x="18" y="188" class="s">Not a bug. Not a mistake.</text>
+
+        <rect x="260" y="18" width="240" height="184" rx="8" fill="#ffffff" stroke="#cfdae2"/>
+        <text x="260" y="12" class="e" style="fill:#0a6a62">2 · THE CONSENT SCREEN</text>
+        <rect x="260" y="18" width="240" height="24" rx="8" fill="#f1f5f8"/>
+        <text x="274" y="35" class="s2">accounts.google.com</text>
+        <text x="274" y="64" class="t">AI Automation Platform</text>
+        <text x="274" y="84" class="s">wants access to your Google</text>
+        <text x="274" y="98" class="s">Account</text>
+        <rect x="274" y="108" width="212" height="24" rx="5" fill="#dcf0ee" stroke="#8cc8c0"/>
+        <text x="284" y="124" class="s" style="fill:#0a5f58">See and edit your spreadsheets</text>
+        <rect x="274" y="136" width="212" height="24" rx="5" fill="#dcf0ee" stroke="#8cc8c0"/>
+        <text x="284" y="152" class="s" style="fill:#0a5f58">Send email on your behalf</text>
+        <rect x="274" y="168" width="70" height="22" rx="4" fill="#ffffff" stroke="#b9c6d2"/>
+        <text x="292" y="183" class="s2">Cancel</text>
+        <rect x="352" y="168" width="70" height="22" rx="4" fill="#0a7a70"/>
+        <text x="374" y="183" class="s" style="fill:#ffffff">Allow</text>
+
+        <rect x="516" y="18" width="240" height="184" rx="8" fill="#ffffff" stroke="#cfdae2"/>
+        <text x="516" y="12" class="e" style="fill:#0a6a62">3 · BACK IN OUR EDITOR</text>
+        <rect x="516" y="18" width="240" height="24" rx="8" fill="#f1f5f8"/>
+        <text x="530" y="35" class="s2">localhost:5173/credentials</text>
+        <rect x="530" y="52" width="212" height="40" rx="6" fill="#ffffff" stroke="#dfe7ec"/>
+        <text x="542" y="70" class="s2">Sheets &#8212; group account</text>
+        <rect x="542" y="75" width="76" height="17" rx="8" fill="#e6f2ea" stroke="#1f7a4d"/>
+        <text x="551" y="87" class="s" style="fill:#186340">Connected</text>
+        <text x="626" y="87" class="s">exp. 59 min</text>
+        <rect x="530" y="100" width="212" height="40" rx="6" fill="#ffffff" stroke="#dfe7ec"/>
+        <text x="542" y="118" class="s2">Gmail &#8212; group account</text>
+        <rect x="542" y="123" width="76" height="17" rx="8" fill="#e6f2ea" stroke="#1f7a4d"/>
+        <text x="551" y="135" class="s" style="fill:#186340">Connected</text>
+        <text x="626" y="135" class="s">exp. 59 min</text>
+        <rect x="530" y="148" width="212" height="40" rx="6" fill="#fdf6f5" stroke="#eec8c4"/>
+        <text x="542" y="166" class="s2">Docs &#8212; personal</text>
+        <rect x="542" y="171" width="112" height="17" rx="8" fill="#fbeae8" stroke="#c2413c"/>
+        <text x="551" y="183" class="s" style="fill:#a03a35">Reconnect (7 d)</text>
+      </svg>
+      <figcaption><b>Figure @.</b> The whole round trip, as the user sees it. Panel 1 always appears while
+        the app is in Testing mode — expect it, and tell your demonstrator to expect it too.</figcaption>
+    </figure>
+    <div class="expect two">
+      <div class="screen dark">
+        <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="ttl">psql — what is actually stored</span></div>
+        <div class="body"><span class="pr">$</span> psql $DATABASE_URL -c \
+   'SELECT name, type, scopes, data FROM credentials'
+
+ name           | type         | scopes
+----------------+--------------+-------------
+ Sheets — group | googleSheets | {…spreadsheets}
+
+ data
+------------------------------------------
+ {"v":1,"iv":"<span class="d">9Gk2…</span>","tag":"<span class="d">7bQ…</span>",
+  "data":"<span class="d">xR1p8vTe…384 more bytes…</span>"}
+<span class="g">✓ no readable token anywhere in the row</span></div>
+      </div>
+      <div class="screen dark">
+        <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="ttl">Terminal — the four ways it can fail</span></div>
+        <div class="body"><span class="d"># pressed Cancel on Google</span>
+<span class="er">400</span> You pressed Cancel on Google&#8217;s screen.
+<span class="d"># came back 11 minutes later</span>
+<span class="er">400</span> This link has expired or was not
+    started here. Press Connect again.
+<span class="d"># already approved once before</span>
+<span class="er">400</span> Google did not send a refresh token.
+    Remove the app at myaccount.google.
+    com/permissions and try again.
+<span class="d"># ENCRYPTION_KEY was regenerated</span>
+<span class="er">500</span> Credential could not be decrypted —
+    has ENCRYPTION_KEY changed?</div>
+      </div>
+    </div>
+
+    <div class="conn">
+      <h5>How this part connects to the others</h5>
+      <div class="hs">
+        <div class="hsbox"><span class="hsn">§2.2b — the Express app</span><span class="hsd">route() · HttpError · db</span></div>
+        <div class="hsar"><span>two routes</span><i></i></div>
+        <div class="hsbox now"><span class="hsn">§2.5b — the permission round trip</span><span class="hsd">credentials · oauth_states</span></div>
+        <div class="hsar"><span>encrypted tokens</span><i></i></div>
+        <div class="hsbox"><span class="hsn">§2.6b / §2.6c — every Google node</span><span class="hsd">googleRequest()</span></div>
+      </div>
+      <div class="wires">
+      <span class="wl">Receives</span><span class="wv">the same Express app, the same <code>route()</code> wrapper and the same error middleware as §2.2b. OAuth adds two routes, not a second server.</span>
+      <span class="wl">Hands on</span><span class="wv">a row in <code>credentials</code> holding an encrypted envelope. <b>Nothing downstream ever sees a stored token</b> — §2.6b asks for one and is handed a fresh access token.</span>
+      <span class="wl">Shared by all</span><span class="wv"><code>crypto.js</code>. Any future credential — an API key, a database password — reuses <code>encrypt()</code> and <code>decrypt()</code> unchanged.</span>
+      <span class="wl">Seam to agree</span><span class="wv"><code>node.credentials.id</code> on the workflow JSON. B1/B2 put the picker in the sidebar, D1 reads it in the node, C1 stores it: one field name, three people, agreed in Week 9.</span>
+      </div>
+    </div>
+
     <div class="chk"><b>Check it works</b>Press Connect, approve on Google's screen, and the credential
-      row appears with unreadable bytes in it. Then call a Sheets endpoint with the decrypted access
-      token and get a 200 back.</div>
+      row appears with unreadable bytes in it. Then deliberately reproduce all four failures on the
+      right — especially the missing refresh token, because it <em>will</em> happen to somebody in your
+      group in Week 9 and the message above is what saves them an afternoon.</div>
   </div>
 </div>

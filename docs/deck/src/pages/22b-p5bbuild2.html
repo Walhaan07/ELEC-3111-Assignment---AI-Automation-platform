@@ -5,91 +5,293 @@
   <div class="band"></div>
 
   <div class="stack">
+    <div class="where">
+      <span class="wl">Program</span><span class="wv">VS&nbsp;Code — see §1.10 for the window, §1.11 for the loop</span>
+      <span class="wl">Files</span><span class="wv"><code>packages/nodes/google/gmail.js</code>, <code>core/code.js</code>, <code>ai/anthropic.js</code></span>
+      <span class="wl">Create them</span><span class="wv">In the Explorer, right-click <code>packages/nodes</code> → <span class="ui">New&nbsp;File</span> → type the name with its extension → paste → <span class="kbd">Ctrl&nbsp;S</span></span>
+    </div>
     <div class="bsteps">
       <div class="bstep"><div class="bn">5</div><div class="bb">
         <h4>Gmail — build the message by hand, then base64url it</h4>
-        <p>This is the only genuinely fiddly node. Knowing that in advance stops it feeling like failure.</p>
+        <p>This is the only genuinely fiddly node. Knowing that in advance stops it feeling like failure.
+          Three things bite: non-English characters in the subject, addresses that are not addresses,
+          and attachments over Gmail's limit.</p>
         <div class="fwrap"><span class="fname">packages/nodes/google/gmail.js</span>
-<pre class="code" data-lang="js"><code>function buildMime({ to, subject, html, attachment }) {
-  const b = 'x' + crypto.randomUUID();
-  const head =
-    `To: ${to}\r\nSubject: ${subject}\r\nMIME-Version: 1.0\r\n` +
-    `Content-Type: multipart/mixed; boundary="${b}"\r\n\r\n`;
-  const bodyPart =
-    `--${b}\r\nContent-Type: text/html; charset="UTF-8"\r\n\r\n${html}\r\n`;
-  const filePart = attachment
-    ? `--${b}\r\nContent-Type: ${attachment.mimeType}\r\n` +
-      `Content-Disposition: attachment; filename="${attachment.fileName}"\r\n` +
-      `Content-Transfer-Encoding: base64\r\n\r\n${attachment.data}\r\n`
-    : '';
-  return head + bodyPart + filePart + `--${b}--`;
+<pre class="code" data-lang="js"><code>const MAX_MESSAGE = 35 * 1024 * 1024;          // Gmail's hard limit for a send
+
+// "Résumé" in a Subject: header is illegal ASCII. RFC 2047 is how you smuggle it through.
+const encodeHeader = (s) =&gt; /^[\x20-\x7E]*$/.test(s)
+  ? s
+  : `=?UTF-8?B?${Buffer.from(s, 'utf8').toString('base64')}?=`;
+
+const isEmail = (s) =&gt; /^[^\s@,;]+@[^\s@,;]+\.[^\s@,;]+$/.test(String(s).trim());
+
+function addressList(value, field) {
+  const list = String(value ?? '').split(',').map(s =&gt; s.trim()).filter(Boolean);
+  if (list.length === 0) throw new Error(`${field} is empty`);
+  const bad = list.filter(a =&gt; !isEmail(a));
+  if (bad.length) throw new Error(`${field} contains an invalid address: ${bad[0]}`);
+  return list.join(', ');
 }
 
-const base64url = (s) => Buffer.from(s).toString('base64')
+export function buildMime({ to, cc, subject, html, text, attachments = [], inReplyTo }) {
+  const b = 'x' + crypto.randomUUID();
+  const headers = [
+    `To: ${addressList(to, 'To')}`,
+    cc ? `Cc: ${addressList(cc, 'Cc')}` : null,
+    `Subject: ${encodeHeader(subject ?? '(no subject)')}`,
+    inReplyTo ? `In-Reply-To: ${inReplyTo}` : null,          // makes it a reply, not a new thread
+    inReplyTo ? `References: ${inReplyTo}` : null,
+    'MIME-Version: 1.0',
+    `Content-Type: multipart/mixed; boundary="${b}"`,
+  ].filter(Boolean).join('\r\n');
+
+  const bodyPart =
+    `--${b}\r\nContent-Type: text/html; charset="UTF-8"\r\n`
+    + `Content-Transfer-Encoding: base64\r\n\r\n`
+    + `${Buffer.from(html ?? text ?? '', 'utf8').toString('base64')}\r\n`;
+
+  const fileParts = attachments.map(a =&gt;
+    `--${b}\r\nContent-Type: ${a.mimeType || 'application/octet-stream'}\r\n`
+    + `Content-Disposition: attachment; filename="${a.fileName.replace(/"/g, '')}"\r\n`
+    + `Content-Transfer-Encoding: base64\r\n\r\n${a.data}\r\n`).join('');
+
+  const mime = `${headers}\r\n\r\n${bodyPart}${fileParts}--${b}--\r\n`;
+  if (Buffer.byteLength(mime) &gt; MAX_MESSAGE)
+    throw new Error('That message is over Gmail’s 35 MB limit — put the file in Drive and link it');
+  return mime;
+}
+
+const base64url = (s) =&gt; Buffer.from(s).toString('base64')
   .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 
-await googleRequest(ctx.credentialId,
-  'https://gmail.googleapis.com/gmail/v1/users/me/messages/send',
-  { method: 'POST', body: JSON.stringify({ raw: base64url(buildMime(fields)) }) });</code></pre></div>
+// dry-run is a real feature: it renders and validates without sending, so the whole
+// workflow can be tested a hundred times without a hundred emails to a real person
+if (ctx.getNodeParameter('dryRun', i, false)) {
+  out.push({ json: { dryRun: true, preview: mime.slice(0, 400) }, pairedItem: i });
+} else {
+  const sent = await googleRequest(ctx.credentialId,
+    'https://gmail.googleapis.com/gmail/v1/users/me/messages/send',
+    { method: 'POST', body: JSON.stringify({ raw: base64url(mime),
+                                             threadId: ctx.getNodeParameter('threadId', i, undefined) }) });
+  out.push({ json: { messageId: sent.id, threadId: sent.threadId }, pairedItem: i });
+}</code></pre></div>
       </div></div>
 
       <div class="bstep"><div class="bn">6</div><div class="bb">
-        <h4>The Code node — a thread we can stop</h4>
+        <h4>The Code node — a thread we can stop, and starve</h4>
+        <p>Two limits, not one. A timeout stops slow code; only a <em>memory</em> limit stops
+          <code>const a = []; while (true) a.push('x')</code> from taking the server with it.</p>
         <div class="fwrap"><span class="fname">packages/nodes/core/code.js</span>
 <pre class="code" data-lang="js"><code>import { Worker } from 'node:worker_threads';
 
-export function runUserCode(code, items, timeoutMs = 5000) {
-  return new Promise((resolve, reject) => {
-    const worker = new Worker(`
-      const vm = require('node:vm');
-      const { parentPort, workerData } = require('node:worker_threads');
-      const sandbox = { items: workerData.items, console: { log() {} } };
-      try {
-        const result = vm.runInNewContext(workerData.code, vm.createContext(sandbox),
-                                          { timeout: 2000 });
-        parentPort.postMessage({ ok: true, result });
-      } catch (e) { parentPort.postMessage({ ok: false, error: String(e) }); }
-    `, { eval: true, workerData: { code, items } });
+const WORKER = `
+  const vm = require('node:vm');
+  const { parentPort, workerData } = require('node:worker_threads');
+  const logs = [];
+  const sandbox = {
+    items: structuredClone(workerData.items),      // a copy: user code cannot mutate ours
+    console: { log: (...a) => logs.push(a.map(String).join(' ')).slice(0, 100) },
+    JSON, Math, Date, String, Number, Boolean, Array, Object, RegExp,
+  };
+  try {
+    const result = vm.runInNewContext(workerData.code, vm.createContext(sandbox),
+                                      { timeout: workerData.timeoutMs, displayErrors: true });
+    parentPort.postMessage({ ok: true, result, logs });
+  } catch (e) {
+    parentPort.postMessage({ ok: false, error: e && e.message ? e.message : String(e), logs });
+  }
+`;
 
-    const timer = setTimeout(() => { worker.terminate();
-      reject(new Error('Code node timed out after 5s')); }, timeoutMs);
+export function runUserCode(code, items, { timeoutMs = 5000, memoryMb = 64 } = {}) {
+  return new Promise((resolve, reject) =&gt; {
+    if (typeof code !== 'string' || code.trim() === '')
+      return reject(new Error('The Code node is empty'));
 
-    worker.on('message', (m) => { clearTimeout(timer);
-      m.ok ? resolve(m.result) : reject(new Error(m.error)); });
-    worker.on('error', (e) => { clearTimeout(timer); reject(e); });
+    const worker = new Worker(WORKER, {
+      eval: true,
+      workerData: { code, items, timeoutMs },
+      resourceLimits: { maxOldGenerationSizeMb: memoryMb, maxYoungGenerationSizeMb: 16 },
+      stdout: true, stderr: true,          // user code cannot spam our server log
+    });
+
+    let settled = false;
+    const finish = (fn, value) =&gt; { if (settled) return; settled = true;
+                                    clearTimeout(timer); worker.terminate(); fn(value); };
+
+    // the vm timeout can be beaten by a tight async loop, so the thread gets a hard deadline too
+    const timer = setTimeout(
+      () =&gt; finish(reject, new Error(`Code node timed out after ${timeoutMs} ms`)),
+      timeoutMs + 500);
+
+    worker.on('message', (m) =&gt; {
+      if (!m.ok) return finish(reject, new Error(`Code node: ${m.error}`));
+      if (!Array.isArray(m.result))
+        return finish(reject, new Error('Code must return an array of items, e.g. return items;'));
+      finish(resolve, { items: m.result.map(x =&gt; ('json' in (x ?? {}) ? x : { json: x })),
+                        logs: m.logs });
+    });
+    worker.on('error', (e) =&gt; finish(reject,
+      /heap out of memory|Worker terminated/i.test(e.message)
+        ? new Error(`Code node used more than ${memoryMb} MB and was stopped`)
+        : e));
+    worker.on('exit', (code) =&gt; { if (!settled &amp;&amp; code !== 0)
+      finish(reject, new Error(`Code node exited unexpectedly (${code})`)); });
   });
 }</code></pre></div>
         <p><b>For the report:</b> run this snippet inside the Code node and show it reaching the host —
-          then explain what a production platform uses instead. It is the strongest security content
-          available to us for about an hour of work.</p>
+          then explain what a production platform uses instead (<code>isolated-vm</code>, or a container
+          per execution). It is the strongest security content available to us for about an hour of work.</p>
         <div class="fwrap"><span class="fname">the escape, for the report only</span>
 <pre class="code" data-lang="js"><code>return this.constructor.constructor('return process.version')();   // vm is not a sandbox</code></pre></div>
       </div></div>
 
       <div class="bstep"><div class="bn">7</div><div class="bb">
-        <h4>The AI node — one request</h4>
+        <h4>The AI node — one request, and everything that can go wrong with it</h4>
         <div class="fwrap"><span class="fname">packages/nodes/ai/anthropic.js</span>
-<pre class="code" data-lang="js"><code>const res = await fetch('https://api.anthropic.com/v1/messages', {
-  method: 'POST',
-  headers: { 'x-api-key': credentials.apiKey, 'anthropic-version': '2023-06-01',
-             'content-type': 'application/json' },
-  body: JSON.stringify({
-    model:      ctx.getNodeParameter('model', i),
-    max_tokens: ctx.getNodeParameter('maxTokens', i),
-    system:     ctx.getNodeParameter('systemPrompt', i),
-    messages: [{ role: 'user', content: ctx.getNodeParameter('userPrompt', i) }],
-  }),
-});
-const data = await res.json();
-out.push({ json: { text: data.content[0].text } });</code></pre></div>
+<pre class="code" data-lang="js"><code>const MODELS = ['claude-opus-5', 'claude-sonnet-5', 'claude-haiku-4-5-20251001'];
+
+async function ask(ctx, i) {
+  const prompt = String(ctx.getNodeParameter('userPrompt', i));
+  if (prompt.length &gt; 20_000) throw new Error('Prompt is too long — trim the data you send in');
+
+  const body = {
+    model:      ctx.getNodeParameter('model', i, MODELS[1]),
+    max_tokens: Math.min(Math.max(ctx.getNodeParameter('maxTokens', i, 512), 1), 4096),
+    system:     ctx.getNodeParameter('systemPrompt', i, ''),
+    messages:  [{ role: 'user', content: prompt }],
+  };
+
+  for (let attempt = 0; attempt &lt; 4; attempt++) {
+    const res = await fetch(`${ctx.credentials.baseUrl ?? 'https://api.anthropic.com'}/v1/messages`, {
+      method: 'POST', signal: AbortSignal.timeout(60_000),
+      headers: { 'x-api-key': ctx.credentials.apiKey, 'anthropic-version': '2023-06-01',
+                 'content-type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+
+    if (res.status === 429 || res.status === 529 || res.status &gt;= 500) {
+      const wait = Number(res.headers.get('retry-after')) * 1000 || 2 ** attempt * 1000;
+      ctx.logger.info(`model busy (${res.status}) — waiting ${wait} ms`);
+      await new Promise(r =&gt; setTimeout(r, wait));
+      continue;
+    }
+    const data = await res.json();
+    if (!res.ok) throw new Error(`AI ${res.status}: ${data.error?.message ?? 'unknown error'}`);
+    if (data.stop_reason === 'max_tokens')
+      ctx.logger.info('answer was cut off — raise Max tokens');
+
+    const text = (data.content ?? []).filter(c =&gt; c.type === 'text').map(c =&gt; c.text).join('');
+    return { text, usage: data.usage, model: data.model, stopReason: data.stop_reason };
+  }
+  throw new Error('The model stayed busy after four attempts');
+}
+
+// asking for JSON and getting prose is the classic failure. Ask, then check, then repair once.
+export function parseJsonAnswer(text, expectedKeys = []) {
+  const block = text.match(/```(?:json)?\s*([\s\S]*?)```/)?.[1] ?? text;
+  const slice = block.slice(block.indexOf('{'), block.lastIndexOf('}') + 1);
+  let parsed;
+  try { parsed = JSON.parse(slice); }
+  catch { throw new Error(`The model did not return JSON. It said: ${text.slice(0, 120)}…`); }
+  const missing = expectedKeys.filter(k =&gt; !(k in parsed));
+  if (missing.length) throw new Error(`The answer is missing: ${missing.join(', ')}`);
+  return parsed;
+}</code></pre></div>
         <p>Because <code>userPrompt</code> runs through the expression resolver, somebody can type
-          <code>Classify this: {{ $json.body.message }}. Answer only urgent or routine.</code> in the
-          sidebar and feed the answer straight into an IF node. Point a second credential at
-          <code>http://localhost:11434/v1</code> to use a local Ollama model instead.</p>
+          <code>Classify this: {{ $json.body.message }}. Reply as JSON: {"urgency":"urgent|routine"}</code>
+          in the sidebar and feed the answer straight into an IF node. Point a second credential's
+          <code>baseUrl</code> at <code>http://localhost:11434/v1</code> to use a local Ollama model
+          instead — the same node, no code change, and a good paragraph for the report.</p>
       </div></div>
     </div>
 
+    <div class="exhead"><b>What you should see</b><i></i></div>
+    <figure>
+      <div class="screen">
+        <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="url">mail.google.com/mail/u/0/#inbox</span></div>
+        <div class="body" style="padding:0">
+          <svg viewBox="0 0 760 132" xmlns="http://www.w3.org/2000/svg">
+            <rect x="0" y="0" width="760" height="132" fill="#ffffff"/>
+            <rect x="0" y="0" width="760" height="30" fill="#f4f7fa"/>
+            <line x1="0" y1="30" x2="760" y2="30" stroke="#dfe6ec"/>
+            <text x="14" y="20" class="e" style="fill:#3a4450">PRIMARY</text>
+            <rect x="620" y="7" width="126" height="19" rx="9" fill="#dcf0ee" stroke="#8cc8c0"/>
+            <text x="630" y="20" class="s" style="fill:#0a5f58">arrived in 1.9 s</text>
+
+            <rect x="0" y="30" width="4" height="34" fill="#0a7a70"/>
+            <text x="18" y="44" class="s2">AI Automation Platform</text>
+            <text x="18" y="58" class="s">Order 1042 flagged URGENT — Alice Nguyen, $42.00</text>
+            <text x="672" y="44" class="s">14:32</text>
+            <rect x="560" y="33" width="66" height="18" rx="9" fill="#fbeae8" stroke="#c2413c"/>
+            <text x="570" y="45" class="s" style="fill:#a03a35">urgent</text>
+            <line x1="0" y1="64" x2="760" y2="64" stroke="#eef2f6"/>
+
+            <text x="18" y="80" class="s2">AI Automation Platform</text>
+            <text x="18" y="94" class="s">Order 1041 received — Bilal Rahman, $17.50</text>
+            <text x="672" y="80" class="s">14:31</text>
+            <rect x="560" y="69" width="70" height="18" rx="9" fill="#e6f2ea" stroke="#1f7a4d"/>
+            <text x="566" y="81" class="s" style="fill:#186340">routine</text>
+            <line x1="0" y1="100" x2="760" y2="100" stroke="#eef2f6"/>
+
+            <rect x="0" y="104" width="760" height="28" fill="#f6faf9"/>
+            <text x="18" y="122" class="s" style="fill:#0a5f58">Two emails, two labels, one workflow — the AI node chose which template each got.</text>
+          </svg>
+        </div>
+      </div>
+      <figcaption><b>Figure @.</b> The end of the Week 14 demo, in the demonstrator's own inbox. The pill
+        on the right is the AI node's answer, carried through an IF node into two different email bodies.</figcaption>
+    </figure>
+    <div class="expect two">
+      <div class="screen dark">
+        <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="ttl">Engine log — the AI node</span></div>
+        <div class="body">info  AI       model busy (<span class="y">529</span>) — waiting 1000 ms
+done  AI       <span class="g">1 item(s) in 2 140 ms</span>
+      {"urgency":"<span class="b">urgent</span>",
+       "reason":"payment failed twice"}
+      usage: <span class="d">in 412 · out 38 tokens</span>
+done  IF       <span class="g">1 → branch 0 (true)</span>
+done  Gmail    <span class="g">messageId 18f2c… · thread 18f2c…</span></div>
+      </div>
+      <div class="screen dark">
+        <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="ttl">Engine log — every guard on this page</span></div>
+        <div class="body"><span class="er">Code node timed out after 5000 ms</span>
+<span class="er">Code node used more than 64 MB and
+  was stopped</span>
+<span class="er">Code must return an array of items,
+  e.g. return items;</span>
+<span class="er">To contains an invalid address: alice@</span>
+<span class="er">That message is over Gmail&#8217;s 35 MB
+  limit — put the file in Drive</span>
+<span class="er">The model did not return JSON. It
+  said: Sure! Here is the answer…</span></div>
+      </div>
+    </div>
+    <p class="exnote"><b>Every line on the right is a deliberate test</b>, not an accident. Run all six
+      before the demo and screenshot them: they are the evidence that the platform fails safely, which
+      is most of what "robust" means to a marker.</p>
+
+    <div class="conn">
+      <h5>How this part connects to the others</h5>
+      <div class="hs">
+        <div class="hsbox"><span class="hsn">§2.6b googleRequest() · §2.3b resolve()</span><span class="hsd">the shared helper</span></div>
+        <div class="hsar"><span>same helper</span><i></i></div>
+        <div class="hsbox now"><span class="hsn">§2.6c — Gmail · Code · AI</span><span class="hsd">the three hardest nodes</span></div>
+        <div class="hsar"><span>classified items</span><i></i></div>
+        <div class="hsbox"><span class="hsn">The Week 14 demo</span><span class="hsd">webhook → AI → IF → Gmail + Sheets</span></div>
+      </div>
+      <div class="wires">
+      <span class="wl">Receives</span><span class="wv">the Google helper for Gmail, and the expression resolver for the AI node&#8217;s prompt — which is what lets somebody type <code>{{ $json.body.message }}</code> into a prompt box in the sidebar.</span>
+      <span class="wl">Hands on</span><span class="wv">a <code>json</code> object the IF node of A2 branches on. The AI node does not know an IF node exists; it returns items, and §2.1b&#8217;s branch pruning does the rest.</span>
+      <span class="wl">Deliberately apart</span><span class="wv">the Code node is the only part that does <em>not</em> use the shared helper. It is a worker thread with its own memory limit, isolated on purpose, and §3.2b tests it on its own.</span>
+      <span class="wl">Seam to agree</span><span class="wv">the AI node&#8217;s output key. Everything downstream reads <code>$json.urgency</code>; change the prompt to emit <code>priority</code> and three workflows break silently. Put the key in the node&#8217;s default prompt.</span>
+      </div>
+    </div>
+
     <div class="chk"><b>Check it works</b>The Week 14 workflow runs end to end: a webhook arrives, the AI
-      classifies it, the IF routes it, a real email lands and a real row appears.</div>
+      classifies it, the IF routes it, a real email lands and a real row appears. Then turn on
+      <b>Dry run</b> on the Gmail node and confirm you can rehearse the whole thing fifty times without
+      sending anything. Finally paste <code>while(true){}</code> into the Code node and confirm the
+      server is still answering afterwards.</div>
   </div>
 </div>

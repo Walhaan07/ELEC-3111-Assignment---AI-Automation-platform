@@ -1,0 +1,134 @@
+<!-- ============================== 1.12 THE INTERFACE ============================== -->
+<div class="page" style="--acc:#087f99;--accs:#ddf0f4">
+  <div class="rh"><span>Part 1 · The big picture</span><span class="r">1.12 — What the interface should look like</span></div>
+  <div class="h-wrap"><span class="secno">1.12</span><h2>What the interface should look like</h2></div>
+  <div class="partline" style="background:linear-gradient(90deg,#0d72b4,#087f99,#0a7a70)"></div>
+  <div class="band-meta">
+    <div class="bm"><span class="lbl">Who builds this part</span>
+      <div class="who-chips"><span class="wc">B1</span><span class="wc">B2</span><span class="wc ghost">agreed with everyone in Week 5</span></div></div>
+    <div class="bm"><span class="lbl">What you need to know</span>
+      <p class="sk">CSS — spacing, borders, and one set of colour variables. No design experience: the numbers below are the design.</p></div>
+  </div>
+
+  <div class="stack">
+    <p class="lede">A marker sees the screen before they see the code. Four rules make it look considered:
+      <b>one accent colour, one spacing step, one corner radius, and no drop shadows except on the thing
+      being dragged.</b> Everything below follows from those.</p>
+
+    <figure>
+      <svg viewBox="0 0 760 350" xmlns="http://www.w3.org/2000/svg">
+        <rect x="10" y="24" width="740" height="316" rx="8" fill="#f7fafc" stroke="#c6d5dd" stroke-width="1.5"/>
+        <rect x="10" y="24" width="740" height="34" rx="8" fill="#ffffff"/>
+        <line x1="10" y1="58" x2="750" y2="58" stroke="#e2e9ee"/>
+        <rect x="24" y="34" width="14" height="14" rx="4" fill="#087f99"/>
+        <text x="48" y="46" class="t">New order handler</text>
+        <rect x="486" y="33" width="70" height="17" rx="9" fill="#e6f2ea" stroke="#1f7a4d"/>
+        <text x="497" y="45" class="s" style="fill:#1f7a4d">Active</text>
+        <rect x="566" y="33" width="58" height="17" rx="4" fill="#ffffff" stroke="#c6d5dd"/>
+        <text x="580" y="45" class="s">Save</text>
+        <rect x="632" y="33" width="102" height="17" rx="4" fill="#087f99"/>
+        <text x="660" y="45" class="s" style="fill:#ffffff">Run once</text>
+
+        <rect x="10" y="58" width="132" height="252" fill="#ffffff"/>
+        <line x1="142" y1="58" x2="142" y2="310" stroke="#e2e9ee"/>
+        <rect x="22" y="70" width="108" height="18" rx="4" fill="#f2f6f8" stroke="#dfe7ec"/>
+        <text x="30" y="83" class="s">Search nodes…</text>
+        <text x="22" y="106" class="e" style="fill:#066476">TRIGGERS</text>
+        <rect x="22" y="112" width="108" height="20" rx="5" fill="#ddf0f4" stroke="#a8d3dd"/>
+        <text x="32" y="126" class="s2">Webhook</text>
+        <rect x="22" y="136" width="108" height="20" rx="5" fill="#ddf0f4" stroke="#a8d3dd"/>
+        <text x="32" y="150" class="s2">Schedule</text>
+        <text x="22" y="176" class="e" style="fill:#066476">ACTIONS</text>
+        <rect x="22" y="182" width="108" height="20" rx="5" fill="#ffffff" stroke="#dfe7ec"/>
+        <text x="32" y="196" class="s2">HTTP Request</text>
+        <rect x="22" y="206" width="108" height="20" rx="5" fill="#ffffff" stroke="#dfe7ec"/>
+        <text x="32" y="220" class="s2">Google Sheets</text>
+        <rect x="22" y="230" width="108" height="20" rx="5" fill="#ffffff" stroke="#dfe7ec"/>
+        <text x="32" y="244" class="s2">Gmail</text>
+
+        <rect x="192" y="92" width="150" height="52" rx="10" fill="#ffffff" stroke="#dfe7ec" stroke-width="1.4"/>
+        <rect x="192" y="92" width="5" height="52" rx="2" fill="#0a7a70"/>
+        <text x="208" y="116" class="t">Webhook</text><text x="208" y="132" class="s">new-order</text>
+        <circle cx="342" cy="118" r="4" fill="#087f99"/>
+        <path d="M348 118 L386 118" stroke="#9fb3bd" fill="none"/>
+
+        <rect x="392" y="92" width="150" height="52" rx="10" fill="#ffffff" stroke="#087f99" stroke-width="2"/>
+        <rect x="392" y="92" width="5" height="52" rx="2" fill="#4b46c0"/>
+        <text x="408" y="116" class="t">AI</text><text x="408" y="132" class="s">classify urgency</text>
+        <circle cx="392" cy="118" r="4" fill="#9fb3bd"/>
+        <circle cx="542" cy="118" r="4" fill="#087f99"/>
+        <path d="M548 118 L586 118" stroke="#9fb3bd" fill="none"/>
+
+        <rect x="592" y="92" width="132" height="52" rx="10" fill="#ffffff" stroke="#dfe7ec" stroke-width="1.4"/>
+        <rect x="592" y="92" width="5" height="52" rx="2" fill="#1f7a4d"/>
+        <text x="608" y="116" class="t">IF</text><text x="608" y="132" class="s">urgent?</text>
+        <circle cx="592" cy="118" r="4" fill="#9fb3bd"/>
+
+        <rect x="192" y="180" width="150" height="52" rx="10" fill="#ffffff" stroke="#dfe7ec" stroke-width="1.4"/>
+        <rect x="192" y="180" width="5" height="52" rx="2" fill="#2a5fce"/>
+        <text x="208" y="204" class="t">Gmail</text><text x="208" y="220" class="s">alert the team</text>
+        <rect x="192" y="240" width="58" height="19" rx="9" fill="#e6f2ea"/>
+        <text x="202" y="253" class="s" style="fill:#1f7a4d">3 items</text>
+
+        <rect x="392" y="180" width="150" height="52" rx="10" fill="#ffffff" stroke="#c2413c" stroke-width="1.4"/>
+        <rect x="392" y="180" width="5" height="52" rx="2" fill="#0a7a70"/>
+        <text x="408" y="204" class="t">Sheets</text><text x="408" y="220" class="s">could not connect</text>
+        <rect x="392" y="240" width="48" height="19" rx="9" fill="#fbeae8"/>
+        <text x="402" y="253" class="s" style="fill:#a8352f">error</text>
+
+        <line x1="600" y1="58" x2="600" y2="310" stroke="#e2e9ee"/>
+        <rect x="600" y="58" width="150" height="252" fill="#ffffff"/>
+        <text x="612" y="176" class="e" style="fill:#066476">SETTINGS</text>
+        <text x="612" y="196" class="s">Model</text>
+        <rect x="612" y="202" width="126" height="18" rx="4" fill="#f7fafc" stroke="#dfe7ec"/>
+        <text x="620" y="215" class="s2">claude · fast</text>
+        <text x="612" y="238" class="s">Prompt</text>
+        <rect x="612" y="244" width="126" height="34" rx="4" fill="#f7fafc" stroke="#dfe7ec"/>
+        <text x="620" y="257" class="s2">Classify this:</text>
+        <text x="620" y="270" class="s2" style="fill:#0b6b63">{{ $json.body }}</text>
+
+        <line x1="10" y1="310" x2="750" y2="310" stroke="#e2e9ee"/>
+        <rect x="10" y="310" width="740" height="30" rx="8" fill="#ffffff"/>
+        <rect x="24" y="316" width="62" height="19" rx="9" fill="#e6f2ea"/>
+        <text x="33" y="329" class="s" style="fill:#1f7a4d">success</text>
+        <text x="96" y="329" class="s2">4 nodes · 3 items · 1.2 s</text>
+        <text x="620" y="329" class="s">last run 2 min ago</text>
+      </svg>
+      <figcaption><b>Figure @.</b> The whole editor. Palette left, canvas centre, settings right, one
+        status strip along the bottom. The selected node has a heavier border; a failed node has a red
+        one; item counts sit on the connection that produced them.</figcaption>
+    </figure>
+
+    <div class="tgrid2">
+      <div class="tbox"><span class="tname">The node card</span>
+        <p><b>150 × 52, radius 10, white, 1&nbsp;px border.</b> A 5&nbsp;px coloured stripe down the left
+          says which family it belongs to — trigger, transform, Google, AI, control flow.</p>
+        <p>Title 13&nbsp;px semibold; subtitle 11&nbsp;px muted, and the subtitle is always the setting
+          that matters most: the webhook path, the operation, the sheet name.</p></div>
+      <div class="tbox"><span class="tname">State, without a legend</span>
+        <p><b>Selected</b> = 2&nbsp;px accent border. <b>Running</b> = accent border plus a pulsing dot.
+          <b>Failed</b> = red border and a red pill. <b>Never ran</b> = no pill at all.</p>
+        <p>Item counts sit on the <em>connection</em>, not the node, because that is where the data
+          actually is — and it teaches the item model without a word of explanation.</p></div>
+    </div>
+
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th style="width:118px">Token</th><th style="width:110px">Value</th><th>Used for</th></tr></thead>
+        <tbody>
+          <tr><td class="term">--accent</td><td><code>#087f99</code></td><td>The Run button, selected borders, focus rings. One accent, nothing else.</td></tr>
+          <tr><td class="term">--ink / --muted</td><td><code>#14161a</code> / <code>#6b7686</code></td><td>Titles and subtitles. Never pure black, never lighter than the muted value.</td></tr>
+          <tr><td class="term">--line</td><td><code>#dfe7ec</code></td><td>Every border and divider in the app. One line colour only.</td></tr>
+          <tr><td class="term">--radius</td><td><code>10px</code> / <code>4px</code></td><td>Cards use 10, controls use 4. No other radii.</td></tr>
+          <tr><td class="term">--space</td><td><code>4 · 8 · 12 · 24</code></td><td>Every margin and padding is one of these four. This single rule does most of the work.</td></tr>
+          <tr><td class="term">status</td><td><code>#1f7a4d</code> / <code>#c2413c</code></td><td>Success and failure pills. Never used for anything decorative.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="call why"><b>How to make it look good without a designer</b>Pick the spacing from the four
+      values above and never invent a fifth. Give every interactive thing a visible <code>:focus</code>
+      ring in the accent colour. Keep one weight of border. And leave more empty space around the canvas
+      than feels necessary — crowding is what makes student projects look unfinished.</div>
+  </div>
+</div>

@@ -53,7 +53,9 @@ def highlight(code, lang):
 def paint(doc):
     def sub(m):
         lang = m.group(1)
-        return f'<pre class="code"><code>{highlight(m.group(2), lang)}</code></pre>'
+        # the fragments are HTML, so `<` and `&` arrive escaped; undo that once so the
+        # tokeniser sees real source and `plain()` escapes it exactly once
+        return f'<pre class="code"><code>{highlight(_html.unescape(m.group(2)), lang)}</code></pre>'
     return re.sub(r'<pre class="code" data-lang="(\w+)"><code>(.*?)</code></pre>', sub, doc, flags=re.S)
 
 # ---------------------------------------------------------------- assemble
@@ -108,7 +110,8 @@ for idx, pg in enumerate(pages):
            else f' · Figures {figs[0]}–{figs[-1]}' if figs else '')
     build = ' class="bld"' if num.endswith(("b", "c")) else ''
     rows.append(f'<div class="row"{build}><span class="n">{num}</span>'
-                f'<span><b>{title}</b>{ref}</span><span class="pg">{idx+1}</span></div>')
+                f'<span><b>{title}</b>{ref}</span>'
+                f'<span class="pg">{printed_page(idx)}</span></div>')
 doc = doc.replace('<div class="toc" data-auto></div>',
                   '<div class="toc">' + "".join(rows) + '</div>')
 print("contents rows:", sum(1 for r in rows if "class=\"row\"" in r))

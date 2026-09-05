@@ -1,6 +1,8 @@
 const { chromium } = require('playwright');
+// set CHROMIUM_PATH when Playwright's bundled browser is not where it expects it
+const EXE = process.env.CHROMIUM_PATH || undefined;
 (async () => {
-  const b = await chromium.launch();
+  const b = await chromium.launch(EXE ? { executablePath: EXE } : {});
   const p = await b.newPage({ viewport: { width: 680, height: 1024 } });
   await p.goto('file://' + process.cwd() + '/plan-print.html', { waitUntil: 'networkidle' });
   await p.evaluate(() => document.fonts.ready);
@@ -43,7 +45,8 @@ const { chromium } = require('playwright');
                      over: Math.round(bb.x + bb.width - r.x), txt }); break; }
         }
         if (host) {
-          const PAD = 11;
+          const small = Math.min(host.w, host.h) < 26;
+          const PAD = small ? 0 : Math.min(11, Math.max(2, Math.min(host.w, host.h) * 0.22));
           const overR = bb.x + bb.width - (host.x + host.w) + PAD;
           const overB = bb.y + bb.height - (host.y + host.h) + 2;
           if (overR > 1) res.overflow.push({ f: si + 1, kind: 'box-right', over: Math.round(overR), txt });
