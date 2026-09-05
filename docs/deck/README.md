@@ -44,8 +44,13 @@ code sections run across two pages.
 Two classes of bug that are invisible until someone prints the document:
 
 1. **Text escaping its shape** — for every `<text>` it finds the rectangle the text actually sits
-   inside and reports anything overflowing that shape or the viewBox.
-2. **Unreadable colour** — any text below 4.5:1 contrast against the shape behind it.
+   inside and reports anything that comes within **11 units** of that shape's edge, or leaves the
+   viewBox. Requiring real padding rather than mere non-overlap is what catches text that *touches* a
+   border, which reads as a bug even though it technically fits.
+2. **Text colliding with a neighbour** — text that partially overlaps a shape it does not sit inside.
+   Text fully contained in an outer container is ignored, so nested boxes do not produce noise. This
+   catches arrow labels drifting onto the box next door.
+3. **Unreadable colour** — any text below 4.5:1 contrast against the shape behind it.
 
 It reads the **computed** fill, not the `fill` attribute. In SVG a CSS class beats a presentation
 attribute, so `class="s2" fill="#e8eaed"` renders in the class colour. Keep in-figure colours as

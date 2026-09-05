@@ -32,9 +32,20 @@ const { chromium } = require('playwright');
         const txt = t.textContent.trim().slice(0, 46);
         if (bb.x + bb.width > vb.width - 1)
           res.overflow.push({ f: si + 1, kind: 'viewBox', over: Math.round(bb.x + bb.width - vb.width), txt });
+        // text that runs into a neighbouring shape it is not inside
+        for (const r of rects) {
+          if (r === host || !r.fill || r.fill === 'none') continue;
+          const hit = bb.x + bb.width > r.x + 2 && bb.x < r.x + r.w - 2 &&
+                      bb.y + bb.height > r.y + 2 && bb.y < r.y + r.h - 2;
+          const inside = bb.x >= r.x && bb.y >= r.y &&
+                         bb.x + bb.width <= r.x + r.w && bb.y + bb.height <= r.y + r.h;
+          if (hit && !inside) { res.overflow.push({ f: si + 1, kind: 'collides',
+                     over: Math.round(bb.x + bb.width - r.x), txt }); break; }
+        }
         if (host) {
-          const overR = bb.x + bb.width - (host.x + host.w);
-          const overB = bb.y + bb.height - (host.y + host.h);
+          const PAD = 11;
+          const overR = bb.x + bb.width - (host.x + host.w) + PAD;
+          const overB = bb.y + bb.height - (host.y + host.h) + 2;
           if (overR > 1) res.overflow.push({ f: si + 1, kind: 'box-right', over: Math.round(overR), txt });
           else if (overB > 1) res.overflow.push({ f: si + 1, kind: 'box-bottom', over: Math.round(overB), txt });
           const fg = getComputedStyle(t).fill || t.getAttribute('fill');
