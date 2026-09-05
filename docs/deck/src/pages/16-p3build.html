@@ -1,0 +1,101 @@
+<!-- ============================== 2.3b BUILD ============================== -->
+<div class="page" style="--acc:#0d72b4;--accs:#dfeef8">
+  <div class="rh"><span>Part 2 · Building it</span><span class="r">2.3b — Phase 3 · the code</span></div>
+  <div class="h-wrap"><span class="secno">2.3b</span><h2>Build it: forms that draw themselves, and expressions</h2></div>
+  <div class="band"></div>
+
+  <div class="stack">
+    <div class="bsteps">
+      <div class="bstep"><div class="bn">1</div><div class="bb">
+        <h4>A node describes its own settings</h4>
+        <div class="fwrap"><span class="fname">packages/nodes/httpRequest.ts</span>
+<pre class="code" data-lang="ts"><code>export const httpRequest = {
+  description: {
+    name: 'httpRequest', displayName: 'HTTP Request', group: 'action',
+    inputs: ['main'], outputs: ['main'],
+    properties: [
+      { displayName: 'Method', name: 'method', type: 'options', default: 'GET',
+        options: [{ name: 'GET', value: 'GET' }, { name: 'POST', value: 'POST' }] },
+      { displayName: 'URL', name: 'url', type: 'string', default: '' },
+      { displayName: 'Timeout (ms)', name: 'timeout', type: 'number', default: 30000 },
+      { displayName: 'Body', name: 'body', type: 'json', default: '{}',
+        displayOptions: { show: { method: ['POST'] } } },   // hidden unless POST
+    ],
+  },
+  async execute(ctx) {
+    const out = [];
+    const items = ctx.getInputData();
+    for (let i = 0; i &lt; items.length; i++) {
+      const res = await fetch(ctx.getNodeParameter('url', i), {
+        method: ctx.getNodeParameter('method', i),
+        signal: AbortSignal.timeout(ctx.getNodeParameter('timeout', i)),
+      });
+      out.push({ json: await res.json() });
+    }
+    return [out];
+  },
+};</code></pre></div>
+      </div></div>
+
+      <div class="bstep"><div class="bn">2</div><div class="bb">
+        <h4>Hand every description to the editor</h4>
+        <div class="fwrap"><span class="fname">apps/api/server.js</span>
+<pre class="code" data-lang="js"><code>import { nodeTypes } from '../../packages/nodes/index.js';
+app.get('/rest/node-types', (req, res) =>
+  res.json(Object.values(nodeTypes).map(n => n.description)));</code></pre></div>
+      </div></div>
+
+      <div class="bstep"><div class="bn">3</div><div class="bb">
+        <h4>One component turns any description into a form</h4>
+        <div class="fwrap"><span class="fname">apps/editor/src/ParameterPanel.tsx</span>
+<pre class="code" data-lang="ts"><code>function isVisible(p, values) {
+  const show = p.displayOptions?.show;
+  if (!show) return true;
+  return Object.entries(show).every(([field, allowed]) => allowed.includes(values[field]));
+}
+
+export function ParameterPanel({ properties, values, onChange }) {
+  return properties.filter(p => isVisible(p, values)).map(p => {
+    const v = values[p.name] ?? p.default;
+    const set = (val) => onChange({ ...values, [p.name]: val });
+    switch (p.type) {
+      case 'string':  return &lt;Field key={p.name} label={p.displayName}&gt;
+                               &lt;input value={v} onChange={e => set(e.target.value)} /&gt;&lt;/Field&gt;;
+      case 'number':  return &lt;Field key={p.name} label={p.displayName}&gt;
+                               &lt;input type="number" value={v} onChange={e => set(+e.target.value)} /&gt;&lt;/Field&gt;;
+      case 'boolean': return &lt;Field key={p.name} label={p.displayName}&gt;
+                               &lt;input type="checkbox" checked={v} onChange={e => set(e.target.checked)} /&gt;&lt;/Field&gt;;
+      case 'options': return &lt;Field key={p.name} label={p.displayName}&gt;
+                               &lt;select value={v} onChange={e => set(e.target.value)}&gt;
+                                 {p.options.map(o => &lt;option key={o.value} value={o.value}&gt;{o.name}&lt;/option&gt;)}
+                               &lt;/select&gt;&lt;/Field&gt;;
+      default: return null;
+    }
+  });
+}</code></pre></div>
+      </div></div>
+
+      <div class="bstep"><div class="bn">4</div><div class="bb">
+        <h4>Expressions, resolved per item</h4>
+        <div class="fwrap"><span class="fname">packages/engine/expressions.js</span>
+<pre class="code" data-lang="js"><code>export function resolve(value, item, results) {
+  if (typeof value !== 'string' || !value.includes('{{')) return value;
+  const evaluate = (expr) => {
+    const $json = item.json;
+    const $node = new Proxy({}, { get: (_, name) => ({ json: results[name]?.[0]?.[0]?.json ?? {} }) });
+    const $now  = new Date();
+    return new Function('$json', '$node', '$now', `"use strict"; return (${expr});`)($json, $node, $now);
+  };
+  const whole = value.match(/^\{\{(.+)\}\}$/s);          // the field is ONE expression
+  if (whole) return evaluate(whole[1]);                   // keep the real type
+  return value.replace(/\{\{(.+?)\}\}/gs, (_, e) => String(evaluate(e)));
+}</code></pre></div>
+        <p>Call it inside <code>getNodeParameter(name, itemIndex)</code> so node authors never see braces.</p>
+      </div></div>
+    </div>
+
+    <div class="chk"><b>Check it works</b>Add a new node file, restart the API, refresh the editor — its
+      whole settings panel is there, and switching Method to POST makes the Body field appear. Nobody
+      touched the editor.</div>
+  </div>
+</div>

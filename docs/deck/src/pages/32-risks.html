@@ -1,0 +1,57 @@
+<!-- ============================== 4.3 ============================== -->
+<div class="page">
+  <div class="rh"><span>Part 4 · Running the project</span><span class="r">4.3 — Risks and habits</span></div>
+  <div class="h-wrap"><span class="secno">4.3</span><h2>Three risks that end projects, and six habits that save them</h2></div>
+  <div class="band" style="background:#0a7a70"></div>
+
+  <div class="stack">
+    <div class="row3">
+      <div class="box" style="border-left:3px solid #c2413c">
+        <h4>Google keys expire after seven days</h4>
+        <p>While our app is in Testing mode the long-lived key stops working after a week. Connected in
+          Week 9, dead by Week 14 — and it looks like a broken node, not an expired key.</p>
+        <p style="margin-top:5px"><b>C2 owns this:</b> reconnect every Google account on the morning of
+          the demo. Step one of the checklist, not a footnote.</p></div>
+      <div class="box" style="border-left:3px solid #c2413c">
+        <h4>Gmail permissions are restricted</h4>
+        <p>Making the app public needs a Google security review we cannot complete this semester.</p>
+        <p style="margin-top:5px"><b>C2 owns this:</b> stay in Testing mode and add all eight of us —
+          plus our demonstrator — as test users in Week 4, not Week 8.</p></div>
+      <div class="box" style="border-left:3px solid #c2413c">
+        <h4>Eight people, five of them idle</h4>
+        <p>The failure specific to a large group: too few tracks early, so people either wait or start
+          rewriting the core.</p>
+        <p style="margin-top:5px"><b>A1 owns this:</b> the eight tracks on the previous page are assigned
+          in Week 4, before anyone asks what to do.</p></div>
+    </div>
+
+    <div style="margin-top:6px">
+      <h3 style="margin-bottom:8px">Six habits that will save us weeks</h3>
+      <ul class="pl">
+        <li><span class="m" style="color:#4b46c0">01</span><span><b>Build the boring version first.</b> An
+          HTTP node that only does the simplest request is worth more in Week 6 than a perfect one in
+          Week 9, because seven other people can then start.</span></li>
+        <li><span class="m" style="color:#2a5fce">02</span><span><b>One person owns the engine.</b> Two
+          people editing it at once produces a mess nobody can untangle — which is exactly why A2 reviews
+          it rather than writing it.</span></li>
+        <li><span class="m" style="color:#0d72b4">03</span><span><b>We are not building user accounts.</b>
+          Logins and password resets earn no marks here and will eat a week of somebody's time.</span></li>
+        <li><span class="m" style="color:#087f99">04</span><span><b>When a node will not work, test the
+          plain request in Postman first.</b> Most “my node is broken” turns out to be a missing
+          permission or a wrong header — nothing to do with our code.</span></li>
+        <li><span class="m" style="color:#0a7a70">05</span><span><b>Print the data between nodes,
+          constantly.</b> Almost every confusing bug is the shape of the data, not the logic — and
+          section 1.3 explains the shape it should have.</span></li>
+        <li><span class="m" style="color:#14624f">06</span><span><b>Copy n8n's good ideas deliberately,
+          and say so in the report.</b> Explaining <em>why</em> a design is right is exactly what the
+          assignment asks for. Copying without understanding is what costs marks.</span></li>
+      </ul>
+    </div>
+
+    <div class="call why"><b>If we fall behind</b>We cut <em>nodes</em>, never phases. Losing the Drive
+      node costs one row in the acceptance checklist. Losing Phase 3 means every later node needs a
+      hand-built settings panel and the six-person surge becomes a queue behind one person. The order of
+      what to drop, if it comes to it: the Merge node, then Drive, then Docs, then the second half of the
+      benchmark. Never the AI node, and never a phase.</div>
+  </div>
+</div>

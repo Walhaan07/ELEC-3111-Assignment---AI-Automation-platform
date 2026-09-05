@@ -1,0 +1,80 @@
+<!-- ============================== 3.1 ============================== -->
+<div class="page">
+  <div class="rh"><span>Part 3 · Putting it together</span><span class="r">3.1 — One system</span></div>
+  <div class="h-wrap"><span class="secno">3.1</span><h2>How six phases become one working system</h2></div>
+  <div class="band" style="background:linear-gradient(90deg,#4b46c0,#2a5fce,#0d72b4,#087f99,#0a7a70,#14624f)"></div>
+
+  <div class="stack">
+    <p class="lede">Each phase produced a piece, and each of us has been working in our own folder.
+      Integration is not a week at the end — it is a habit from Week 4: <b>one repository, one command,
+      and everything runs.</b> If assembling the project is ever difficult, something went wrong
+      earlier.</p>
+
+    <figure>
+      <svg viewBox="0 0 760 236" xmlns="http://www.w3.org/2000/svg">
+        <defs><marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#7c8492"/></marker></defs>
+        <rect x="10" y="24" width="230" height="198" rx="5" fill="#fff" stroke="#dcdfe5"/>
+        <rect x="10" y="24" width="230" height="22" rx="5" fill="#f7f8fa"/>
+        <text x="24" y="39" class="e">ONE REPOSITORY</text>
+        <rect x="22" y="56" width="206" height="26" rx="3" fill="#f7f8fa" stroke="#ecEEF1"/>
+        <rect x="22" y="56" width="5" height="26" fill="#2a5fce"/><text x="36" y="73" class="s2">apps/editor</text>
+        <rect x="22" y="88" width="206" height="26" rx="3" fill="#f7f8fa" stroke="#ecEEF1"/>
+        <rect x="22" y="88" width="5" height="26" fill="#087f99"/><text x="36" y="105" class="s2">apps/api</text>
+        <rect x="22" y="120" width="206" height="26" rx="3" fill="#f7f8fa" stroke="#ecEEF1"/>
+        <rect x="22" y="120" width="5" height="26" fill="#4b46c0"/><text x="36" y="137" class="s2">packages/engine</text>
+        <rect x="22" y="152" width="206" height="26" rx="3" fill="#f7f8fa" stroke="#ecEEF1"/>
+        <rect x="22" y="152" width="5" height="26" fill="#0a7a70"/><text x="36" y="169" class="s2">packages/nodes</text>
+        <rect x="22" y="184" width="206" height="26" rx="3" fill="#f7f8fa" stroke="#ecEEF1"/>
+        <rect x="22" y="184" width="5" height="26" fill="#14624f"/><text x="36" y="201" class="s2">infra · docs</text>
+
+        <path d="M240 122L296 122" stroke="#7c8492" fill="none" marker-end="url(#a1)"/>
+        <text x="244" y="114" class="e">ONE COMMAND</text>
+
+        <rect x="304" y="24" width="240" height="198" rx="5" fill="#fff" stroke="#dcdfe5"/>
+        <rect x="304" y="24" width="240" height="22" rx="5" fill="#f7f8fa"/>
+        <text x="318" y="39" class="e">THREE THINGS START</text>
+        <rect x="316" y="58" width="216" height="40" rx="4" fill="#e3ebfb" stroke="#2a5fce"/>
+        <text x="330" y="76" class="t">the canvas</text><text x="330" y="91" class="s">port 5173</text>
+        <rect x="316" y="104" width="216" height="40" rx="4" fill="#ddf0f4" stroke="#087f99"/>
+        <text x="330" y="122" class="t">the server + engine</text><text x="330" y="137" class="s">port 5678</text>
+        <rect x="316" y="150" width="216" height="40" rx="4" fill="#f7f8fa" stroke="#dcdfe5"/>
+        <text x="330" y="168" class="t">the database</text><text x="330" y="183" class="s">port 5432</text>
+        <text x="318" y="210" class="s">identical on all eight laptops</text>
+
+        <path d="M544 122L600 122" stroke="#7c8492" fill="none" marker-end="url(#a1)"/>
+        <rect x="608" y="92" width="142" height="62" rx="5" fill="#e8edf6" stroke="#34558f" stroke-width="1.5"/>
+        <rect x="608" y="92" width="142" height="14" rx="5" fill="#cfd9ea"/>
+        <circle cx="620" cy="99" r="2.4" fill="#8fa2c2"/><circle cx="629" cy="99" r="2.4" fill="#8fa2c2"/><circle cx="638" cy="99" r="2.4" fill="#8fa2c2"/>
+        <text x="622" y="128" class="t">a browser</text>
+        <text x="622" y="145" class="s">and it just works</text>
+      </svg>
+      <figcaption><b>Figure @.</b> Five folders, one command, three programs. Anyone who can clone the
+        repository can run the whole platform.</figcaption>
+    </figure>
+
+    <div>
+      <div class="eyebrow" style="margin-bottom:6px">How we proceed</div>
+      <ol class="steps">
+        <li><b>One repository from day one</b>, everyone on their own branch, merging into the main one.
+          Never a zip file passed around, and never “I will send you my folder”.</li>
+        <li><b>One command starts everything.</b> If that command ever stops working, fixing it matters
+          more than any feature.</li>
+        <li><b>One example settings file</b> in the repository listing every key the project needs, with
+          fake values. Real keys live only in each person's own untracked copy.</li>
+        <li><b>A starter workflow loaded on first run</b>, so a fresh clone shows something working
+          instead of an empty screen.</li>
+        <li><b>Integration every Thursday.</b> Everything merges, and one person — a different one of the
+          eight each week — clones the repository fresh and runs it. Whatever breaks is that week's
+          priority, and D2 chairs it.</li>
+      </ol>
+    </div>
+
+    <div class="row2">
+      <div class="call done"><b>Done when</b>Someone who has never touched the project can clone it, run
+        one command, and have a working platform in under ten minutes without asking a question.</div>
+      <div class="call warn"><b>Watch out</b>The classic failure is eight people whose parts each work
+        alone and have never run together — and with eight it happens faster. Merging weekly from Week 4
+        makes integration boring, which is exactly what we want it to be.</div>
+    </div>
+  </div>
+</div>

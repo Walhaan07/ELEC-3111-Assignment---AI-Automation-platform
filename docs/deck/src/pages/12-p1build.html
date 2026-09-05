@@ -1,0 +1,98 @@
+<!-- ============================== 2.1b BUILD ============================== -->
+<div class="page" style="--acc:#4b46c0;--accs:#e8e7f9">
+  <div class="rh"><span>Part 2 · Building it</span><span class="r">2.1b — Phase 1 · the code</span></div>
+  <div class="h-wrap"><span class="secno">2.1b</span><h2>Build it: the engine, line by line</h2></div>
+  <div class="band"></div>
+
+  <div class="stack">
+    <p class="lede">Everything on this page goes into <b>one file</b>. Type it, run it, and you have a
+      working workflow engine before lunch.</p>
+
+    <div class="bsteps">
+      <div class="bstep"><div class="bn">1</div><div class="bb">
+        <h4>Create the workspace</h4>
+        <div class="cmd"><span class="p">$</span> mkdir ai-automation &amp;&amp; cd ai-automation
+<span class="p">$</span> npm init -y
+<span class="p">$</span> npm pkg set type=module workspaces[0]="packages/*" workspaces[1]="apps/*"
+<span class="p">$</span> mkdir -p packages/engine packages/nodes apps/api apps/editor</div>
+        <p><code>type=module</code> lets us use <code>import</code>; <code>workspaces</code> is npm's own
+          monorepo support — no extra tool to install.</p>
+      </div></div>
+
+      <div class="bstep"><div class="bn">2</div><div class="bb">
+        <h4>The workflow, and two node types</h4>
+        <div class="fwrap"><span class="fname">packages/engine/engine.js</span>
+<pre class="code" data-lang="js"><code>const workflow = {
+  nodes: [
+    { name: 'Start',   type: 'manualTrigger', parameters: {} },
+    { name: 'Weather', type: 'httpRequest',
+      parameters: { url: 'https://wttr.in/Newcastle?format=j1' } },
+  ],
+  // one entry per node: a list of output branches, each listing who it feeds
+  connections: { 'Start': [['Weather']] },
+};
+
+const nodeTypes = {
+  manualTrigger: {
+    description: { name: 'manualTrigger', group: 'trigger', properties: [] },
+    async execute() { return [[{ json: {} }]]; },
+  },
+  httpRequest: {
+    description: { name: 'httpRequest', group: 'action', properties: [] },
+    async execute(ctx) {
+      const out = [];
+      for (const item of ctx.getInputData()) {
+        const res = await fetch(ctx.getNodeParameter('url'));
+        out.push({ json: await res.json() });
+      }
+      return [out];              // one branch, containing every item
+    },
+  },
+};</code></pre></div>
+      </div></div>
+
+      <div class="bstep"><div class="bn">3</div><div class="bb">
+        <h4>The loop from Figure 5 — the whole engine</h4>
+        <div class="fwrap"><span class="fname">packages/engine/engine.js — continued</span>
+<pre class="code" data-lang="js"><code>export async function runWorkflow(workflow, nodeTypes) {
+  const byName  = Object.fromEntries(workflow.nodes.map(n => [n.name, n]));
+  const results = {};
+  const trigger = workflow.nodes.find(n => nodeTypes[n.type].description.group === 'trigger');
+  const ready   = [{ nodeName: trigger.name, items: [{ json: {} }] }];
+
+  while (ready.length > 0) {
+    const { nodeName, items } = ready.shift();          // 3 · take the next node
+    const node = byName[nodeName];
+    const ctx  = {                                       // 4 · what the node may ask for
+      getInputData:     () => items,
+      getNodeParameter: (name) => node.parameters[name],
+    };
+
+    const branches = await nodeTypes[node.type].execute(ctx);   // 5 · run it
+    results[nodeName] = branches;
+    console.log(nodeName, '->', JSON.stringify(branches[0]).slice(0, 80));
+
+    const targets = workflow.connections[nodeName] || [];        // 6 · push what comes next
+    branches.forEach((branchItems, i) => {
+      if (branchItems.length === 0) return;              // an empty branch goes quiet
+      for (const t of targets[i] || []) ready.push({ nodeName: t, items: branchItems });
+    });
+  }
+  return results;
+}
+
+runWorkflow(workflow, nodeTypes).then(() => console.log('done'));</code></pre></div>
+      </div></div>
+    </div>
+
+    <div class="twocol">
+      <div class="cmd"><span class="p">$</span> node packages/engine/engine.js
+Start   -&gt; [{}]
+Weather -&gt; [{"current_condition":[{"temp_C":"18"…
+done</div>
+      <div class="chk"><b>Check it works</b>Real weather appears. Then break it on purpose: make
+        <code>httpRequest</code> return <code>[[]]</code> instead of <code>[out]</code> and confirm nothing
+        after it runs. That is branch pruning, and you have just tested it.</div>
+    </div>
+  </div>
+</div>

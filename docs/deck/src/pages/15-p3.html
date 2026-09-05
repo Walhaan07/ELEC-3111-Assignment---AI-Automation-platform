@@ -1,0 +1,112 @@
+<!-- ============================== 2.3 PHASE 3 ============================== -->
+<div class="page" style="--acc:#0d72b4;--accs:#dfeef8">
+  <div class="rh"><span>Part 2 · Building it</span><span class="r">2.3 — Phase 3 · Make it usable</span></div>
+  <div class="ph"><span class="chip">Phase 3 · Make it usable</span>
+    <span class="stages">Stages 5–6 · Week 6 · lead: B2 · A1</span></div>
+  <div class="h-wrap"><span class="secno">2.3</span><h2>Nodes describe themselves, and fields carry live data</h2></div>
+  <div class="band"></div>
+
+  <div class="stack">
+    <p class="lede"><b>What we are doing.</b> The two mechanisms that look small and decide everything:
+      the settings panel that <b>draws itself</b>, and <b>expressions</b>.</p>
+
+    <figure>
+      <svg viewBox="0 0 760 232" xmlns="http://www.w3.org/2000/svg">
+        <rect x="10" y="26" width="282" height="196" rx="6" fill="#fff" stroke="#0d72b4" stroke-width="1.6"/>
+        <rect x="10" y="26" width="282" height="22" rx="6" fill="#dfeef8"/>
+        <text x="24" y="42" class="e" style="fill:#0a5b90">WHAT THE NODE FILE SAYS</text>
+        <text x="24" y="70" class="s2">“URL” — a text box</text>
+        <text x="24" y="110" class="s2">“Method” — a dropdown, one of</text>
+        <text x="34" y="126" class="s">GET · POST · PUT · DELETE</text>
+        <text x="24" y="158" class="s2">“Timeout” — a number, 30000</text>
+        <text x="24" y="198" class="s2">“Body” — hide it unless</text>
+        <text x="34" y="214" class="s">Method is POST or PUT</text>
+
+        <text x="360" y="112" class="e" style="fill:#0a5b90" text-anchor="middle">ONE PIECE OF CODE,</text>
+        <text x="360" y="126" class="e" style="fill:#0a5b90" text-anchor="middle">WRITTEN ONCE</text>
+
+        <rect x="428" y="26" width="272" height="196" rx="6" fill="#fff" stroke="#dcdfe5" stroke-width="1.6"/>
+        <rect x="428" y="26" width="272" height="22" rx="6" fill="#f7f8fa"/>
+        <text x="442" y="42" class="e">WHAT APPEARS IN THE SIDEBAR</text>
+        <text x="442" y="66" class="s">URL</text>
+        <rect x="442" y="72" width="244" height="22" rx="3" fill="#f7f8fa" stroke="#c9cfd8"/>
+        <text x="450" y="87" class="s2">https://api.example.com</text>
+        <text x="442" y="114" class="s">Method</text>
+        <rect x="442" y="120" width="244" height="22" rx="3" fill="#f7f8fa" stroke="#c9cfd8"/>
+        <text x="450" y="135" class="s2">POST</text><text x="672" y="135" class="s2">▾</text>
+        <text x="442" y="162" class="s">Timeout</text>
+        <rect x="442" y="168" width="110" height="22" rx="3" fill="#f7f8fa" stroke="#c9cfd8"/>
+        <text x="450" y="183" class="s2">30000</text>
+        <text x="442" y="210" class="s">Body</text>
+        <rect x="486" y="196" width="200" height="18" rx="3" fill="#fff" stroke="#e6e8ec" stroke-dasharray="3 3"/>
+        <text x="494" y="209" class="s">shown because Method is POST</text>
+
+        <path d="M294 66 C 350 66, 370 74, 424 78" stroke="#0d72b4" fill="none" stroke-dasharray="3 3"/>
+        <circle cx="426" cy="78" r="2.6" fill="#0d72b4"/>
+        <path d="M294 112 C 350 112, 370 122, 424 126" stroke="#0d72b4" fill="none" stroke-dasharray="3 3"/>
+        <circle cx="426" cy="126" r="2.6" fill="#0d72b4"/>
+        <path d="M294 156 C 350 156, 370 170, 424 174" stroke="#0d72b4" fill="none" stroke-dasharray="3 3"/>
+        <circle cx="426" cy="174" r="2.6" fill="#0d72b4"/>
+        <path d="M294 200 C 350 200, 370 202, 424 204" stroke="#0d72b4" fill="none" stroke-dasharray="3 3"/>
+        <circle cx="426" cy="204" r="2.6" fill="#0d72b4"/>
+      </svg>
+      <figcaption><b>Figure @.</b> Four lines of description, four fields on screen — and the fourth
+        appears only because Method happens to be POST. Nobody hand-builds a panel, ever.</figcaption>
+    </figure>
+
+    <figure>
+      <svg viewBox="0 0 760 112" xmlns="http://www.w3.org/2000/svg">
+        <defs><marker id="x1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#7c8492"/></marker></defs>
+        <text x="10" y="14" class="e" style="fill:#0a5b90">AND ONE FIELD BECOMES A DIFFERENT VALUE FOR EACH ITEM</text>
+        <rect x="10" y="24" width="286" height="28" rx="4" fill="#dfeef8" stroke="#0d72b4"/>
+        <text x="24" y="43" class="s2">https://wttr.in/{{ $json.city }}</text>
+        <text x="10" y="70" class="s">what we type once, in the sidebar</text>
+        <path d="M300 38L340 38L340 66L378 66" stroke="#7c8492" fill="none" marker-end="url(#x1)"/>
+        <path d="M300 38L340 38L340 96L378 96" stroke="#7c8492" fill="none" marker-end="url(#x1)"/>
+        <rect x="386" y="52" width="152" height="26" rx="3" fill="#f7f8fa" stroke="#dcdfe5"/>
+        <text x="396" y="70" class="s2">city: "Newcastle"</text>
+        <rect x="386" y="82" width="152" height="26" rx="3" fill="#f7f8fa" stroke="#dcdfe5"/>
+        <text x="396" y="100" class="s2">city: "Sydney"</text>
+        <path d="M542 66L578 66" stroke="#7c8492" fill="none" marker-end="url(#x1)"/>
+        <path d="M542 96L578 96" stroke="#7c8492" fill="none" marker-end="url(#x1)"/>
+        <text x="586" y="70" class="s2">wttr.in/Newcastle</text>
+        <text x="586" y="100" class="s2">wttr.in/Sydney</text>
+        <text x="386" y="42" class="s">two items arrive</text>
+        <text x="556" y="42" class="s">two different requests go out</text>
+      </svg>
+      <figcaption><b>Figure @.</b> The engine fills the field in for every item separately, just before
+        the node runs — the node never sees the braces.</figcaption>
+    </figure>
+
+    <div class="n8n"><b>Familiar from n8n</b>Changing a node's <b>Operation</b> made half the fields
+      disappear — that is the top figure. Dragging a field into a box inserted
+      <code>{{ $json.something }}</code> — that is the bottom one.</div>
+
+    <div class="tools">
+      <div class="eyebrow" style="color:#0d72b4">Tools we use in this phase</div>
+      <div class="tgrid">
+        <div><b>React</b><span>the one component that turns a description into a form</span></div>
+        <div><b>Our own code</b><span>no library does this for us — about a hundred lines, and the cleverest part of the project</span></div>
+        <div><b>Monaco</b><span>the editor from VS Code, dropped in later as the Code node's text box</span></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="eyebrow" style="margin-bottom:6px">How we proceed</div>
+      <ol class="steps">
+        <li><b>Agree the kinds of setting we support</b> — text, number, on/off, dropdown, code box — then
+          write the single component that reads a description and produces those inputs.</li>
+        <li><b>Add “only show this when…”</b>, so a panel changes as you pick an operation — this is what
+          makes the Google nodes feel finished rather than overwhelming.</li>
+        <li><b>Add expressions</b>, filled in for each item just before the node runs.</li>
+      </ol>
+    </div>
+
+    <div class="row2">
+      <div class="call done"><b>Done when</b>A brand-new node file appears in the sidebar with a full
+        settings panel, and nobody touched the canvas code.</div>
+      <div class="call warn"><b>Watch out</b>Skip this “to save time” and each of the next ten nodes needs
+        a hand-built panel — turning Weeks 8–10 into a queue behind one person.</div>
+    </div>
+  </div>
+</div>

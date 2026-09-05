@@ -1,0 +1,91 @@
+<!-- ============================== 2.7b BUILD ============================== -->
+<div class="page" style="--acc:#14624f;--accs:#dceee8">
+  <div class="rh"><span>Part 2 · Building it</span><span class="r">2.7b — Phase 6 · the code</span></div>
+  <div class="h-wrap"><span class="secno">2.7b</span><h2>Build it: online, and measured against n8n</h2></div>
+  <div class="band"></div>
+
+  <div class="stack">
+    <div class="bsteps">
+      <div class="bstep"><div class="bn">1</div><div class="bb">
+        <h4>The production stack — three containers and a certificate</h4>
+        <div class="fwrap"><span class="fname">docker-compose.prod.yml</span>
+<pre class="code" data-lang="yaml"><code>services:
+  caddy:
+    image: caddy:2
+    ports: ["80:80", "443:443"]
+    volumes: ["./Caddyfile:/etc/caddy/Caddyfile", "caddy_data:/data"]
+  api:
+    build: .
+    env_file: .env
+    environment:
+      DATABASE_URL: postgres://postgres:${DB_PASSWORD}@postgres:5432/automation
+    depends_on: [postgres]
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: automation
+    volumes: ["pgdata:/var/lib/postgresql/data"]
+volumes:
+  caddy_data: {}
+  pgdata: {}</code></pre></div>
+        <div class="fwrap"><span class="fname">Caddyfile — the entire TLS configuration</span>
+<pre class="code" data-lang="conf"><code>your-domain.com {
+  reverse_proxy api:5678
+}</code></pre></div>
+      </div></div>
+
+      <div class="bstep"><div class="bn">2</div><div class="bb">
+        <h4>Put it on the machine</h4>
+        <div class="cmd"><span class="p">$</span> ssh ubuntu@your-server
+<span class="p">$</span> git clone https://github.com/&lt;org&gt;/ai-automation &amp;&amp; cd ai-automation
+<span class="p">$</span> cp .env.example .env &amp;&amp; nano .env        <span class="c"># real keys go here only</span>
+<span class="p">$</span> docker compose -f docker-compose.prod.yml up -d --build
+<span class="c"># later deploys:</span>
+<span class="p">$</span> git pull &amp;&amp; docker compose -f docker-compose.prod.yml up -d --build</code></pre></div>
+      </div></div>
+
+      <div class="bstep"><div class="bn">3</div><div class="bb">
+        <h4>Stand n8n up beside it, configured the same way</h4>
+        <div class="fwrap"><span class="fname">benchmarks/n8n/docker-compose.yml</span>
+<pre class="code" data-lang="yaml"><code>services:
+  n8n:
+    image: n8nio/n8n:1.70.1          # pin it, and cite this version in the report
+    environment:
+      DB_TYPE: postgresdb
+      DB_POSTGRESDB_HOST: n8n-db
+      EXECUTIONS_MODE: queue
+      QUEUE_BULL_REDIS_HOST: redis
+    ports: ["5679:5678"]
+    deploy: { resources: { limits: { cpus: "1.0", memory: 1G } } }
+  n8n-worker:
+    image: n8nio/n8n:1.70.1
+    command: worker
+    deploy: { replicas: 2, resources: { limits: { cpus: "1.0", memory: 1G } } }</code></pre></div>
+        <p>Give our own containers the identical <code>cpus</code> and <code>memory</code> limits, or the
+          comparison is not a comparison.</p>
+      </div></div>
+
+      <div class="bstep"><div class="bn">4</div><div class="bb">
+        <h4>Measure both with the same script</h4>
+        <div class="fwrap"><span class="fname">benchmarks/k6/w1.js</span>
+<pre class="code" data-lang="js"><code>import http from 'k6/http';
+export const options = {
+  scenarios: { load: { executor: 'constant-vus', vus: 10, duration: '60s', gracefulStop: '10s' } },
+  thresholds: { http_req_duration: ['p(95)&lt;1000'] },
+};
+export default function () {
+  http.post(`${__ENV.TARGET}/webhook/bench-w1`, JSON.stringify({ id: __VU, ts: Date.now() }),
+            { headers: { 'content-type': 'application/json' } });
+}</code></pre></div>
+        <div class="cmd"><span class="p">$</span> k6 run -e TARGET=http://localhost:5678 --summary-export=ours-w1.json benchmarks/k6/w1.js
+<span class="p">$</span> k6 run -e TARGET=http://localhost:5679 --summary-export=n8n-w1.json  benchmarks/k6/w1.js
+<span class="c"># three runs each, commit every JSON file — the raw data is what makes it credible</span></div>
+      </div></div>
+    </div>
+
+    <div class="chk"><b>Check it works</b>The editor and a webhook address both work from a phone on
+      mobile data, and you have six JSON result files for workflow&nbsp;1. Then repeat for workflows 2
+      and 3.</div>
+  </div>
+</div>

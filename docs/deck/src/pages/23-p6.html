@@ -1,0 +1,89 @@
+<!-- ============================== 2.7 PHASE 6 ============================== -->
+<div class="page" style="--acc:#14624f;--accs:#dceee8">
+  <div class="rh"><span>Part 2 · Building it</span><span class="r">2.7 — Phase 6 · Ship it</span></div>
+  <div class="ph"><span class="chip">Phase 6 · Ship it</span>
+    <span class="stages">Stages 13–15 · Weeks 11–15 · lead: D2 · all hands</span></div>
+  <div class="h-wrap"><span class="secno">2.7</span><h2>Online, measured, and written up</h2></div>
+  <div class="band"></div>
+
+  <div class="stack">
+    <p class="lede"><b>What we are doing.</b> Putting the platform on a real computer so our web addresses
+      work from anywhere, then measuring it honestly against n8n, then writing the report.
+      <b>At the end of Week 11 we stop adding features</b> — everything after that is fixing, measuring
+      and writing.</p>
+
+    <figure>
+      <svg viewBox="0 0 760 216" xmlns="http://www.w3.org/2000/svg">
+        <defs><marker id="v1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#14624f"/></marker></defs>
+        <rect x="10" y="72" width="182" height="66" rx="6" fill="#dceee8" stroke="#14624f" stroke-width="1.5"/>
+        <rect x="26" y="86" width="28" height="40" rx="4" fill="#fff" stroke="#14624f"/>
+        <rect x="30" y="91" width="20" height="27" rx="2" fill="#dceee8"/>
+        <text x="66" y="102" class="t">Anyone,</text>
+        <text x="66" y="119" class="t">anywhere</text>
+        <path d="M192 105L236 105" stroke="#14624f" fill="none" marker-end="url(#v1)"/>
+        <rect x="198" y="80" width="14" height="11" rx="2" fill="none" stroke="#14624f"/>
+        <path d="M201 80 A4 4 0 0 1 209 80" fill="none" stroke="#14624f"/>
+        <text x="216" y="90" class="e" style="fill:#0f4d3e">HTTPS</text>
+
+        <rect x="244" y="16" width="300" height="184" rx="6" fill="#fff" stroke="#14624f" stroke-width="1.5"/>
+        <rect x="244" y="16" width="300" height="24" rx="6" fill="#dceee8"/>
+        <text x="260" y="33" class="e" style="fill:#0f4d3e">ONE SMALL RENTED COMPUTER</text>
+        <rect x="262" y="52" width="264" height="40" rx="4" fill="#f7f8fa" stroke="#dcdfe5"/>
+        <text x="276" y="70" class="t">Caddy</text><text x="276" y="86" class="s">fetches the HTTPS certificate for us</text>
+        <rect x="262" y="100" width="264" height="40" rx="4" fill="#f7f8fa" stroke="#dcdfe5"/>
+        <text x="276" y="118" class="t">Our app</text><text x="276" y="134" class="s">the same containers we run locally</text>
+        <rect x="262" y="148" width="264" height="40" rx="4" fill="#f7f8fa" stroke="#dcdfe5"/>
+        <text x="276" y="166" class="t">Postgres</text><text x="276" y="182" class="s">on a disk that survives restarts</text>
+
+        <path d="M544 105L588 105" stroke="#14624f" fill="none" marker-end="url(#v1)"/>
+        <rect x="596" y="72" width="154" height="66" rx="6" fill="#fff" stroke="#dcdfe5" stroke-dasharray="4 3"/>
+        <text x="612" y="98" class="t">Google · AI</text>
+        <text x="612" y="116" class="s2">the outside world</text>
+        <text x="588" y="164" class="s">about $20 a month, and it</text>
+        <text x="588" y="180" class="s">stops with one command</text>
+      </svg>
+      <figcaption><b>Figure @.</b> Not a cloud architecture diagram — one machine running the same three
+        containers we already use. An afternoon's work, not two weeks.</figcaption>
+    </figure>
+
+    <div class="n8n"><b>Familiar from n8n</b>This is simply n8n's own self-hosting story pointed at our
+      code. The reason your <code>docker run n8nio/n8n</code> worked first time is the reason our deploy
+      will: the container carries everything it needs with it.</div>
+
+    <div class="tools">
+      <div class="eyebrow" style="color:#14624f">Tools we use in this phase</div>
+      <div class="tgrid">
+        <div><b>AWS EC2</b><span>one small rented machine that runs the whole platform</span></div>
+        <div><b>Caddy</b><span>gets and renews the HTTPS certificate by itself; three lines of configuration</span></div>
+        <div><b>n8n (Docker)</b><span>the platform we compare against, set up the same way as ours</span></div>
+        <div><b>k6</b><span>sends measured traffic at both so the comparison is real</span></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="eyebrow" style="margin-bottom:6px">How we proceed</div>
+      <ol class="steps">
+        <li><b>Freeze features at the end of Week 11.</b> A group decision made in advance, so it is not
+          an argument later.</li>
+        <li><b>Rent one small machine, point a cheap domain at it</b>, and let Caddy handle HTTPS. Set a
+          spending alarm on day one, before launching anything.</li>
+        <li><b>Run n8n on the same machine, configured the same way</b> — not its simplest setup, or the
+          comparison is unfair and a marker will notice.</li>
+        <li><b>Build the same three workflows on both</b>, run each three times, and keep the raw numbers
+          rather than only the averages.</li>
+        <li><b>Time ourselves adding a new node to each platform.</b> We will win this clearly, and nobody
+          else will think to measure it.</li>
+        <li><b>Write honestly.</b> n8n does far more per run than we do, so being faster mostly means “we
+          do less”. Saying that plainly is worth more marks than the number itself.</li>
+      </ol>
+    </div>
+
+    <div class="row2">
+      <div class="call done"><b>Done when</b>The canvas and a webhook address both work from a phone on
+        mobile data, the benchmark numbers are recorded, and the report draft is circulating.</div>
+      <div class="call warn"><b>Watch out</b>Write the report from Week 5 onwards, a section at a time,
+        and screenshot everything as it is built. You cannot re-screenshot a server you have already shut
+        down.</div>
+    </div>
+  </div>
+</div>

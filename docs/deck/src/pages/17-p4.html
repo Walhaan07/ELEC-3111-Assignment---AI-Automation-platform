@@ -1,0 +1,90 @@
+<!-- ============================== 2.4 PHASE 4 ============================== -->
+<div class="page" style="--acc:#087f99;--accs:#ddf0f4">
+  <div class="rh"><span>Part 2 · Building it</span><span class="r">2.4 — Phase 4 · Make it start by itself</span></div>
+  <div class="ph"><span class="chip">Phase 4 · Make it start by itself</span>
+    <span class="stages">Stages 7–8 · Week 7 · lead: C2</span></div>
+  <div class="h-wrap"><span class="secno">2.4</span><h2>Workflows that run without anyone pressing a button</h2></div>
+  <div class="band"></div>
+
+  <div class="stack">
+    <p class="lede"><b>What we are doing.</b> Building the two <b>triggers</b> from section 0.1. One is a
+      <b>web address</b> that anything on the internet can call; the other is a <b>clock</b> inside our
+      own server. These are the two the assignment names, and together they are what turns a tool into a
+      platform.</p>
+
+    <figure>
+      <svg viewBox="0 0 760 244" xmlns="http://www.w3.org/2000/svg">
+        <defs><marker id="t1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#087f99"/></marker></defs>
+        <rect x="10" y="18" width="264" height="76" rx="6" fill="#ddf0f4" stroke="#087f99" stroke-width="1.5"/>
+        <rect x="26" y="30" width="30" height="52" rx="5" fill="#fff" stroke="#087f99"/>
+        <rect x="30" y="36" width="22" height="36" rx="2" fill="#ddf0f4"/>
+        <circle cx="41" cy="77" r="2.4" fill="#087f99"/>
+        <text x="70" y="48" class="t">Anything, anywhere</text>
+        <text x="70" y="66" class="s2">a phone, a form, another app</text>
+        <text x="70" y="82" class="s">sends one request to us</text>
+        <path d="M274 56L318 56L318 106L344 106" stroke="#087f99" fill="none" marker-end="url(#t1)"/>
+        <text x="280" y="48" class="e" style="fill:#066476">WEBHOOK</text>
+
+        <rect x="10" y="132" width="264" height="76" rx="6" fill="#ddf0f4" stroke="#087f99" stroke-width="1.5"/>
+        <circle cx="41" cy="170" r="18" fill="#fff" stroke="#087f99"/>
+        <path d="M41 158L41 170L50 176" stroke="#087f99" fill="none" stroke-width="1.6"/>
+        <text x="70" y="160" class="t">A clock in our server</text>
+        <text x="70" y="178" class="s2">one timer per active workflow</text>
+        <text x="70" y="194" class="s">rebuilt every time we restart</text>
+        <path d="M274 170L318 170L318 128L344 128" stroke="#087f99" fill="none" marker-end="url(#t1)"/>
+        <text x="280" y="188" class="e" style="fill:#066476">SCHEDULE</text>
+
+        <rect x="350" y="86" width="190" height="62" rx="6" fill="#fff" stroke="#087f99" stroke-width="2.5"/>
+        <text x="366" y="112" class="t">The same engine</text>
+        <text x="366" y="131" class="s2">nothing about it changes</text>
+        <path d="M540 117L574 117" stroke="#087f99" fill="none" marker-end="url(#t1)"/>
+        <rect x="580" y="86" width="170" height="62" rx="6" fill="#f7f8fa" stroke="#dcdfe5"/>
+        <text x="596" y="112" class="t">The run is saved</text>
+        <text x="596" y="131" class="s2">green or red</text>
+
+        <text x="10" y="228" class="s2">Each workflow gets two addresses, exactly like n8n: a test one while we are editing it,</text>
+        <text x="10" y="242" class="s2">and the real one once it has been switched on.</text>
+      </svg>
+      <figcaption><b>Figure @.</b> Both routes arrive at the same loop. Adding a trigger never means
+        changing the engine — that is the payoff for getting Phase 1 right.</figcaption>
+    </figure>
+
+    <div class="n8n"><b>Familiar from n8n</b>The Webhook node in n8n showed you two URLs, a Test one and a
+      Production one, and made you press “Listen for test event” before the test one would work. That is
+      precisely the mechanism on this page, and we are copying the two-URL idea because it stops us
+      sending real emails while we are still experimenting.</div>
+
+    <div class="tools">
+      <div class="eyebrow" style="color:#087f99">Tools we use in this phase</div>
+      <div class="tgrid">
+        <div><b>croner</b><span>one small library that runs a function on a schedule, with timezones handled</span></div>
+        <div><b>Postman or curl</b><span>to fire test requests at our own addresses without a real caller</span></div>
+        <div><b>cloudflared</b><span>a free tunnel giving our laptop a public address while we develop</span></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="eyebrow" style="margin-bottom:6px">How we proceed</div>
+      <ol class="steps">
+        <li><b>Give each workflow its own web address.</b> When a request arrives we look up which
+          workflow owns that address, and start it with the request handed in as the first item.</li>
+        <li><b>Two addresses per workflow</b> — a test one while editing, a live one once activated.</li>
+        <li><b>Decide what the caller gets back:</b> an instant “received”, or wait for the workflow to
+          finish and return its result. Both are useful, and both are easy once the first works.</li>
+        <li><b>For schedules, keep one timer per active workflow</b>, and rebuild the whole set whenever
+          the server restarts — otherwise schedules stop silently after every deploy.</li>
+        <li><b>Always store a timezone.</b> Our laptops are on Australian time and the server will be on
+          UTC, so a workflow set for 9am would otherwise fire in the evening.</li>
+      </ol>
+    </div>
+
+    <div class="row2">
+      <div class="call done"><b>Done when</b>A request sent from someone's phone runs a workflow on the
+        laptop, and a scheduled workflow produces exactly one run per minute — stopping the moment it is
+        switched off.</div>
+      <div class="call warn"><b>Watch out</b>To test from outside while developing, use a tunnel rather
+        than trying to open ports on the university network. It is one command and saves an
+        afternoon.</div>
+    </div>
+  </div>
+</div>

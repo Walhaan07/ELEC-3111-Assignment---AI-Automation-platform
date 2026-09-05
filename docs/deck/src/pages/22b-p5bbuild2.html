@@ -1,0 +1,95 @@
+<!-- ============================== 2.6c BUILD ============================== -->
+<div class="page" style="--acc:#0a7a70;--accs:#dcf0ee">
+  <div class="rh"><span>Part 2 · Building it</span><span class="r">2.6c — Gmail, Code and AI</span></div>
+  <div class="h-wrap"><span class="secno">2.6c</span><h2>Build it: Gmail, the sandbox, and the AI node</h2></div>
+  <div class="band"></div>
+
+  <div class="stack">
+    <div class="bsteps">
+      <div class="bstep"><div class="bn">5</div><div class="bb">
+        <h4>Gmail — build the message by hand, then base64url it</h4>
+        <p>This is the only genuinely fiddly node. Knowing that in advance stops it feeling like failure.</p>
+        <div class="fwrap"><span class="fname">packages/nodes/google/gmail.js</span>
+<pre class="code" data-lang="js"><code>function buildMime({ to, subject, html, attachment }) {
+  const b = 'x' + crypto.randomUUID();
+  const head =
+    `To: ${to}\r\nSubject: ${subject}\r\nMIME-Version: 1.0\r\n` +
+    `Content-Type: multipart/mixed; boundary="${b}"\r\n\r\n`;
+  const bodyPart =
+    `--${b}\r\nContent-Type: text/html; charset="UTF-8"\r\n\r\n${html}\r\n`;
+  const filePart = attachment
+    ? `--${b}\r\nContent-Type: ${attachment.mimeType}\r\n` +
+      `Content-Disposition: attachment; filename="${attachment.fileName}"\r\n` +
+      `Content-Transfer-Encoding: base64\r\n\r\n${attachment.data}\r\n`
+    : '';
+  return head + bodyPart + filePart + `--${b}--`;
+}
+
+const base64url = (s) => Buffer.from(s).toString('base64')
+  .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
+await googleRequest(ctx.credentialId,
+  'https://gmail.googleapis.com/gmail/v1/users/me/messages/send',
+  { method: 'POST', body: JSON.stringify({ raw: base64url(buildMime(fields)) }) });</code></pre></div>
+      </div></div>
+
+      <div class="bstep"><div class="bn">6</div><div class="bb">
+        <h4>The Code node — a thread we can stop</h4>
+        <div class="fwrap"><span class="fname">packages/nodes/core/code.js</span>
+<pre class="code" data-lang="js"><code>import { Worker } from 'node:worker_threads';
+
+export function runUserCode(code, items, timeoutMs = 5000) {
+  return new Promise((resolve, reject) => {
+    const worker = new Worker(`
+      const vm = require('node:vm');
+      const { parentPort, workerData } = require('node:worker_threads');
+      const sandbox = { items: workerData.items, console: { log() {} } };
+      try {
+        const result = vm.runInNewContext(workerData.code, vm.createContext(sandbox),
+                                          { timeout: 2000 });
+        parentPort.postMessage({ ok: true, result });
+      } catch (e) { parentPort.postMessage({ ok: false, error: String(e) }); }
+    `, { eval: true, workerData: { code, items } });
+
+    const timer = setTimeout(() => { worker.terminate();
+      reject(new Error('Code node timed out after 5s')); }, timeoutMs);
+
+    worker.on('message', (m) => { clearTimeout(timer);
+      m.ok ? resolve(m.result) : reject(new Error(m.error)); });
+    worker.on('error', (e) => { clearTimeout(timer); reject(e); });
+  });
+}</code></pre></div>
+        <p><b>For the report:</b> run this snippet inside the Code node and show it reaching the host —
+          then explain what a production platform uses instead. It is the strongest security content
+          available to us for about an hour of work.</p>
+        <div class="fwrap"><span class="fname">the escape, for the report only</span>
+<pre class="code" data-lang="js"><code>return this.constructor.constructor('return process.version')();   // vm is not a sandbox</code></pre></div>
+      </div></div>
+
+      <div class="bstep"><div class="bn">7</div><div class="bb">
+        <h4>The AI node — one request</h4>
+        <div class="fwrap"><span class="fname">packages/nodes/ai/anthropic.js</span>
+<pre class="code" data-lang="js"><code>const res = await fetch('https://api.anthropic.com/v1/messages', {
+  method: 'POST',
+  headers: { 'x-api-key': credentials.apiKey, 'anthropic-version': '2023-06-01',
+             'content-type': 'application/json' },
+  body: JSON.stringify({
+    model:      ctx.getNodeParameter('model', i),
+    max_tokens: ctx.getNodeParameter('maxTokens', i),
+    system:     ctx.getNodeParameter('systemPrompt', i),
+    messages: [{ role: 'user', content: ctx.getNodeParameter('userPrompt', i) }],
+  }),
+});
+const data = await res.json();
+out.push({ json: { text: data.content[0].text } });</code></pre></div>
+        <p>Because <code>userPrompt</code> runs through the expression resolver, somebody can type
+          <code>Classify this: {{ $json.body.message }}. Answer only urgent or routine.</code> in the
+          sidebar and feed the answer straight into an IF node. Point a second credential at
+          <code>http://localhost:11434/v1</code> to use a local Ollama model instead.</p>
+      </div></div>
+    </div>
+
+    <div class="chk"><b>Check it works</b>The Week 14 workflow runs end to end: a webhook arrives, the AI
+      classifies it, the IF routes it, a real email lands and a real row appears.</div>
+  </div>
+</div>

@@ -1,0 +1,105 @@
+<!-- ============================== 2.2 PHASE 2 ============================== -->
+<div class="page" style="--acc:#2a5fce;--accs:#e3ebfb">
+  <div class="rh"><span>Part 2 · Building it</span><span class="r">2.2 — Phase 2 · Make it real</span></div>
+  <div class="ph"><span class="chip">Phase 2 · Make it real</span>
+    <span class="stages">Stages 3–4 · Weeks 5–6 · lead: C1 · B1</span></div>
+  <div class="h-wrap"><span class="secno">2.2</span><h2>Workflows survive a restart, and we can draw them</h2></div>
+  <div class="band"></div>
+
+  <div class="stack">
+    <p class="lede"><b>What we are doing.</b> Giving the engine a home. A <b>database</b> remembers
+      workflows, a <b>server</b> hands them out through the five addresses from section 1.5, and a
+      <b>canvas</b> lets us draw one instead of typing JSON by hand.</p>
+
+    <figure>
+      <svg viewBox="0 0 760 216" xmlns="http://www.w3.org/2000/svg">
+        <defs><marker id="p2a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#2a5fce"/></marker></defs>
+        <text x="10" y="16" class="e">AFTER PHASE 1</text>
+        <rect x="10" y="26" width="192" height="120" rx="5" fill="#14161a"/>
+        <rect x="10" y="26" width="192" height="16" rx="5" fill="#2b3038"/>
+        <circle cx="24" cy="34" r="2.8" fill="#5b6472"/><circle cx="33" cy="34" r="2.8" fill="#5b6472"/><circle cx="42" cy="34" r="2.8" fill="#5b6472"/>
+        <text x="22" y="62" class="s2" style="fill:#7fd39a">$ node engine.js</text>
+        <text x="22" y="82" class="s2" style="fill:#e8eaed">Start   -&gt; [ { } ]</text>
+        <text x="22" y="100" class="s2" style="fill:#e8eaed">Weather -&gt; [ … ]</text>
+        <text x="22" y="120" class="s2" style="fill:#7fd39a">done</text>
+        <text x="10" y="166" class="s">one file, hard-coded,</text>
+        <text x="10" y="180" class="s">gone when it finishes</text>
+
+        <path d="M210 86L256 86" stroke="#2a5fce" fill="none" marker-end="url(#p2a)"/>
+        <text x="212" y="78" class="e" style="fill:#1f4aa8">PHASE 2 ADDS</text>
+
+        <text x="266" y="16" class="e" style="fill:#1f4aa8">AFTER PHASE 2</text>
+        <rect x="266" y="26" width="256" height="66" rx="5" fill="#e3ebfb" stroke="#2a5fce" stroke-width="1.5"/>
+        <rect x="266" y="26" width="256" height="14" rx="5" fill="#b9ded9"/>
+        <circle cx="278" cy="33" r="2.6" fill="#2a5fce"/><circle cx="287" cy="33" r="2.6" fill="#2a5fce"/><circle cx="296" cy="33" r="2.6" fill="#2a5fce"/>
+        <rect x="284" y="50" width="70" height="16" rx="3" fill="#fff" stroke="#a8bdee"/>
+        <rect x="284" y="70" width="70" height="16" rx="3" fill="#fff" stroke="#a8bdee"/>
+        <rect x="384" y="60" width="70" height="16" rx="3" fill="#fff" stroke="#a8bdee"/>
+        <path d="M354 58L382 65" stroke="#2a5fce" fill="none"/><path d="M354 78L382 71" stroke="#2a5fce" fill="none"/>
+        
+        <path d="M394 92L394 106" stroke="#2a5fce" fill="none" marker-end="url(#p2a)"/>
+        <rect x="266" y="108" width="256" height="42" rx="5" fill="#fff" stroke="#2a5fce" stroke-width="1.5"/>
+        <text x="282" y="126" class="t">the server</text>
+        <text x="282" y="142" class="s">five addresses · the engine</text>
+        <path d="M394 150L394 164" stroke="#2a5fce" fill="none" marker-end="url(#p2a)"/>
+        <ellipse cx="394" cy="172" rx="34" ry="7" fill="#e3ebfb" stroke="#2a5fce"/>
+        <path d="M360 172 L360 196 A34 7 0 0 0 428 196 L428 172" fill="#e3ebfb" stroke="#2a5fce"/>
+        <ellipse cx="394" cy="172" rx="34" ry="7" fill="#fff" stroke="#2a5fce"/>
+        <text x="440" y="188" class="s2">the database</text>
+
+        <rect x="546" y="26" width="204" height="176" rx="5" fill="#f7f8fa" stroke="#dcdfe5"/>
+        <text x="562" y="48" class="t">What is new</text>
+        <text x="562" y="72" class="s2">a page you can draw on</text>
+        <text x="562" y="92" class="s2">five addresses to call</text>
+        <text x="562" y="112" class="s2">two tables that remember</text>
+        <text x="562" y="132" class="s2">a Run button that works</text>
+        <text x="562" y="164" class="s" style="fill:#1f4aa8">the engine itself does not</text>
+        <text x="562" y="178" class="s" style="fill:#1f4aa8">change at all — it is simply</text>
+        <text x="562" y="192" class="s" style="fill:#1f4aa8">called from somewhere new</text>
+      </svg>
+      <figcaption><b>Figure @.</b> Phase 2 wraps phase 1 in the four things every web application has: a
+        screen, a server, a database, and a way back. Nothing about the engine is rewritten.</figcaption>
+    </figure>
+
+    <div class="n8n"><b>Familiar from n8n</b>Everything on this page is what n8n already gave you for
+      free: a canvas that saved when you clicked away, a workflow list that survived a restart, and a
+      Run button. You never thought about the database behind it — which is exactly the experience we
+      are now building for ourselves.</div>
+
+    <div class="tools">
+      <div class="eyebrow" style="color:#2a5fce">Tools we use in this phase</div>
+      <div class="tgrid">
+        <div><b>Docker Compose</b><span>starts the database with one command — nobody installs Postgres by hand</span></div>
+        <div><b>PostgreSQL</b><span>remembers the workflows and every past run</span></div>
+        <div><b>Express</b><span>the smallest useful server — readable end to end in an afternoon</span></div>
+        <div><b>node-postgres</b><span>talks to the database in plain SQL; no extra layer to learn</span></div>
+        <div><b>React + Vite</b><span>builds the page the canvas lives in</span></div>
+        <div><b>React Flow</b><span>dragging, connecting, panning and zooming — already solved</span></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="eyebrow" style="margin-bottom:6px">How we proceed</div>
+      <ol class="steps">
+        <li><b>Start the database in a container.</b> One configuration file, one command, the same on
+          every laptop.</li>
+        <li><b>Two tables only:</b> one for workflows, one for runs. The whole drawing goes into a single
+          column as the text from Figure 2 — which is what makes saving one write and loading one read.</li>
+        <li><b>Build the five addresses:</b> list, fetch, create, save, run. That really is enough for the
+          next month.</li>
+        <li><b>Put React Flow on the page.</b> We write the boxes and the sidebar; we do not write
+          dragging, zooming or line-drawing.</li>
+        <li><b>Join the two halves</b> so the drawing saves to the database and the Run button executes
+          it, showing what each node produced.</li>
+      </ol>
+    </div>
+
+    <div class="row2">
+      <div class="call done"><b>Done when</b>We can drag out two nodes, connect them, refresh the browser
+        and find them still there — then press Run and see the result of each one.</div>
+      <div class="call warn"><b>Watch out</b>Converting between React Flow's format and ours is the fiddly
+        job here, and essentially every canvas bug for the rest of the semester will live in it. Write it
+        once, carefully, with someone reading over your shoulder.</div>
+    </div>
+  </div>
+</div>

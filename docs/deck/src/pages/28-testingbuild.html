@@ -1,0 +1,82 @@
+<!-- ============================== 3.2b BUILD ============================== -->
+<div class="page">
+  <div class="rh"><span>Part 3 · Putting it together</span><span class="r">3.2b — the tests</span></div>
+  <div class="h-wrap"><span class="secno">3.2b</span><h2>Build it: the four levels, in code</h2></div>
+  <div class="band" style="background:linear-gradient(90deg,#4b46c0,#0d72b4,#087f99,#0a7a70)"></div>
+
+  <div class="stack">
+    <div class="cmd"><span class="p">$</span> npm i -D vitest @playwright/test
+<span class="p">$</span> npx playwright install chromium</div>
+
+    <div class="bsteps">
+      <div class="bstep"><div class="bn">1</div><div class="bb">
+        <h4>Level 1 — the engine, in milliseconds</h4>
+        <div class="fwrap"><span class="fname">packages/engine/engine.test.js</span>
+<pre class="code" data-lang="js"><code>import { test, expect } from 'vitest';
+import { runWorkflow } from './engine.js';
+
+const fake = (name, out) => ({ description: { name, group: 'action', properties: [] },
+                               async execute() { return out; } });
+
+test('runs nodes in order and passes items along', async () => {
+  const types = { start: fake('start', [[{ json: { a: 1 } }]]),
+                  next:  fake('next',  [[{ json: { b: 2 } }]]) };
+  types.start.description.group = 'trigger';
+  const wf = { nodes: [{ name: 'S', type: 'start', parameters: {} },
+                       { name: 'N', type: 'next',  parameters: {} }],
+               connections: { S: [['N']] } };
+  const r = await runWorkflow(wf, types);
+  expect(r.N[0][0].json).toEqual({ b: 2 });
+});
+
+test('an empty branch stops everything after it', async () => {
+  const types = { start: fake('start', [[]]), never: fake('never', [[{ json: {} }]]) };
+  types.start.description.group = 'trigger';
+  const wf = { nodes: [{ name: 'S', type: 'start', parameters: {} },
+                       { name: 'X', type: 'never', parameters: {} }],
+               connections: { S: [['X']] } };
+  const r = await runWorkflow(wf, types);
+  expect(r.X).toBeUndefined();          // it never ran — and that is correct
+});</code></pre></div>
+      </div></div>
+
+      <div class="bstep"><div class="bn">2</div><div class="bb">
+        <h4>Level 2 — a node against a fake Google, with no internet</h4>
+        <div class="fwrap"><span class="fname">packages/nodes/google/sheets.test.js</span>
+<pre class="code" data-lang="js"><code>import { test, expect, beforeAll, afterAll } from 'vitest';
+import http from 'node:http';
+
+let server, received;
+beforeAll(() => new Promise(done => {
+  server = http.createServer((req, res) => {
+    let body = ''; req.on('data', c => body += c);
+    req.on('end', () => {
+      received = { url: req.url, method: req.method, body: JSON.parse(body || '{}') };
+      res.writeHead(200, { 'content-type': 'application/json' });
+      res.end(JSON.stringify({ updates: { updatedRows: 1 } }));
+    });
+  }).listen(4010, done);
+}));
+afterAll(() => server.close());
+
+test('append sends one row, in order, to the right range', async () => {
+  await sheetsNode.execute(makeCtx({
+    base: 'http://localhost:4010',
+    documentId: 'https://docs.google.com/spreadsheets/d/ABC123/edit',
+    sheetName: 'Orders', columns: { name: 'Alice', email: 'a@example.com' },
+  }));
+  expect(received.method).toBe('POST');
+  expect(received.url).toContain('/ABC123/values/');
+  expect(received.body.values).toEqual([['Alice', 'a@example.com']]);
+});</code></pre></div>
+        <p>Thirty lines, and every Google node gets the same treatment. No credentials, no quota, no
+          network — so it runs on every push in about two seconds.</p>
+      </div></div>
+
+    </div>
+
+    <div class="chk"><b>Check levels 1 and 2</b><code>npm test</code> finishes in under five seconds, with
+      no internet connection and no Google credentials. If it needs either, the fake server is not being
+      used.</div>
+  </div>
+</div>

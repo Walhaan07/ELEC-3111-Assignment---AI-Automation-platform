@@ -1,0 +1,57 @@
+<!-- ============================== 0.1 ============================== -->
+<div class="page">
+  <div class="rh"><span>Part 0 · The vocabulary</span><span class="r">0.1 — The words on the screen</span></div>
+  <div class="h-wrap"><span class="secno">0.1</span><h2>The words we will keep using</h2></div>
+  <div class="band"></div>
+
+  <div class="stack">
+    <p class="lede">Most of the confusion in a project like this comes from words, not from ideas. These
+      eight describe things you have <b>already seen with your own eyes</b> in n8n — we are only giving
+      them their proper names so the rest of this document can be short.</p>
+
+    <table>
+      <thead><tr><th style="width:104px">Word</th><th>What it means, plainly</th><th style="width:214px">Where you met it in n8n</th></tr></thead>
+      <tbody>
+        <tr><td class="term">Workflow</td>
+            <td>One complete automation, from the thing that starts it to the last thing it does. It is
+                just a drawing: some boxes and some lines.</td>
+            <td class="n8ncol">Your weather automation. One tab, one name, one on/off switch.</td></tr>
+        <tr><td class="term">Node</td>
+            <td>One step in that drawing. A node takes some data in, does one job, and passes data out.
+                Every node works the same way, whether it sends an email or adds two numbers.</td>
+            <td class="n8ncol">Every box you dragged from the panel on the left.</td></tr>
+        <tr><td class="term">Trigger</td>
+            <td>A special node with nothing before it. It is what <em>starts</em> a workflow — a clock
+                reaching a certain time, or a message arriving from outside.</td>
+            <td class="n8ncol">Your Schedule Trigger. Also the Webhook node.</td></tr>
+        <tr><td class="term">Item</td>
+            <td>One single piece of data travelling between nodes — one row, one email, one order. Nodes
+                always pass a <em>list</em> of items, even when the list has only one thing in it.</td>
+            <td class="n8ncol">The numbered rows in the OUTPUT panel when you clicked a node.</td></tr>
+        <tr><td class="term">Canvas</td>
+            <td>The big area where you drag boxes and draw lines between them. It is only a drawing
+                tool — the canvas never runs anything itself.</td>
+            <td class="n8ncol">The grey grid that filled most of the n8n screen.</td></tr>
+        <tr><td class="term">Execution<br>(a “run”)</td>
+            <td>One occasion on which a workflow actually ran. Each run is recorded so you can look
+                back at it: what came in, what each node produced, whether it worked.</td>
+            <td class="n8ncol">The Executions list, with green ticks and red crosses.</td></tr>
+        <tr><td class="term">Expression</td>
+            <td>A small piece of text inside a settings box, written between double braces, that gets
+                replaced with real data just before the node runs.</td>
+            <td class="n8ncol"><code>{{ $json.city }}</code> — what appeared when you dragged a field
+                into a box.</td></tr>
+        <tr><td class="term">Credential</td>
+            <td>A saved login for an outside service, stored once and reused by any node that needs it.
+                Kept scrambled so that reading the database does not reveal it.</td>
+            <td class="n8ncol">The Credentials screen where you connected your accounts.</td></tr>
+      </tbody>
+    </table>
+
+    <div class="n8n"><b>Why this matters more than it looks</b>Three of these words carry the whole
+      project. <b>Node</b> tells us what four of us will spend Weeks 8–10 writing. <b>Item</b> decides
+      the shape of every piece of code we write, and cannot be changed later. And <b>execution</b> is
+      the thing our database exists to remember. If those three are clear to everyone, the rest of this
+      document is mostly detail.</div>
+  </div>
+</div>

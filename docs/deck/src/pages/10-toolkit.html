@@ -1,0 +1,57 @@
+<!-- ============================== 1.7 ============================== -->
+<div class="page">
+  <div class="rh"><span>Part 1 · How it all works</span><span class="r">1.7 — The toolkit</span></div>
+  <div class="h-wrap"><span class="secno">1.7</span><h2>The toolkit — what we install, and when</h2></div>
+  <div class="band"></div>
+
+  <div class="stack">
+    <p class="lede">The complete list for the semester. <b>Nobody needs to learn it all now</b> — each
+      phase introduces two or three things, and about half of them are already built into Node.js. The
+      guiding rule is on the right of the figure: build the thing the assignment is about, and borrow
+      everything else.</p>
+
+    <figure>
+      <svg viewBox="0 0 760 156" xmlns="http://www.w3.org/2000/svg">
+        <rect x="10" y="22" width="364" height="124" rx="6" fill="#e8edf6" stroke="#34558f" stroke-width="1.5"/>
+        <text x="28" y="46" class="t">We write this ourselves</text>
+        <text x="28" y="70" class="s2">the engine loop · the node shape · every node</text>
+        <text x="28" y="88" class="s2">the settings-panel generator · expressions</text>
+        <text x="28" y="106" class="s2">webhook handling · the schedule registry</text>
+        <text x="28" y="124" class="s2">the Google permission flow · the sandbox</text>
+        <text x="28" y="142" class="s" style="fill:#34558f">this is the project — the report comes from it</text>
+        <rect x="386" y="22" width="364" height="124" rx="6" fill="#f7f8fa" stroke="#dcdfe5"/>
+        <text x="404" y="46" class="t">We deliberately do not</text>
+        <text x="404" y="70" class="s2">dragging and connecting boxes (React Flow)</text>
+        <text x="404" y="88" class="s2">the database (Postgres) · HTTPS (Caddy)</text>
+        <text x="404" y="106" class="s2">running on a schedule (croner)</text>
+        <text x="404" y="124" class="s2">the code-editing box (Monaco)</text>
+        <text x="404" y="142" class="s">solved problems — using them is a good decision</text>
+      </svg>
+      <figcaption><b>Figure 8.</b> Borrowing the canvas library is not cheating; writing our own would
+        cost a month and earn nothing. Borrowing the <em>engine</em> would be the mistake.</figcaption>
+    </figure>
+
+    <table>
+      <thead><tr><th style="width:126px">Tool</th><th>What it is for</th><th style="width:74px">Phase</th></tr></thead>
+      <tbody>
+        <tr><td class="term">Node.js 22</td><td>The language everything is written in — the one we already learned this semester.</td><td>1</td></tr>
+        <tr><td class="term">Git + GitHub</td><td>One shared folder with a full history of who changed what. Everyone works on a branch and merges.</td><td>1</td></tr>
+        <tr><td class="term">TypeScript</td><td>JavaScript with labels on the data, so a mistake shows up in the editor instead of at three in the morning.</td><td>1</td></tr>
+        <tr><td class="term">Docker Compose</td><td>Starts the database and the app together with one command, identically on all eight laptops.</td><td>2</td></tr>
+        <tr><td class="term">PostgreSQL 16</td><td>The database. Remembers workflows and every past run.</td><td>2</td></tr>
+        <tr><td class="term">Express</td><td>The server framework — it turns “when someone asks for this address, do that” into three lines.</td><td>2</td></tr>
+        <tr><td class="term">React + Vite<br>+ React Flow</td><td>Builds the page in the browser, and gives us the canvas — dragging, drawing lines, panning and zooming, all solved.</td><td>2</td></tr>
+        <tr><td class="term">Monaco</td><td>The code-editing box in the sidebar — literally the editor from VS Code.</td><td>3</td></tr>
+        <tr><td class="term">croner</td><td>Runs a function on a schedule, with timezones handled properly.</td><td>4</td></tr>
+        <tr><td class="term">Postman / curl<br>+ cloudflared</td><td>Send test requests to our own addresses, and give our laptop a temporary public address so outside services can reach it.</td><td>4</td></tr>
+        <tr><td class="term">Google Cloud<br>Console</td><td>The website where we switch on the four Google APIs and set up the permission screen. Free.</td><td>5</td></tr>
+        <tr><td class="term">node:crypto,<br>worker_threads</td><td>Both built into Node. One scrambles the stored Google keys; the other runs a user's JavaScript without risking the server.</td><td>5</td></tr>
+        <tr><td class="term">Anthropic API</td><td>The AI node — one request, one response. Ollama can serve a local model instead, as in our weather project.</td><td>5</td></tr>
+        <tr><td class="term">AWS EC2</td><td>One small rented computer that runs the finished platform, about $20 a month.</td><td>6</td></tr>
+        <tr><td class="term">Caddy</td><td>Gets and renews the HTTPS certificate by itself. Three lines of configuration.</td><td>6</td></tr>
+        <tr><td class="term">n8n (Docker)</td><td>The platform we compare ourselves against, set up the same way as ours so the comparison is fair.</td><td>6</td></tr>
+        <tr><td class="term">k6</td><td>Sends measured traffic at both platforms so the comparison uses real numbers.</td><td>6</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>

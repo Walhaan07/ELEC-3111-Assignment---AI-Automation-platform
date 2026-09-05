@@ -1,0 +1,75 @@
+<!-- ============================== 1.6 ============================== -->
+<div class="page">
+  <div class="rh"><span>Part 1 · How it all works</span><span class="r">1.6 — The six phases</span></div>
+  <div class="h-wrap"><span class="secno">1.6</span><h2>The six phases</h2></div>
+  <div class="band" style="background:linear-gradient(90deg,#4b46c0,#2a5fce,#0d72b4,#087f99,#0a7a70,#14624f)"></div>
+
+  <div class="stack">
+    <p class="lede">Everything from here on is building. The work splits into six phases, and
+      <b>each one ends in something we can run and show somebody</b>. From this page onward each phase
+      carries its own colour, used in its heading and in every diagram that belongs to it, so you can
+      always tell at a glance which part of the project you are looking at.</p>
+
+    <figure>
+      <svg viewBox="0 0 760 280" xmlns="http://www.w3.org/2000/svg">
+        <text x="272" y="20" class="e" text-anchor="end">WEEK</text>
+        <line x1="282" y1="26" x2="282" y2="248" stroke="#ecEEF1"/><text x="301" y="20" class="e" text-anchor="middle">4</text>
+        <line x1="321" y1="26" x2="321" y2="248" stroke="#ecEEF1"/><text x="340" y="20" class="e" text-anchor="middle">5</text>
+        <line x1="360" y1="26" x2="360" y2="248" stroke="#ecEEF1"/><text x="379" y="20" class="e" text-anchor="middle">6</text>
+        <line x1="399" y1="26" x2="399" y2="248" stroke="#ecEEF1"/><text x="418" y="20" class="e" text-anchor="middle">7</text>
+        <line x1="438" y1="26" x2="438" y2="248" stroke="#ecEEF1"/><text x="457" y="20" class="e" text-anchor="middle">8</text>
+        <line x1="477" y1="26" x2="477" y2="248" stroke="#ecEEF1"/><text x="496" y="20" class="e" text-anchor="middle">9</text>
+        <line x1="516" y1="26" x2="516" y2="248" stroke="#ecEEF1"/><text x="535" y="20" class="e" text-anchor="middle">10</text>
+        <line x1="555" y1="26" x2="555" y2="248" stroke="#ecEEF1"/><text x="574" y="20" class="e" text-anchor="middle">11</text>
+        <line x1="594" y1="26" x2="594" y2="248" stroke="#ecEEF1"/><text x="613" y="20" class="e" text-anchor="middle">12</text>
+        <line x1="633" y1="26" x2="633" y2="248" stroke="#ecEEF1"/><text x="652" y="20" class="e" text-anchor="middle">13</text>
+        <line x1="672" y1="26" x2="672" y2="248" stroke="#ecEEF1"/><text x="691" y="20" class="e" text-anchor="middle">14</text>
+        <line x1="711" y1="26" x2="711" y2="248" stroke="#ecEEF1"/><text x="730" y="20" class="e" text-anchor="middle">15</text>
+        <line x1="750" y1="26" x2="750" y2="248" stroke="#ecEEF1"/>
+
+        <rect x="282" y="34" width="78" height="26" rx="4" fill="#4b46c0"/>
+        <text x="0" y="52" class="t" style="fill:#4b46c0">1 · Make it run</text><text x="202" y="52" class="e">stages 1–2</text>
+        <rect x="321" y="70" width="78" height="26" rx="4" fill="#2a5fce"/>
+        <text x="0" y="88" class="t" style="fill:#2a5fce">2 · Make it real</text><text x="202" y="88" class="e">stages 3–4</text>
+        <rect x="360" y="106" width="39" height="26" rx="4" fill="#0d72b4"/>
+        <text x="0" y="124" class="t" style="fill:#0d72b4">3 · Make it usable</text><text x="202" y="124" class="e">stages 5–6</text>
+        <rect x="399" y="142" width="39" height="26" rx="4" fill="#087f99"/>
+        <text x="0" y="160" class="t" style="fill:#087f99">4 · Self-starting</text><text x="202" y="160" class="e">stages 7–8</text>
+        <rect x="399" y="178" width="156" height="26" rx="4" fill="#0a7a70"/>
+        <text x="0" y="196" class="t" style="fill:#0a7a70">5 · Make it do things</text><text x="202" y="196" class="e">stages 9–12</text>
+        <rect x="555" y="214" width="195" height="26" rx="4" fill="#14624f"/>
+        <text x="0" y="232" class="t" style="fill:#14624f">6 · Ship it</text><text x="202" y="232" class="e">stages 13–15</text>
+
+        <line x1="360" y1="26" x2="360" y2="252" stroke="#c2413c" stroke-width="1.5" stroke-dasharray="4 3"/>
+        <text x="364" y="264" class="e" style="fill:#b03a34">HARD GATE · END OF WEEK 5</text>
+        <line x1="594" y1="26" x2="594" y2="252" stroke="#c2413c" stroke-width="1.5" stroke-dasharray="4 3"/>
+        <text x="598" y="264" class="e" style="fill:#b03a34">FEATURE FREEZE</text>
+        <text x="0" y="264" class="e">DEMO WK 14 · REPORT WK 15</text>
+      </svg>
+      <figcaption><b>Figure 7.</b> Two dates cannot move. By the end of Week 5 a workflow must run from
+        end to end, however ugly it looks. At the end of Week 11 we stop adding features altogether.</figcaption>
+    </figure>
+
+    <div class="row3">
+      <div class="box" style="border-left:3px solid #4b46c0"><h4>1 · Make it run</h4>
+        <p>A script that executes a workflow and prints the answer. No web page, no database.</p></div>
+      <div class="box" style="border-left:3px solid #2a5fce"><h4>2 · Make it real</h4>
+        <p>Workflows are saved in a database and drawn on a canvas.</p></div>
+      <div class="box" style="border-left:3px solid #0d72b4"><h4>3 · Make it usable</h4>
+        <p>Settings panels build themselves, and fields can carry live data.</p></div>
+    </div>
+    <div class="row3">
+      <div class="box" style="border-left:3px solid #087f99"><h4>4 · Self-starting</h4>
+        <p>Workflows start on their own, from a web address or from a clock.</p></div>
+      <div class="box" style="border-left:3px solid #0a7a70"><h4>5 · Make it do things</h4>
+        <p>Google permission, then the four Google nodes, the Code node and the AI node.</p></div>
+      <div class="box" style="border-left:3px solid #14624f"><h4>6 · Ship it</h4>
+        <p>Online, measured against n8n, and written up.</p></div>
+    </div>
+
+    <div class="call warn"><b>The rule that protects the schedule</b>If we fall behind we cut
+      <em>nodes</em>, never phases. Losing the Drive node costs almost nothing. Losing Phase 3 means
+      every later node needs a hand-built settings panel, and only one person can work at a time — which
+      would cost us the whole of Weeks 8 to 10.</div>
+  </div>
+</div>

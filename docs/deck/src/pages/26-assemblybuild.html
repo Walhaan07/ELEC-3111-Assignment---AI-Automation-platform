@@ -1,0 +1,82 @@
+<!-- ============================== 3.1b BUILD ============================== -->
+<div class="page">
+  <div class="rh"><span>Part 3 · Putting it together</span><span class="r">3.1b — the repository</span></div>
+  <div class="h-wrap"><span class="secno">3.1b</span><h2>Build it: one repository, one command</h2></div>
+  <div class="band" style="background:linear-gradient(90deg,#4b46c0,#2a5fce,#0d72b4,#087f99,#0a7a70,#14624f)"></div>
+
+  <div class="stack">
+    <div class="bsteps">
+      <div class="bstep"><div class="bn">1</div><div class="bb">
+        <h4>The layout everyone clones</h4>
+        <div class="fwrap"><span class="fname">the whole tree</span>
+<pre class="code" data-lang="bash"><code>ai-automation/
+├── apps/
+│   ├── api/          # Express, the five routes, webhooks, schedules, OAuth   C1 C2
+│   └── editor/       # React + React Flow + the parameter panel               B1 B2
+├── packages/
+│   ├── engine/       # the loop, items, expressions                           A1
+│   └── nodes/
+│       ├── core/     # IF, Set, Merge, Code                                   A2
+│       ├── google/   # Sheets, Drive, Docs, Gmail                             D1
+│       └── ai/       # the LLM node                                           A1
+├── benchmarks/       # k6 scripts, the n8n stack, raw results                 D2
+├── infra/            # Caddyfile, docker-compose.prod.yml, deploy notes       D2
+├── docs/             # this guide, ADRs, the report as it is written          D2
+├── docker-compose.yml
+└── .env.example</code></pre></div>
+      </div></div>
+
+      <div class="bstep"><div class="bn">2</div><div class="bb">
+        <h4>One command starts everything</h4>
+        <div class="fwrap"><span class="fname">package.json — root</span>
+<pre class="code" data-lang="json"><code>{
+  "type": "module",
+  "workspaces": ["apps/*", "packages/*"],
+  "scripts": {
+    "dev":     "docker compose up -d && npm run dev --workspaces --if-present",
+    "migrate": "psql $DATABASE_URL -f schema.sql && psql $DATABASE_URL -f seed.sql",
+    "test":    "vitest run",
+    "e2e":     "playwright test",
+    "lint":    "eslint . && tsc --noEmit"
+  }
+}</code></pre></div>
+        <div class="cmd"><span class="p">$</span> git clone … &amp;&amp; cd ai-automation
+<span class="p">$</span> cp .env.example .env
+<span class="p">$</span> npm install
+<span class="p">$</span> npm run migrate
+<span class="p">$</span> npm run dev          <span class="c"># editor 5173 · api 5678 · postgres 5432</span></div>
+        <p>Five commands, ten minutes, no questions asked of anybody. That is the target.</p>
+      </div></div>
+
+      <div class="bstep"><div class="bn">3</div><div class="bb">
+        <h4>Every key the project needs, with fake values</h4>
+        <div class="fwrap"><span class="fname">.env.example — committed; .env is never committed</span>
+<pre class="code" data-lang="bash"><code>DATABASE_URL=postgres://postgres:dev@localhost:5432/automation
+BASE_URL=http://localhost:5678
+ENCRYPTION_KEY=0000000000000000000000000000000000000000000000000000000000000000
+GOOGLE_CLIENT_ID=replace-me.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=replace-me
+ANTHROPIC_API_KEY=replace-me</code></pre></div>
+        <div class="cmd"><span class="p">$</span> echo ".env" &gt;&gt; .gitignore
+<span class="p">$</span> npx gitleaks detect --no-git   <span class="c"># run it once a week; a leaked key costs marks</span></div>
+      </div></div>
+
+      <div class="bstep"><div class="bn">4</div><div class="bb">
+        <h4>A starter workflow, so a fresh clone shows something</h4>
+        <div class="fwrap"><span class="fname">seed.sql</span>
+<pre class="code" data-lang="sql"><code>INSERT INTO workflows (name, nodes, connections) VALUES (
+  'Hello weather',
+  '[{"name":"Start","type":"manualTrigger","parameters":{},"position":{"x":80,"y":80}},
+    {"name":"Weather","type":"httpRequest",
+     "parameters":{"url":"https://wttr.in/Newcastle?format=j1"},"position":{"x":360,"y":80}}]',
+  '{"Start":[["Weather"]]}'
+);</code></pre></div>
+        <p>The difference between a new teammate being productive in ten minutes or in two days.</p>
+      </div></div>
+    </div>
+
+    <div class="chk"><b>Check it works</b>Every Thursday, one of the eight — a different one each week —
+      clones the repository into a brand-new folder and runs those five commands. Whatever breaks is
+      that week's first priority.</div>
+  </div>
+</div>

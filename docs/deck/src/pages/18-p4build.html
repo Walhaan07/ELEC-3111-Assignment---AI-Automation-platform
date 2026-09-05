@@ -1,0 +1,94 @@
+<!-- ============================== 2.4b BUILD ============================== -->
+<div class="page" style="--acc:#087f99;--accs:#ddf0f4">
+  <div class="rh"><span>Part 2 · Building it</span><span class="r">2.4b — Phase 4 · the code</span></div>
+  <div class="h-wrap"><span class="secno">2.4b</span><h2>Build it: webhooks and schedules</h2></div>
+  <div class="band"></div>
+
+  <div class="stack">
+    <div class="bsteps">
+      <div class="bstep"><div class="bn">1</div><div class="bb">
+        <h4>One more table, for the addresses in use</h4>
+        <div class="fwrap"><span class="fname">schema.sql — additions</span>
+<pre class="code" data-lang="sql"><code>CREATE TABLE webhooks (
+  path        text NOT NULL,
+  method      text NOT NULL,
+  workflow_id uuid REFERENCES workflows(id) ON DELETE CASCADE,
+  node_name   text NOT NULL,
+  is_test     boolean NOT NULL DEFAULT false,
+  PRIMARY KEY (path, method)
+);
+
+CREATE TABLE schedules (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  workflow_id uuid REFERENCES workflows(id) ON DELETE CASCADE,
+  cron        text NOT NULL,
+  timezone    text NOT NULL DEFAULT 'Australia/Sydney'
+);</code></pre></div>
+      </div></div>
+
+      <div class="bstep"><div class="bn">2</div><div class="bb">
+        <h4>The webhook route</h4>
+        <div class="fwrap"><span class="fname">apps/api/webhooks.js</span>
+<pre class="code" data-lang="js"><code>app.all('/webhook/:path', async (req, res) => {
+  const hook = (await db.query(
+    'SELECT * FROM webhooks WHERE path = $1 AND method = $2 AND is_test = false',
+    [req.params.path, req.method])).rows[0];
+
+  if (!hook) return res.status(404).json({ message: 'No workflow is listening here' });
+
+  const trigger = [{ json: { headers: req.headers, query: req.query, body: req.body } }];
+
+  if (hook.response_mode === 'immediately') {
+    res.json({ message: 'Workflow was started' });
+    runById(hook.workflow_id, trigger).catch(console.error);   // note: no await
+    return;
+  }
+  const result = await runById(hook.workflow_id, trigger);
+  res.json(lastNodeOutput(result));
+});</code></pre></div>
+        <p>The test address is the same handler with <code>is_test = true</code> and a different path
+          prefix, so experiments never fire real emails.</p>
+      </div></div>
+
+      <div class="bstep"><div class="bn">3</div><div class="bb">
+        <h4>The schedule registry</h4>
+        <div class="cmd"><span class="p">$</span> npm i croner --workspace apps/api</div>
+        <div class="fwrap"><span class="fname">apps/api/schedules.js</span>
+<pre class="code" data-lang="js"><code>import { Cron } from 'croner';
+const jobs = new Map();
+
+export function activate(workflow, schedule) {
+  deactivate(workflow.id);
+  jobs.set(workflow.id, new Cron(schedule.cron, { timezone: schedule.timezone }, () =>
+    runById(workflow.id, [{ json: { timestamp: new Date().toISOString() } }])
+      .catch(console.error)));
+}
+
+export function deactivate(workflowId) {
+  jobs.get(workflowId)?.stop();
+  jobs.delete(workflowId);
+}
+
+// rebuild every timer on boot — otherwise schedules stop silently after each deploy
+export async function restoreAll(db) {
+  const rows = (await db.query(
+    'SELECT w.*, s.cron, s.timezone FROM workflows w JOIN schedules s ON s.workflow_id = w.id ' +
+    'WHERE w.active = true')).rows;
+  for (const r of rows) activate(r, r);
+  console.log(`restored ${rows.length} schedules`);
+}</code></pre></div>
+      </div></div>
+
+      <div class="bstep"><div class="bn">4</div><div class="bb">
+        <h4>Reach your laptop from outside</h4>
+        <div class="cmd"><span class="p">$</span> npx cloudflared tunnel --url http://localhost:5678
+<span class="c"># prints https://something-random.trycloudflare.com — use that in Postman,</span>
+<span class="c"># or paste it into a phone browser to fire the webhook from another network</span></div>
+      </div></div>
+    </div>
+
+    <div class="chk"><b>Check it works</b>A POST from your phone through the tunnel creates an execution
+      row within a second. A workflow on <code>* * * * *</code> makes exactly one row per minute, and
+      stops the moment you deactivate it.</div>
+  </div>
+</div>

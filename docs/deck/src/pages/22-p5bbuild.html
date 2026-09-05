@@ -1,0 +1,107 @@
+<!-- ============================== 2.6b BUILD ============================== -->
+<div class="page" style="--acc:#0a7a70;--accs:#dcf0ee">
+  <div class="rh"><span>Part 2 · Building it</span><span class="r">2.6b — the Google nodes</span></div>
+  <div class="h-wrap"><span class="secno">2.6b</span><h2>Build it: one helper, then four Google nodes</h2></div>
+  <div class="band"></div>
+
+  <div class="stack">
+    <p class="lede">D1 writes the helper first. After that each node is a settings description plus one
+      request, and six people can work in parallel without talking to each other.</p>
+
+    <div class="bsteps">
+      <div class="bstep"><div class="bn">1</div><div class="bb">
+        <h4>The shared helper — refresh-on-401, written once</h4>
+        <div class="fwrap"><span class="fname">packages/nodes/google/request.js</span>
+<pre class="code" data-lang="js"><code>export async function googleRequest(credentialId, url, options = {}) {
+  let token = await getAccessToken(credentialId);
+  const send = () => fetch(url, { ...options,
+    headers: { 'content-type': 'application/json', ...options.headers,
+               Authorization: `Bearer ${token}` } });
+
+  let res = await send();
+  if (res.status === 401) {                    // the hour is up — refresh once, then retry
+    token = await refreshAccessToken(credentialId);
+    res = await send();
+  }
+  if (!res.ok) throw new Error(`Google ${res.status}: ${(await res.text()).slice(0, 300)}`);
+  return res.json();
+}
+
+async function refreshAccessToken(credentialId) {
+  const { refresh_token } = JSON.parse(decrypt(await loadCredential(credentialId)));
+  const r = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      refresh_token, grant_type: 'refresh_token',
+      client_id: process.env.GOOGLE_CLIENT_ID, client_secret: process.env.GOOGLE_CLIENT_SECRET }),
+  });
+  const t = await r.json();
+  await cacheAccessToken(credentialId, t.access_token, t.expires_in);
+  return t.access_token;
+}</code></pre></div>
+      </div></div>
+
+      <div class="bstep"><div class="bn">2</div><div class="bb">
+        <h4>Google Sheets — append a row</h4>
+        <div class="fwrap"><span class="fname">packages/nodes/google/sheets.js</span>
+<pre class="code" data-lang="js"><code>async execute(ctx) {
+  const out = [];
+  const items = ctx.getInputData();
+  for (let i = 0; i &lt; items.length; i++) {
+    const id    = parseSheetId(ctx.getNodeParameter('documentId', i));   // URL or bare id
+    const range = ctx.getNodeParameter('sheetName', i) + '!A:Z';
+    const row   = ctx.getNodeParameter('columns', i);                    // { name, email, … }
+
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${id}/values/`
+              + `${encodeURIComponent(range)}:append?valueInputOption=USER_ENTERED`;
+
+    const body = await googleRequest(ctx.credentialId, url, {
+      method: 'POST', body: JSON.stringify({ values: [Object.values(row)] }) });
+    out.push({ json: body });
+  }
+  return [out];
+}
+
+const parseSheetId = (s) => s.match(/\/d\/([a-zA-Z0-9-_]+)/)?.[1] ?? s;</code></pre></div>
+      </div></div>
+
+      <div class="bstep"><div class="bn">3</div><div class="bb">
+        <h4>Google Docs — a mail merge in one request</h4>
+        <div class="fwrap"><span class="fname">packages/nodes/google/docs.js</span>
+<pre class="code" data-lang="js"><code>const requests = Object.entries(ctx.getNodeParameter('replacements', i)).map(([k, v]) => ({
+  replaceAllText: { containsText: { text: `{{${k}}}`, matchCase: true }, replaceText: String(v) },
+}));
+
+await googleRequest(ctx.credentialId,
+  `https://docs.googleapis.com/v1/documents/${docId}:batchUpdate`,
+  { method: 'POST', body: JSON.stringify({ requests }) });</code></pre></div>
+        <p>Make a template document containing <code>{{customer_name}}</code> and friends, copy it with
+          Drive first, then run this on the copy — otherwise you overwrite the template.</p>
+      </div></div>
+
+      <div class="bstep"><div class="bn">4</div><div class="bb">
+        <h4>Google Drive — upload, which is multipart and slightly odd</h4>
+        <div class="fwrap"><span class="fname">packages/nodes/google/drive.js</span>
+<pre class="code" data-lang="js"><code>const boundary = 'b' + crypto.randomUUID();
+const meta = { name: fileName, parents: folderId ? [folderId] : undefined };
+
+const body = Buffer.concat([
+  Buffer.from(`--${boundary}\r\ncontent-type: application/json\r\n\r\n`),
+  Buffer.from(JSON.stringify(meta)),
+  Buffer.from(`\r\n--${boundary}\r\ncontent-type: ${mimeType}\r\n\r\n`),
+  fileBuffer,
+  Buffer.from(`\r\n--${boundary}--`),
+]);
+
+await googleRequest(ctx.credentialId,
+  'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+  { method: 'POST', body, headers: { 'content-type': `multipart/related; boundary=${boundary}` } });</code></pre></div>
+      </div></div>
+    </div>
+
+    <div class="chk"><b>Check it works</b>Webhook → Sheets append puts a row into a spreadsheet you have
+      open on screen, within about a second. Then Sheets read → Docs replace produces a filled document
+      in Drive.</div>
+  </div>
+</div>

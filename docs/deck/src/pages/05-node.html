@@ -1,0 +1,71 @@
+<!-- ============================== 1.2 ============================== -->
+<div class="page">
+  <div class="rh"><span>Part 1 · How it all works</span><span class="r">1.2 — What a node really is</span></div>
+  <div class="h-wrap"><span class="secno">1.2</span><h2>What a node really is</h2></div>
+  <div class="band"></div>
+
+  <div class="stack">
+    <p class="lede">A node is <b>one file that does two separate jobs</b>. Half of it <em>describes</em>
+      itself, so the screen knows what settings to draw. The other half is an ordinary function that
+      <em>does the work</em> when the engine calls it. Nothing else. Once this is clear, adding a node to
+      our platform stops being mysterious.</p>
+
+    <figure>
+      <svg viewBox="0 0 760 226" xmlns="http://www.w3.org/2000/svg">
+        <defs><marker id="n1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#7c8492"/></marker></defs>
+        <rect x="10" y="42" width="140" height="56" rx="5" fill="#e8edf6" stroke="#34558f" stroke-width="1.5"/>
+        <text x="26" y="66" class="t">The screen</text>
+        <text x="26" y="83" class="s2">draws the settings</text>
+        <path d="M150 70L184 70" stroke="#7c8492" fill="none" marker-end="url(#n1)"/>
+        <text x="156" y="62" class="e">READS</text>
+
+        <rect x="192" y="14" width="376" height="200" rx="6" fill="#fff" stroke="#34558f" stroke-width="2"/>
+        <text x="208" y="34" class="e" style="fill:#34558f">ONE NODE FILE</text>
+        <rect x="208" y="44" width="344" height="72" rx="4" fill="#f7f8fa" stroke="#dcdfe5"/>
+        <text x="222" y="63" class="t">Its description</text>
+        <text x="222" y="80" class="s2">its name and icon</text>
+        <text x="222" y="95" class="s2">the list of settings it needs, and their types</text>
+        <text x="222" y="110" class="s2">which settings to hide until they apply</text>
+
+        <rect x="208" y="126" width="344" height="72" rx="4" fill="#f7f8fa" stroke="#dcdfe5"/>
+        <text x="222" y="145" class="t">Its execute function</text>
+        <text x="222" y="162" class="s2">take the list of items that arrived</text>
+        <text x="222" y="177" class="s2">do exactly one job with them</text>
+        <text x="222" y="192" class="s2">hand a list of items onward</text>
+
+        <path d="M568 162L604 162" stroke="#7c8492" fill="none" marker-end="url(#n1)"/>
+        <text x="574" y="154" class="e">RUNS</text>
+        <rect x="612" y="134" width="140" height="56" rx="5" fill="#e8edf6" stroke="#34558f" stroke-width="1.5"/>
+        <text x="628" y="158" class="t">The engine</text>
+        <text x="628" y="175" class="s2">calls it in turn</text>
+      </svg>
+      <figcaption><b>Figure 3.</b> Two halves, two audiences. The screen never runs a node; the engine
+        never draws anything. Neither half needs to know the other exists.</figcaption>
+    </figure>
+
+    <div class="n8n"><b>Familiar from n8n</b>Click a Google Sheets node in n8n and the panel on the right
+      appears instantly, with exactly the right fields. Change <b>Operation</b> from “Append” to “Read”
+      and the fields change with it. n8n did not hand-build hundreds of panels — every node describes
+      its own fields, and one piece of code turns any such description into a form. We are copying that
+      idea deliberately, and it is the reason four of us can add nodes at the same time.</div>
+
+    <div class="row2">
+      <div class="box"><span class="tag">The description half</span>
+        <h4>Data, not code</h4>
+        <p>A plain list: “URL is a text box”, “Method is a dropdown with four choices”, “only show Body
+          when Method is POST”. The screen reads that list and draws the panel. Adding a field to a node
+          means adding a line to this list — <b>never touching the editor</b>.</p></div>
+      <div class="box"><span class="tag">The execute half</span>
+        <h4>One job, done plainly</h4>
+        <p>Items come in, the node does its single job — call an API, reshape some fields, split the flow
+          in two — and items go out. A node never talks to the database, never draws anything, and never
+          decides what runs next. That is the engine's business.</p></div>
+    </div>
+
+    <div class="call why"><b>The rule that keeps us out of trouble</b>Every node in our platform obeys the
+      same shape, whether it sends email through Gmail or simply adds a field. Because the shape never
+      varies, the engine can run a node it has never seen before, and the screen can draw a settings
+      panel for a node written five minutes ago. We agree this shape in Phase 1 and then <b>freeze
+      it</b> — changing it later would break everyone's work at once.</div>
+  </div>
+</div>

@@ -1,0 +1,83 @@
+<!-- ============================== 2.1 PHASE 1 ============================== -->
+<div class="page" style="--acc:#4b46c0;--accs:#e8e7f9">
+  <div class="rh"><span>Part 2 · Building it</span><span class="r">2.1 — Phase 1 · Make it run</span></div>
+  <div class="ph"><span class="chip">Phase 1 · Make it run</span>
+    <span class="stages">Stages 1–2 · Weeks 4–5 · lead: A1, reviewed by A2</span></div>
+  <div class="h-wrap"><span class="secno">2.1</span><h2>A workflow runs, from a single file</h2></div>
+  <div class="band"></div>
+
+  <div class="stack">
+    <p class="lede"><b>What we are doing.</b> Writing the loop from section 1.4 as one small program, and
+      agreeing the exact shape every node will have. <b>No web page, no database, no canvas</b> — just a
+      file we run from the terminal and watch print real results.</p>
+
+    <figure>
+      <svg viewBox="0 0 760 206" xmlns="http://www.w3.org/2000/svg">
+        <rect x="10" y="20" width="452" height="176" rx="6" fill="#14161a"/>
+        <rect x="10" y="20" width="452" height="20" rx="6" fill="#2b3038"/>
+        <rect x="10" y="34" width="452" height="6" fill="#2b3038"/>
+        <circle cx="26" cy="30" r="3.4" fill="#5b6472"/><circle cx="38" cy="30" r="3.4" fill="#5b6472"/><circle cx="50" cy="30" r="3.4" fill="#5b6472"/>
+        <text x="66" y="34" class="s" style="fill:#b9c0cb">engine.js</text>
+        <text x="26" y="64" class="s2" style="fill:#7fd39a">$ node engine.js</text>
+        <text x="26" y="88" class="s2" style="fill:#e8eaed">Start   -&gt; [ { } ]</text>
+        <text x="26" y="110" class="s2" style="fill:#e8eaed">Weather -&gt; [ { "temp_C": "18",</text>
+        <text x="26" y="128" class="s2" style="fill:#e8eaed">              "desc": "Partly cloudy" } ]</text>
+        <text x="26" y="152" class="s2" style="fill:#e8eaed">Shape   -&gt; [ { "city": "Newcastle",</text>
+        <text x="26" y="170" class="s2" style="fill:#e8eaed">              "temp": 18 } ]</text>
+        <text x="26" y="190" class="s2" style="fill:#7fd39a">done</text>
+
+        <rect x="478" y="20" width="272" height="176" rx="6" fill="#e8e7f9" stroke="#4b46c0" stroke-width="1.5"/>
+        <text x="494" y="46" class="t">What just happened</text>
+        <text x="494" y="70" class="s2">A hard-coded workflow object, three</text>
+        <text x="494" y="86" class="s2">node functions, and the loop — all in</text>
+        <text x="494" y="102" class="s2">one file, about forty lines.</text>
+        <text x="494" y="128" class="s2">It called a real weather API, passed</text>
+        <text x="494" y="144" class="s2">the result to the next node, and</text>
+        <text x="494" y="160" class="s2">printed what each one produced.</text>
+        <text x="494" y="186" class="s" style="fill:#3a36a0">everything else is built around this</text>
+      </svg>
+      <figcaption><b>Figure @.</b> The whole product, on the first day. Every later phase adds a way to
+        create, store, trigger or display this — never a second way to run it.</figcaption>
+    </figure>
+
+    <div class="n8n"><b>Familiar from n8n</b>This is the moment n8n goes from magic to machinery. What you
+      watched happen on the n8n canvas — nodes lighting up in order, data appearing in each output panel
+      — is exactly what those printed lines are. The only difference is that n8n draws it prettily and
+      we are printing it to a terminal.</div>
+
+    <div class="tools">
+      <div class="eyebrow" style="color:#4b46c0">Tools we use in this phase</div>
+      <div class="tgrid">
+        <div><b>Node.js</b><span>the language we already learned — nothing new to install</span></div>
+        <div><b>VS Code + Git</b><span>one shared repository, everyone on a branch</span></div>
+        <div><b>TypeScript</b><span>used lightly, only to write down the node shape</span></div>
+        <div><b>No frameworks</b><span>deliberately — this phase is plain JavaScript in one file</span></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="eyebrow" style="margin-bottom:6px">How we proceed</div>
+      <ol class="steps">
+        <li><b>One person writes the file.</b> A hard-coded workflow, two or three node functions, and the
+          waiting-list loop. It should end by printing real data from a public weather API.</li>
+        <li><b>All eight of us read it together</b> until nobody has a question. This is worth an hour of
+          everyone's time — it is the only genuinely conceptual part of the whole project.</li>
+        <li><b>We write the node shape down</b> in the repository: what a node receives, what it must
+          hand back, and what it is never allowed to do (touch the database, draw anything, or decide
+          what runs next).</li>
+        <li><b>We build two boring nodes against it</b> — one that adds fields to each item, one that
+          splits the flow in two. Nothing that can fail for reasons outside our control.</li>
+        <li><b>We freeze the shape.</b> From here on, changing it needs everyone to agree, because a
+          change breaks work already in progress.</li>
+      </ol>
+    </div>
+
+    <div class="row2">
+      <div class="call done"><b>Done when</b>Three nodes run in a chain, the splitting node sends data
+        down the correct branch, and every one of us can explain the loop without notes.</div>
+      <div class="call warn"><b>Watch out</b>Do not put eight people on this. A1 writes, A2 reads closely,
+        and the other six work on the independent tracks in section 4.2. Parallel work on an unstable core
+        produces eight rewrites — the most common way a large group fails quietly in week three.</div>
+    </div>
+  </div>
+</div>

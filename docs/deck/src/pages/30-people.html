@@ -1,0 +1,81 @@
+<!-- ============================== 4.1 ============================== -->
+<div class="page">
+  <div class="rh"><span>Part 4 · Running the project</span><span class="r">4.1 — Who owns what</span></div>
+  <div class="h-wrap"><span class="secno">4.1</span><h2>Eight people, eight areas</h2></div>
+  <div class="band" style="background:linear-gradient(90deg,#4b46c0,#2a5fce,#0d72b4,#087f99,#0a7a70,#14624f)"></div>
+
+  <div class="stack">
+    <p class="lede">We own <b>parts of the system</b>, not tasks — so nobody has to ask whose decision
+      something is, and we rarely edit the same file at the same time. Eight people means <b>four areas
+      of two</b>: within a pair you swap work freely and review each other; across pairs you talk through
+      the written agreements.</p>
+
+    <figure>
+      <svg viewBox="0 0 760 260" xmlns="http://www.w3.org/2000/svg">
+        <rect x="10" y="26" width="176" height="82" rx="6" fill="#e8e7f9" stroke="#4b46c0" stroke-width="1.5"/>
+        <text x="26" y="48" class="t">The engine</text>
+        <text x="26" y="65" class="s2">the loop, items, nodes</text>
+        <rect x="26" y="76" width="30" height="22" rx="4" fill="#4b46c0"/><text x="32" y="92" class="t" style="fill:#fff">A1</text>
+        <rect x="62" y="76" width="30" height="22" rx="4" fill="#4b46c0"/><text x="68" y="92" class="t" style="fill:#fff">A2</text>
+
+        <rect x="198" y="26" width="176" height="82" rx="6" fill="#e3ebfb" stroke="#2a5fce" stroke-width="1.5"/>
+        <text x="214" y="48" class="t">The editor</text>
+        <text x="214" y="65" class="s2">canvas and sidebar</text>
+        <rect x="214" y="76" width="30" height="22" rx="4" fill="#2a5fce"/><text x="220" y="92" class="t" style="fill:#fff">B1</text>
+        <rect x="250" y="76" width="30" height="22" rx="4" fill="#2a5fce"/><text x="256" y="92" class="t" style="fill:#fff">B2</text>
+
+        <rect x="386" y="26" width="176" height="82" rx="6" fill="#ddf0f4" stroke="#087f99" stroke-width="1.5"/>
+        <text x="402" y="48" class="t">The server</text>
+        <text x="402" y="65" class="s2">API, triggers, keys</text>
+        <rect x="402" y="76" width="30" height="22" rx="4" fill="#087f99"/><text x="408" y="92" class="t" style="fill:#fff">C1</text>
+        <rect x="438" y="76" width="30" height="22" rx="4" fill="#087f99"/><text x="444" y="92" class="t" style="fill:#fff">C2</text>
+
+        <rect x="574" y="26" width="176" height="82" rx="6" fill="#dceee8" stroke="#14624f" stroke-width="1.5"/>
+        <text x="590" y="48" class="t">Delivery</text>
+        <text x="590" y="65" class="s2">infra, tests, report</text>
+        <rect x="590" y="76" width="30" height="22" rx="4" fill="#14624f"/><text x="596" y="92" class="t" style="fill:#fff">D1</text>
+        <rect x="626" y="76" width="30" height="22" rx="4" fill="#14624f"/><text x="632" y="92" class="t" style="fill:#fff">D2</text>
+
+        <rect x="10" y="132" width="740" height="86" rx="6" fill="#fff" stroke="#0a7a70" stroke-width="1.5"/>
+        <rect x="10" y="132" width="740" height="22" rx="6" fill="#dcf0ee"/>
+        <text x="26" y="147" class="e" style="fill:#075f57">WEEKS 8–10 · THE NODE SURGE — SIX OF US TAKE ONE NODE EACH</text>
+        <rect x="26" y="166" width="106" height="38" rx="5" fill="#dcf0ee" stroke="#0a7a70"/>
+        <text x="38" y="184" class="t">Sheets</text><text x="38" y="198" class="s">D1</text>
+        <rect x="146" y="166" width="106" height="38" rx="5" fill="#dcf0ee" stroke="#0a7a70"/>
+        <text x="158" y="184" class="t">Drive</text><text x="158" y="198" class="s">C1</text>
+        <rect x="266" y="166" width="106" height="38" rx="5" fill="#dcf0ee" stroke="#0a7a70"/>
+        <text x="278" y="184" class="t">Docs</text><text x="278" y="198" class="s">B2</text>
+        <rect x="386" y="166" width="106" height="38" rx="5" fill="#dcf0ee" stroke="#0a7a70"/>
+        <text x="398" y="184" class="t">Gmail</text><text x="398" y="198" class="s">C2</text>
+        <rect x="506" y="166" width="106" height="38" rx="5" fill="#dceee8" stroke="#14624f"/>
+        <text x="518" y="184" class="t">Code</text><text x="518" y="198" class="s">A2</text>
+        <rect x="626" y="166" width="106" height="38" rx="5" fill="#dceee8" stroke="#14624f"/>
+        <text x="638" y="184" class="t">AI</text><text x="638" y="198" class="s">A1</text>
+        <text x="10" y="238" class="s2">B1 builds the code-editing box and the run viewer in the same weeks;</text>
+        <text x="10" y="254" class="s2">D2 writes the tests and the benchmark harness for all six.</text>
+      </svg>
+      <figcaption><b>Figure @.</b> Areas are owned all semester. The nodes in Weeks 8–10 are a
+        <em>surge</em> — six of us take one each, which is only possible because Phase 3 made nodes
+        independent of the editor.</figcaption>
+    </figure>
+
+    <table>
+      <thead><tr><th style="width:34px"></th><th style="width:158px">Owns</th><th>Responsible for, all semester</th></tr></thead>
+      <tbody>
+        <tr><td><b>A1</b></td><td class="term">packages/engine</td><td><b>Engine core and technical lead.</b> The loop, the item model, the expression resolver. Writes Phase 1 alone. Holds the casting vote on architecture. Takes the AI node in the surge.</td></tr>
+        <tr><td><b>A2</b></td><td class="term">packages/nodes/core</td><td><b>Control flow and isolation.</b> IF, Set, Merge, per-node retry and error handling; later the Code node's sandbox. Reviews A1's work and vice versa.</td></tr>
+        <tr><td><b>B1</b></td><td class="term">apps/editor/canvas</td><td><b>The canvas.</b> React Flow, node rendering, and the conversion between its format and ours — the fiddliest code in the editor. Later the code-editing box.</td></tr>
+        <tr><td><b>B2</b></td><td class="term">apps/editor/panel</td><td><b>The sidebar and run viewer.</b> The settings-panel generator — the single highest-leverage piece in the project — plus the execution list and log. Takes Docs in the surge.</td></tr>
+        <tr><td><b>C1</b></td><td class="term">apps/api</td><td><b>Server and database.</b> The five addresses, the schema and its migrations, and the query layer. Takes Drive in the surge.</td></tr>
+        <tr><td><b>C2</b></td><td class="term">apps/api/triggers</td><td><b>Triggers and credentials.</b> Webhook ingress, the schedule registry, encryption, and the Google permission flow. Takes Gmail in the surge — they already know that auth path.</td></tr>
+        <tr><td><b>D1</b></td><td class="term">packages/nodes/google</td><td><b>Integrations lead.</b> The shared Google request helper and the node-writing conventions everyone else copies. Takes Sheets first, so the pattern exists before the surge starts.</td></tr>
+        <tr><td><b>D2</b></td><td class="term">infra/ · docs/</td><td><b>Infrastructure, testing and the report.</b> Docker, automatic checks, deployment, the benchmark. Editor-in-chief of the report and director of the demo. Starts on day one, not in Week 12.</td></tr>
+      </tbody>
+    </table>
+
+    <div class="call why"><b>Three written agreements hold eight people together</b>The <b>node shape</b>
+      (frozen Phase 1, A1 owns it), the <b>five addresses</b> (frozen Phase 2, C1 owns them), and the
+      <b>settings-description format</b> (frozen Phase 3, B2 owns it). Everything else can change without
+      a meeting. These three cannot change without one.</div>
+  </div>
+</div>

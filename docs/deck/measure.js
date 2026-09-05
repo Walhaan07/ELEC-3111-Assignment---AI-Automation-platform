@@ -15,6 +15,7 @@ const { chromium } = require('playwright');
     const over = r.h - LIMIT;
     console.log(`${String(r.i).padStart(2)}  ${String(r.h).padStart(5)}px  ${over > 0 ? 'OVER by ' + String(over).padStart(4) : 'ok        '}  ${r.title}`);
   }
+  require('fs').writeFileSync('heights.json', JSON.stringify(rows.map(r => r.h)));
   console.log('total est. pages:', rows.reduce((a, r) => a + Math.max(1, Math.ceil(r.h / LIMIT)), 0));
   await b.close();
 })();

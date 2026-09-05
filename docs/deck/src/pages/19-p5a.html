@@ -1,0 +1,83 @@
+<!-- ============================== 2.5 PHASE 5a ============================== -->
+<div class="page" style="--acc:#0a7a70;--accs:#dcf0ee">
+  <div class="rh"><span>Part 2 · Building it</span><span class="r">2.5 — Phase 5 · Permission</span></div>
+  <div class="ph"><span class="chip">Phase 5 · Make it do things</span>
+    <span class="stages">Stage 9 · Weeks 7–8 · lead: C2</span></div>
+  <div class="h-wrap"><span class="secno">2.5</span><h2>First, permission to use a Google account</h2></div>
+  <div class="band"></div>
+
+  <div class="stack">
+    <p class="lede"><b>What we are doing.</b> Getting permission to act for somebody — <b>without ever
+      seeing their password</b>. The step most likely to cost us a week, so we do it early and once.</p>
+
+    <figure>
+      <svg viewBox="0 0 760 274" xmlns="http://www.w3.org/2000/svg">
+        <defs><marker id="o1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#0a7a70"/></marker></defs>
+        <rect x="10" y="8" width="216" height="28" rx="5" fill="#dcf0ee"/>
+        <text x="26" y="27" class="t">A teammate's browser</text>
+        <rect x="272" y="8" width="216" height="28" rx="5" fill="#dcf0ee"/>
+        <text x="288" y="27" class="t">Our server</text>
+        <rect x="534" y="8" width="216" height="28" rx="5" fill="#dcf0ee"/>
+        <text x="550" y="27" class="t">Google</text>
+        <line x1="118" y1="40" x2="118" y2="250" stroke="#ecEEF1" stroke-width="1.5"/>
+        <line x1="380" y1="40" x2="380" y2="250" stroke="#ecEEF1" stroke-width="1.5"/>
+        <line x1="642" y1="40" x2="642" y2="250" stroke="#ecEEF1" stroke-width="1.5"/>
+
+        <path d="M118 60L374 60" stroke="#0a7a70" fill="none" marker-end="url(#o1)"/>
+        <text x="130" y="54" class="s2"><tspan class="n" style="fill:#0a7a70">1</tspan>  clicks “Connect Google Sheets”</text>
+        <path d="M380 90L124 90" stroke="#0a7a70" fill="none" marker-end="url(#o1)"/>
+        <text x="130" y="84" class="s2"><tspan class="n" style="fill:#0a7a70">2</tspan>  go to Google, and ask for exactly these permissions</text>
+        <path d="M118 120L636 120" stroke="#0a7a70" fill="none" marker-end="url(#o1)"/>
+        <text x="130" y="114" class="s2"><tspan class="n" style="fill:#0a7a70">3</tspan>  the consent screen appears — they press Allow</text>
+        <path d="M642 150L386 150" stroke="#0a7a70" fill="none" marker-end="url(#o1)"/>
+        <text x="398" y="144" class="s2"><tspan class="n" style="fill:#0a7a70">4</tspan>  sends them back to us with a one-time code</text>
+        <path d="M380 180L636 180" stroke="#0a7a70" fill="none" marker-end="url(#o1)"/>
+        <text x="392" y="174" class="s2"><tspan class="n" style="fill:#0a7a70">5</tspan>  that code, plus our own secret</text>
+        <path d="M642 210L386 210" stroke="#0a7a70" fill="none" marker-end="url(#o1)"/>
+        <text x="398" y="204" class="s2"><tspan class="n" style="fill:#0a7a70">6</tspan>  two keys: one lasting an hour, one long-lived</text>
+        <rect x="272" y="228" width="288" height="34" rx="5" fill="#dcf0ee" stroke="#0a7a70"/>
+        <text x="288" y="250" class="s2"><tspan class="n" style="fill:#0a7a70">7</tspan>  we scramble the long key and store it</text>
+        <text x="574" y="250" class="s">never sent to a browser</text>
+      </svg>
+      <figcaption><b>Figure @.</b> The whole thing in seven arrows. Steps 1–3 happen in front of the
+        person; 4–7 happen invisibly in about half a second.</figcaption>
+    </figure>
+
+    <div class="n8n"><b>Familiar from n8n</b>Adding a Google credential opened a small window, showed
+      Google's “choose an account” screen, then said <em>Account connected</em>. These seven arrows are
+      what happened inside it.</div>
+
+    <div class="tools">
+      <div class="eyebrow" style="color:#0a7a70">Tools we use in this phase</div>
+      <div class="tgrid">
+        <div><b>Google Cloud<br>Console</b><span>where the project, the four APIs and the permission screen live — free</span></div>
+        <div><b>OAuth 2.0</b><span>the agreed way of saying “let this app act for me” — a sequence of requests, not a library</span></div>
+        <div><b>node:crypto</b><span>built into Node; scrambles the stored keys</span></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="eyebrow" style="margin-bottom:6px">How we proceed</div>
+      <ol class="steps">
+        <li><b>One of us creates a Google Cloud project</b> and switches on the four APIs. Free, fifteen
+          minutes.</li>
+        <li><b>Fill in the consent screen</b> and keep the app in <b>Testing</b> mode. Add every group
+          member as a <b>test user</b>, plus our demonstrator: in Testing mode nobody outside that list
+          can connect at all.</li>
+        <li><b>Build the round trip</b> from the figure above, then scramble the long-lived key before
+          storing it — and never send it to a browser.</li>
+      </ol>
+    </div>
+
+    <div class="call warn"><b>The two traps that end demos</b>
+      <span class="wsub">1 · Gmail permissions are “restricted”.</span>
+      Publishing the app would need a Google security review we cannot finish this semester — and we do
+      not need one: Testing mode plus a test-user list behaves identically for us.
+      <span class="wsub">2 · In Testing mode the long-lived key dies after seven days.</span>
+      An account connected in Week 9 is dead by Week 14, and it looks like a broken node.
+      <b>Reconnecting every account is step one of the demo-morning checklist.</b></div>
+
+    <div class="call done"><b>Done when</b>Somebody presses Connect, approves on Google's screen, and our
+      server can read a real spreadsheet with the stored keys.</div>
+  </div>
+</div>

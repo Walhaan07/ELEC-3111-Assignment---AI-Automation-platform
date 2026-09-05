@@ -1,0 +1,75 @@
+<!-- ============================== 1.4 ============================== -->
+<div class="page">
+  <div class="rh"><span>Part 1 · How it all works</span><span class="r">1.4 — What the engine really is</span></div>
+  <div class="h-wrap"><span class="secno">1.4</span><h2>What the engine really is</h2></div>
+  <div class="band"></div>
+
+  <div class="stack">
+    <p class="lede">An <b>engine</b> is a program that reads a set of instructions and carries them out in
+      the right order. A chess engine reads a position; a search engine reads a query. <b>Our engine
+      reads a workflow</b> — the JSON from section 1.1 — and calls each node's execute function at the
+      right moment, with the right data. It is about forty lines long, and it is the heart of the whole
+      project.</p>
+
+    <figure>
+      <svg viewBox="0 0 760 322" xmlns="http://www.w3.org/2000/svg">
+        <defs><marker id="e1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#7c8492"/></marker></defs>
+        <rect x="14" y="8" width="336" height="36" rx="4" fill="#e8edf6" stroke="#b9c6de"/>
+        <text x="30" y="25" class="n" style="fill:#34558f">1</text><text x="50" y="25" class="t">Read the workflow</text>
+        <text x="50" y="38" class="s">the boxes and the lines, from the database</text>
+        <path d="M182 44L182 56" stroke="#7c8492" fill="none" marker-end="url(#e1)"/>
+        <rect x="14" y="58" width="336" height="36" rx="4" fill="#e8edf6" stroke="#b9c6de"/>
+        <text x="30" y="75" class="n" style="fill:#34558f">2</text><text x="50" y="75" class="t">Put the trigger on the list</text>
+        <text x="50" y="88" class="s">with one empty item, to start things off</text>
+        <path d="M182 94L182 106" stroke="#7c8492" fill="none" marker-end="url(#e1)"/>
+        <rect x="14" y="108" width="336" height="36" rx="4" fill="#e8edf6" stroke="#34558f" stroke-width="2.5"/>
+        <text x="30" y="125" class="n" style="fill:#34558f">3</text><text x="50" y="125" class="t">Take the next node off the list</text>
+        <text x="50" y="138" class="s">together with the items waiting for it</text>
+        <path d="M182 144L182 156" stroke="#7c8492" fill="none" marker-end="url(#e1)"/>
+        <rect x="14" y="158" width="336" height="36" rx="4" fill="#e8edf6" stroke="#b9c6de"/>
+        <text x="30" y="175" class="n" style="fill:#34558f">4</text><text x="50" y="175" class="t">Fill in its settings</text>
+        <text x="50" y="188" class="s">every expression becomes a real value</text>
+        <path d="M182 194L182 206" stroke="#7c8492" fill="none" marker-end="url(#e1)"/>
+        <rect x="14" y="208" width="336" height="36" rx="4" fill="#e8edf6" stroke="#b9c6de"/>
+        <text x="30" y="225" class="n" style="fill:#34558f">5</text><text x="50" y="225" class="t">Call its execute function</text>
+        <text x="50" y="238" class="s">and keep whatever it hands back</text>
+        <path d="M182 244L182 256" stroke="#7c8492" fill="none" marker-end="url(#e1)"/>
+        <rect x="14" y="258" width="336" height="36" rx="4" fill="#e8edf6" stroke="#b9c6de"/>
+        <text x="30" y="275" class="n" style="fill:#34558f">6</text><text x="50" y="275" class="t">Add whoever comes next</text>
+        <text x="50" y="288" class="s">but only exits that actually produced items</text>
+        <path d="M350 276L384 276L384 126L356 126" stroke="#34558f" fill="none" stroke-width="1.6" marker-end="url(#e1)"/>
+        <text x="14" y="314" class="e" style="fill:#34558f">THE ARROW GOES BACK TO STEP 3 UNTIL THE WAITING LIST IS EMPTY</text>
+
+        <rect x="440" y="8" width="316" height="172" rx="4" fill="#fff" stroke="#34558f" stroke-width="1.5"/>
+        <rect x="440" y="8" width="316" height="22" rx="4" fill="#e8edf6"/>
+        <text x="452" y="23" class="e" style="fill:#34558f">THE SAME LOOP, RUNNING A REAL WORKFLOW</text>
+        <line x1="440" y1="54" x2="756" y2="54" stroke="#dcdfe5"/>
+        <text x="452" y="48" class="e">TICK</text><text x="490" y="48" class="e">NODE RUN</text>
+        <text x="580" y="48" class="e">PRODUCED</text><text x="668" y="48" class="e">WAITING</text>
+        <text x="452" y="74" class="s2">1</text><text x="490" y="74" class="s2">Webhook</text>
+        <text x="580" y="74" class="s2">1 item</text><text x="668" y="74" class="s2">Code</text>
+        <text x="452" y="96" class="s2">2</text><text x="490" y="96" class="s2">Code</text>
+        <text x="580" y="96" class="s2">3 items</text><text x="668" y="96" class="s2">IF</text>
+        <text x="452" y="118" class="s2">3</text><text x="490" y="118" class="s2">IF</text>
+        <text x="580" y="118" class="s2">3 and 0</text><text x="668" y="118" class="s2">Gmail</text>
+        <text x="452" y="140" class="s2">4</text><text x="490" y="140" class="s2">Gmail</text>
+        <text x="580" y="140" class="s2">3 items</text><text x="668" y="140" class="s2">nothing</text>
+        <text x="452" y="166" class="s">the list is empty, so the run is finished</text>
+
+        <rect x="440" y="190" width="316" height="104" rx="4" fill="#f7f8fa" stroke="#dcdfe5"/>
+        <text x="454" y="212" class="t">Look at tick 3</text>
+        <text x="454" y="232" class="s2">The IF sent 3 items down its true exit and</text>
+        <text x="454" y="248" class="s2">0 down its false exit. Step 6 only adds exits</text>
+        <text x="454" y="264" class="s2">that produced something — so whatever sat</text>
+        <text x="454" y="280" class="s2">on the false side simply never ran.</text>
+      </svg>
+      <figcaption><b>Figure 5.</b> Left: the loop. Right: the same loop actually running our demo workflow,
+        one tick at a time, until the waiting list empties.</figcaption>
+    </figure>
+
+    <div class="n8n"><b>Familiar from n8n</b>Press <em>Execute Workflow</em> in n8n and you can watch nodes
+      light up one after another, each turning green as it finishes, branches that were not taken staying
+      grey. You were watching this exact loop run. Our version will do the same thing — and because we
+      wrote it, we will be able to explain every step of it in the report.</div>
+  </div>
+</div>

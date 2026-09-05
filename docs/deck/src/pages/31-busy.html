@@ -1,0 +1,78 @@
+<!-- ============================== 4.2 ============================== -->
+<div class="page">
+  <div class="rh"><span>Part 4 · Running the project</span><span class="r">4.2 — Keeping eight people busy</span></div>
+  <div class="h-wrap"><span class="secno">4.2</span><h2>The hard part of being eight, and how we solve it</h2></div>
+  <div class="band" style="background:#4b46c0"></div>
+
+  <div class="stack">
+    <p class="lede">Eight people is an advantage in Weeks 8 to 10 and a <b>liability in Weeks 4 to 6</b>.
+      Phase 1 is genuinely one person's work and Phase 2 is about three. If we do not plan for that, five
+      of us spend three weeks either idle or — much worse — rewriting each other's code.</p>
+
+    <figure>
+      <svg viewBox="0 0 760 216" xmlns="http://www.w3.org/2000/svg">
+        <text x="10" y="16" class="e">WEEKS 4–6 · EIGHT INDEPENDENT TRACKS THAT CONVERGE IN WEEK 6</text>
+        <rect x="10" y="26" width="348" height="26" rx="4" fill="#e8e7f9" stroke="#4b46c0"/>
+        <text x="24" y="44" class="s2">A1  writes the engine script — the critical path</text>
+        <rect x="10" y="58" width="332" height="26" rx="4" fill="#e8e7f9" stroke="#4b46c0"/>
+        <text x="24" y="76" class="s2">A2  reads it, then writes IF and Set against it</text>
+        <rect x="10" y="90" width="266" height="26" rx="4" fill="#e3ebfb" stroke="#2a5fce"/>
+        <text x="24" y="108" class="s2">B1  a canvas that can drag and connect</text>
+        <rect x="10" y="122" width="358" height="26" rx="4" fill="#dfeef8" stroke="#0d72b4"/>
+        <text x="24" y="140" class="s2">B2  the panel generator, against a fake description</text>
+        <rect x="10" y="154" width="264" height="26" rx="4" fill="#ddf0f4" stroke="#087f99"/>
+        <text x="24" y="172" class="s2">C1  Postgres, the schema, one address</text>
+        <rect x="386" y="26" width="348" height="26" rx="4" fill="#ddf0f4" stroke="#087f99"/>
+        <text x="400" y="44" class="s2">C2  Google Cloud setup, then the permission flow</text>
+        <rect x="386" y="58" width="364" height="26" rx="4" fill="#dcf0ee" stroke="#0a7a70"/>
+        <text x="400" y="76" class="s2">D1  proves all four Google calls in Postman, by hand</text>
+        <rect x="386" y="90" width="300" height="26" rx="4" fill="#dceee8" stroke="#14624f"/>
+        <text x="400" y="108" class="s2">D2  repository, Docker, automatic checks</text>
+        <rect x="386" y="130" width="364" height="78" rx="5" fill="#f7f8fa" stroke="#dcdfe5"/>
+        <text x="400" y="150" class="t">Why this works</text>
+        <text x="400" y="168" class="s2">None of these eight tracks reads another's</text>
+        <text x="400" y="184" class="s2">code. They only need the property types and</text>
+        <text x="400" y="200" class="s2">the node shape, both agreed in Week 4.</text>
+        <text x="10" y="196" class="s2">Everything meets at the Week 6 freeze.</text>
+      </svg>
+      <figcaption><b>Figure @.</b> Eight tracks, no shared code. The only Week 4 decisions everyone needs
+        are the node shape and the list of setting types — both are one meeting.</figcaption>
+    </figure>
+
+    <div class="row2">
+      <div class="box"><span class="tag">The trick for B2</span>
+        <h4>Build against a fake</h4>
+        <p>The settings generator does not need real nodes — it needs a <em>description</em>. Write three
+          fake ones by hand in Week 4 and build the whole panel against them. When real nodes arrive in
+          Week 6 they simply work.</p></div>
+      <div class="box"><span class="tag">The trick for D1</span>
+        <h4>Prove the API calls by hand first</h4>
+        <p>Every Google call can be made in Postman before a single node exists. Doing all four in Week 4
+          — and saving the exact requests — turns Weeks 8–10 from research into typing, and finds the
+          permission problems while there is still time.</p></div>
+    </div>
+
+    <div>
+      <div class="eyebrow" style="margin-bottom:6px">How eight people work without getting in each other's way</div>
+      <ol class="steps">
+        <li><b>Directory ownership is real.</b> A change inside someone's directory is reviewed by them.
+          One approval plus green checks merges it; nobody waits for all eight.</li>
+        <li><b>Pairs review each other.</b> A1↔A2, B1↔B2, C1↔C2, D1↔D2. Reviews stay fast because the
+          reviewer already knows the code.</li>
+        <li><b>Two short meetings, not one long one.</b> Monday, twenty minutes, in two groups — engine
+          and editor, then server and delivery. Thursday, forty minutes, all eight, and everyone shows
+          something running.</li>
+        <li><b>Never eight people on one problem.</b> If a thing is stuck, at most two people work on it
+          and the rest keep moving. Eight people debugging one webhook is a wasted afternoon for six.</li>
+        <li><b>Write the contribution statement weekly</b>, from the commit history, while it is still
+          accurate. With eight names it is a marked component and it is impossible to reconstruct in
+          Week 15.</li>
+      </ol>
+    </div>
+
+    <div class="call why"><b>What eight buys us</b>Capacity in Weeks 8–10, and therefore scope. With five
+      people the AI Agent node, the Merge node, per-node retry and the execution queue were all “only if
+      we are ahead”. With eight they are <b>expected</b> — and they are the four things most likely to
+      make our comparison with n8n interesting rather than apologetic.</div>
+  </div>
+</div>

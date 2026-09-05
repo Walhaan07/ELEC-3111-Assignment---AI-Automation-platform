@@ -1,0 +1,100 @@
+<!-- ============================== 2.2b BUILD ============================== -->
+<div class="page" style="--acc:#2a5fce;--accs:#e3ebfb">
+  <div class="rh"><span>Part 2 · Building it</span><span class="r">2.2b — Phase 2 · the code</span></div>
+  <div class="h-wrap"><span class="secno">2.2b</span><h2>Build it: database, server and canvas</h2></div>
+  <div class="band"></div>
+
+  <div class="stack">
+    <div class="bsteps">
+      <div class="bstep"><div class="bn">1</div><div class="bb">
+        <h4>Start Postgres in a container</h4>
+        <div class="fwrap"><span class="fname">docker-compose.yml</span>
+<pre class="code" data-lang="yaml"><code>services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_PASSWORD: dev
+      POSTGRES_DB: automation
+    ports: ["5432:5432"]
+    volumes: ["pgdata:/var/lib/postgresql/data"]
+volumes:
+  pgdata: {}</code></pre></div>
+        <div class="cmd"><span class="p">$</span> docker compose up -d
+<span class="p">$</span> psql postgresql://postgres:dev@localhost:5432/automation -f schema.sql</div>
+      </div></div>
+
+      <div class="bstep"><div class="bn">2</div><div class="bb">
+        <h4>Two tables</h4>
+        <div class="fwrap"><span class="fname">schema.sql</span>
+<pre class="code" data-lang="sql"><code>CREATE TABLE workflows (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name        text NOT NULL,
+  active      boolean NOT NULL DEFAULT false,
+  nodes       jsonb NOT NULL DEFAULT '[]',      -- the boxes
+  connections jsonb NOT NULL DEFAULT '{}',      -- the lines
+  created_at  timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE executions (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  workflow_id uuid REFERENCES workflows(id) ON DELETE CASCADE,
+  status      text NOT NULL,                    -- running | success | error
+  data        jsonb,                            -- what each node produced
+  error       jsonb,
+  started_at  timestamptz NOT NULL DEFAULT now(),
+  finished_at timestamptz
+);</code></pre></div>
+      </div></div>
+
+      <div class="bstep"><div class="bn">3</div><div class="bb">
+        <h4>The five routes</h4>
+        <div class="cmd"><span class="p">$</span> npm i express pg --workspace apps/api</div>
+        <div class="fwrap"><span class="fname">apps/api/server.js</span>
+<pre class="code" data-lang="js"><code>import express from 'express';
+import pg from 'pg';
+import { runWorkflow } from '../../packages/engine/engine.js';
+
+const db  = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+const app = express();
+app.use(express.json());
+
+app.get('/rest/workflows', async (req, res) =>
+  res.json((await db.query('SELECT id, name, active FROM workflows ORDER BY name')).rows));
+
+app.get('/rest/workflows/:id', async (req, res) =>
+  res.json((await db.query('SELECT * FROM workflows WHERE id = $1', [req.params.id])).rows[0]));
+
+app.post('/rest/workflows', async (req, res) => {
+  const { name, nodes, connections } = req.body;
+  const q = 'INSERT INTO workflows (name, nodes, connections) VALUES ($1, $2, $3) RETURNING *';
+  res.json((await db.query(q, [name, nodes, connections])).rows[0]);
+});
+
+app.patch('/rest/workflows/:id', async (req, res) => {
+  const { nodes, connections } = req.body;
+  const q = 'UPDATE workflows SET nodes = $1, connections = $2 WHERE id = $3 RETURNING *';
+  res.json((await db.query(q, [nodes, connections, req.params.id])).rows[0]);
+});
+
+app.post('/rest/workflows/:id/run', async (req, res) => {
+  const wf  = (await db.query('SELECT * FROM workflows WHERE id = $1', [req.params.id])).rows[0];
+  const run = await db.query("INSERT INTO executions (workflow_id, status) VALUES ($1,'running') RETURNING id", [wf.id]);
+  try {
+    const data = await runWorkflow(wf, nodeTypes);
+    await db.query("UPDATE executions SET status='success', data=$1, finished_at=now() WHERE id=$2", [data, run.rows[0].id]);
+    res.json(data);
+  } catch (e) {
+    await db.query("UPDATE executions SET status='error', error=$1, finished_at=now() WHERE id=$2", [{ message: e.message }, run.rows[0].id]);
+    res.status(500).json({ message: e.message });
+  }
+});
+
+app.listen(5678, () => console.log('api on http://localhost:5678'));</code></pre></div>
+      </div></div>
+    </div>
+
+    <div class="chk"><b>Check it works</b><code>curl -X POST localhost:5678/rest/workflows -H
+      'content-type: application/json' -d '{"name":"first","nodes":[],"connections":{}}'</code> — then
+      restart the container and fetch it back. If it survives, Phase 2's hardest half is done.</div>
+  </div>
+</div>

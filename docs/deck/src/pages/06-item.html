@@ -1,0 +1,89 @@
+<!-- ============================== 1.3 ============================== -->
+<div class="page">
+  <div class="rh"><span>Part 1 · How it all works</span><span class="r">1.3 — What an item really is</span></div>
+  <div class="h-wrap"><span class="secno">1.3</span><h2>What an item really is</h2></div>
+  <div class="band"></div>
+
+  <div class="stack">
+    <p class="lede">An item is <b>one thing</b> — one spreadsheet row, one email, one order. Nodes never
+      pass a single item; they always pass a <b>list</b> of them, even when the list is one item long.
+      This sounds like a small detail. It is the decision that shapes every line of code we write.</p>
+
+    <figure>
+      <svg viewBox="0 0 760 244" xmlns="http://www.w3.org/2000/svg">
+        <defs><marker id="i1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#7c8492"/></marker></defs>
+        <text x="10" y="16" class="e">A REAL SPREADSHEET</text>
+        <rect x="10" y="26" width="196" height="112" rx="3" fill="#fff" stroke="#c3c9d4"/>
+        <rect x="10" y="26" width="196" height="22" fill="#e8edf6"/>
+        <line x1="132" y1="26" x2="132" y2="138" stroke="#e2e5ea"/>
+        <line x1="10" y1="48" x2="206" y2="48" stroke="#c3c9d4"/>
+        <line x1="10" y1="70" x2="206" y2="70" stroke="#e2e5ea"/>
+        <line x1="10" y1="92" x2="206" y2="92" stroke="#e2e5ea"/>
+        <line x1="10" y1="114" x2="206" y2="114" stroke="#e2e5ea"/>
+        <text x="20" y="42" class="s2">name</text><text x="142" y="42" class="s2">row</text>
+        <text x="20" y="64" class="s2">Alice</text><text x="142" y="64" class="s2">1</text>
+        <text x="20" y="86" class="s2">Bob</text><text x="142" y="86" class="s2">2</text>
+        <text x="20" y="108" class="s2">Cara</text><text x="142" y="108" class="s2">3</text>
+        <text x="20" y="130" class="s">… 47 more</text>
+        <text x="10" y="158" class="s2">the Sheets node reads it</text>
+
+        <path d="M212 82L252 82" stroke="#7c8492" fill="none" marker-end="url(#i1)"/>
+
+        <text x="262" y="16" class="e" style="fill:#34558f">BECOMES ONE LIST OF 50 ITEMS</text>
+        <rect x="262" y="26" width="266" height="146" rx="5" fill="#fff" stroke="#b9c6de" stroke-width="1.5"/>
+        <rect x="274" y="40" width="252" height="28" rx="3" fill="#f7f8fa" stroke="#ecEEF1"/>
+        <text x="284" y="59" class="s2">{ json: { name: "Alice", row: 1 } }</text>
+        <rect x="274" y="74" width="252" height="28" rx="3" fill="#f7f8fa" stroke="#ecEEF1"/>
+        <text x="284" y="93" class="s2">{ json: { name: "Bob",   row: 2 } }</text>
+        <rect x="274" y="108" width="252" height="28" rx="3" fill="#f7f8fa" stroke="#ecEEF1"/>
+        <text x="284" y="127" class="s2">{ json: { name: "Cara",  row: 3 } }</text>
+        <text x="284" y="156" class="s">… 47 more items</text>
+        <text x="262" y="190" class="s2">one row becomes one item</text>
+
+        <path d="M534 82L574 82" stroke="#7c8492" fill="none" marker-end="url(#i1)"/>
+
+        <text x="584" y="16" class="e">AND 50 EMAILS GO OUT</text>
+        <rect x="584" y="26" width="86" height="40" rx="3" fill="#e8edf6" stroke="#34558f"/>
+        <path d="M584 26L627 52L670 26" fill="none" stroke="#34558f"/>
+        <rect x="584" y="72" width="86" height="40" rx="3" fill="#e8edf6" stroke="#34558f"/>
+        <path d="M584 72L627 98L670 72" fill="none" stroke="#34558f"/>
+        <rect x="584" y="118" width="86" height="40" rx="3" fill="#e8edf6" stroke="#34558f"/>
+        <path d="M584 118L627 144L670 118" fill="none" stroke="#34558f"/>
+        <text x="682" y="52" class="s">to Alice</text>
+        <text x="682" y="98" class="s">to Bob</text>
+        <text x="682" y="144" class="s">to Cara</text>
+        <text x="584" y="178" class="s">… 47 more</text>
+        <text x="584" y="190" class="s2">one item, one email</text>
+
+        <text x="10" y="222" class="s2">The Gmail node is called ONCE. It receives all fifty items and loops over them itself —</text>
+        <text x="10" y="238" class="s2">we never write “repeat this node fifty times” anywhere, because the list already says so.</text>
+      </svg>
+      <figcaption><b>Figure 4.</b> One read, fifty items, one send node, fifty emails — and no special
+        code anywhere to make that happen.</figcaption>
+    </figure>
+
+    <div class="n8n"><b>Familiar from n8n</b>Open any node's OUTPUT panel in n8n and the heading says
+      something like <em>“5 items”</em>, with little numbered tabs you can click through. That is exactly
+      this list. And it explains something you may have noticed: put a Gmail node after a node that
+      produced five items, and n8n sends five emails without you configuring anything. The list is why.</div>
+
+    <div class="row2">
+      <div class="box"><span class="tag">Inside one item</span>
+        <h4>A labelled bag of values</h4>
+        <p>Each item holds a <code>json</code> part — the ordinary fields, like a name and an email
+          address — and optionally a <code>binary</code> part for files riding along, such as a PDF that
+          a later node will attach to an email.</p></div>
+      <div class="box"><span class="tag">The list of lists</span>
+        <h4>One list per exit</h4>
+        <p>Most nodes have one exit, so they return one list. A node that splits the flow, like IF, has
+          two exits and returns two lists — everything that passed the test, and everything that
+          did not.</p></div>
+    </div>
+
+    <div class="call warn"><b>The bug every one of us will hit at least once</b>Returning one list where
+      two were expected, or the other way round. Remember it as: <b>the outer list is the exits, the
+      inner list is the items.</b> A normal node returns “one exit, containing all my items”. When a node
+      mysteriously sends nothing onward, or sends everything down the wrong branch, this is almost
+      always why — and printing the data between nodes finds it in about a minute.</div>
+  </div>
+</div>

@@ -1,0 +1,70 @@
+<!-- ============================== 1.5 ============================== -->
+<div class="page">
+  <div class="rh"><span>Part 1 · How it all works</span><span class="r">1.5 — The canvas and the API</span></div>
+  <div class="h-wrap"><span class="secno">1.5</span><h2>The canvas and the API — the two halves of the app</h2></div>
+  <div class="band"></div>
+
+  <div class="stack">
+    <p class="lede">What looks like one application is really <b>two programs having a conversation</b>.
+      The <b>canvas</b> runs inside your browser and only draws. The <b>server</b> runs somewhere else and
+      does all the real work. They never share memory — they only send each other messages, and the list
+      of messages they agree on is called the <b>API</b>.</p>
+
+    <div class="n8n"><b>Familiar from n8n</b>Open <code>localhost:5678</code> in a second browser window
+      and your workflows are all still there. Close the browser entirely, reopen it — still there. That
+      is because the workflows were never <em>in</em> the page. The page asked the server for them, and
+      the server read them from its database. Every screen you saw in n8n was assembled that way.</div>
+
+    <figure>
+      <svg viewBox="0 0 760 250" xmlns="http://www.w3.org/2000/svg">
+        <defs><marker id="q1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#34558f"/></marker></defs>
+        <rect x="10" y="8" width="220" height="28" rx="5" fill="#e8edf6"/>
+        <text x="26" y="27" class="t">The canvas (browser)</text>
+        <rect x="270" y="8" width="220" height="28" rx="5" fill="#e8edf6"/>
+        <text x="286" y="27" class="t">Our server</text>
+        <rect x="530" y="8" width="220" height="28" rx="5" fill="#e8edf6"/>
+        <text x="546" y="27" class="t">The database</text>
+        <line x1="120" y1="40" x2="120" y2="242" stroke="#ecEEF1" stroke-width="1.5"/>
+        <line x1="380" y1="40" x2="380" y2="242" stroke="#ecEEF1" stroke-width="1.5"/>
+        <line x1="640" y1="40" x2="640" y2="242" stroke="#ecEEF1" stroke-width="1.5"/>
+
+        <path d="M120 62L374 62" stroke="#34558f" fill="none" marker-end="url(#q1)"/>
+        <text x="132" y="56" class="s2"><tspan class="n" style="fill:#34558f">1</tspan>  you press Run — POST /rest/workflows/42/run</text>
+        <path d="M380 92L634 92" stroke="#34558f" fill="none" marker-end="url(#q1)"/>
+        <text x="392" y="86" class="s2"><tspan class="n" style="fill:#34558f">2</tspan>  give me workflow 42</text>
+        <path d="M640 122L386 122" stroke="#34558f" fill="none" marker-end="url(#q1)"/>
+        <text x="398" y="116" class="s2"><tspan class="n" style="fill:#34558f">3</tspan>  here it is, as JSON</text>
+
+        <rect x="288" y="136" width="330" height="42" rx="4" fill="#e8edf6" stroke="#34558f"/>
+        <text x="302" y="154" class="s2"><tspan class="n" style="fill:#34558f">4</tspan>  the engine runs the nodes, one at a time</text>
+        <text x="302" y="170" class="s">each node calls out to Google as needed</text>
+
+        <path d="M380 196L634 196" stroke="#34558f" fill="none" marker-end="url(#q1)"/>
+        <text x="392" y="190" class="s2"><tspan class="n" style="fill:#34558f">5</tspan>  save what happened</text>
+        <path d="M380 226L126 226" stroke="#34558f" fill="none" marker-end="url(#q1)"/>
+        <text x="138" y="220" class="s2"><tspan class="n" style="fill:#34558f">6</tspan>  here is what each node produced</text>
+      </svg>
+      <figcaption><b>Figure 6.</b> One click, six messages. The canvas never touches the database and
+        never runs a node — it asks, and it displays the answer.</figcaption>
+    </figure>
+
+    <div class="row2">
+      <div class="box"><span class="tag">Our own API</span>
+        <h4>Five addresses is enough</h4>
+        <p>List the workflows · fetch one · create one · save one · run one. That is the entire
+          conversation our canvas needs for the first month. Each address has a verb (GET to fetch, POST
+          to create, PATCH to change) and a path such as <code>/rest/workflows/42</code>.</p></div>
+      <div class="box"><span class="tag">Other people's APIs</span>
+        <h4>The same idea, pointed outward</h4>
+        <p>Google publishes an address that means “add this row to that spreadsheet”. Our Sheets node
+          sends a request to it and reads the answer. A node is, almost always, one carefully built
+          request to somebody else's API.</p></div>
+    </div>
+
+    <div class="call why"><b>Why we care about this split</b>Because it is what lets two people work at
+      once without colliding. Whoever builds the canvas and whoever builds the server only have to agree
+      on those five addresses — the shape of each message, and what comes back. After that, one can
+      redesign the whole screen and the other can rewrite the whole engine, and neither breaks the
+      other. We write that agreement down in Phase 2 and then leave it alone.</div>
+  </div>
+</div>

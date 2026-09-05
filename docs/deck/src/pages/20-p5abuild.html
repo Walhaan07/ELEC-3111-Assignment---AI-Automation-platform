@@ -1,0 +1,85 @@
+<!-- ============================== 2.5b BUILD ============================== -->
+<div class="page" style="--acc:#0a7a70;--accs:#dcf0ee">
+  <div class="rh"><span>Part 2 · Building it</span><span class="r">2.5b — Phase 5 · the code</span></div>
+  <div class="h-wrap"><span class="secno">2.5b</span><h2>Build it: the Google permission round trip</h2></div>
+  <div class="band"></div>
+
+  <div class="stack">
+    <div class="bsteps">
+      <div class="bstep"><div class="bn">1</div><div class="bb">
+        <h4>In the Google Cloud Console, once</h4>
+        <p><b>APIs &amp; Services → Library</b>: enable Google Sheets, Drive, Docs and Gmail. →
+          <b>OAuth consent screen</b>: External, <em>Testing</em>, add all eight of us and the
+          demonstrator as Test Users. → <b>Credentials → Create OAuth client ID → Web application</b>,
+          with this exact redirect URI:</p>
+        <div class="cmd">http://localhost:5678/rest/oauth2-credential/callback
+https://your-domain.com/rest/oauth2-credential/callback   <span class="c"># add the live one too</span></div>
+      </div></div>
+
+      <div class="bstep"><div class="bn">2</div><div class="bb">
+        <h4>Send the user to Google</h4>
+        <div class="fwrap"><span class="fname">apps/api/oauth.js</span>
+<pre class="code" data-lang="js"><code>const SCOPES = {
+  googleSheets: 'https://www.googleapis.com/auth/spreadsheets',
+  googleDrive:  'https://www.googleapis.com/auth/drive.file',
+  googleDocs:   'https://www.googleapis.com/auth/documents',
+  gmail:        'https://www.googleapis.com/auth/gmail.send',
+};
+
+app.get('/rest/oauth2-credential/auth', (req, res) => {
+  const url = 'https://accounts.google.com/o/oauth2/v2/auth?' + new URLSearchParams({
+    client_id:     process.env.GOOGLE_CLIENT_ID,
+    redirect_uri:  `${process.env.BASE_URL}/rest/oauth2-credential/callback`,
+    response_type: 'code',
+    scope:         SCOPES[req.query.type],
+    access_type:   'offline',   // REQUIRED, or no long-lived key comes back
+    prompt:        'consent',   // REQUIRED when re-authorising
+    state:         req.query.credentialId,
+  });
+  res.redirect(url);
+});</code></pre></div>
+      </div></div>
+
+      <div class="bstep"><div class="bn">3</div><div class="bb">
+        <h4>Trade the code for keys, and store them scrambled</h4>
+        <div class="fwrap"><span class="fname">apps/api/oauth.js — continued</span>
+<pre class="code" data-lang="js"><code>app.get('/rest/oauth2-credential/callback', async (req, res) => {
+  const r = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      code:          req.query.code,
+      client_id:     process.env.GOOGLE_CLIENT_ID,
+      client_secret: process.env.GOOGLE_CLIENT_SECRET,
+      redirect_uri:  `${process.env.BASE_URL}/rest/oauth2-credential/callback`,
+      grant_type:    'authorization_code',
+    }),
+  });
+  const tokens = await r.json();          // { access_token, refresh_token, expires_in }
+  await saveCredential(req.query.state, encrypt(JSON.stringify(tokens)));
+  res.send('&lt;p&gt;Connected. You can close this window.&lt;/p&gt;');
+});</code></pre></div>
+        <div class="fwrap"><span class="fname">apps/api/crypto.js — no library needed</span>
+<pre class="code" data-lang="js"><code>import crypto from 'node:crypto';
+const key = Buffer.from(process.env.ENCRYPTION_KEY, 'hex');    // 32 bytes
+
+export function encrypt(text) {
+  const iv = crypto.randomBytes(12);
+  const c  = crypto.createCipheriv('aes-256-gcm', key, iv);
+  return { data: Buffer.concat([c.update(text, 'utf8'), c.final()]), iv, tag: c.getAuthTag() };
+}
+export function decrypt({ data, iv, tag }) {
+  const d = crypto.createDecipheriv('aes-256-gcm', key, iv);
+  d.setAuthTag(tag);
+  return Buffer.concat([d.update(data), d.final()]).toString('utf8');
+}</code></pre></div>
+        <div class="cmd"><span class="p">$</span> node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+<span class="c"># put the result in .env as ENCRYPTION_KEY — never commit it</span></div>
+      </div></div>
+    </div>
+
+    <div class="chk"><b>Check it works</b>Press Connect, approve on Google's screen, and the credential
+      row appears with unreadable bytes in it. Then call a Sheets endpoint with the decrypted access
+      token and get a 200 back.</div>
+  </div>
+</div>

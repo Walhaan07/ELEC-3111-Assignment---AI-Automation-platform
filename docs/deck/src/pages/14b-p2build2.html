@@ -1,0 +1,81 @@
+<!-- ============================== 2.2c BUILD ============================== -->
+<div class="page" style="--acc:#2a5fce;--accs:#e3ebfb">
+  <div class="rh"><span>Part 2 · Building it</span><span class="r">2.2c — Phase 2 · the canvas</span></div>
+  <div class="h-wrap"><span class="secno">2.2c</span><h2>Build it: the canvas, and the two functions that matter</h2></div>
+  <div class="band"></div>
+
+  <div class="stack">
+    <div class="bsteps">
+      <div class="bstep"><div class="bn">4</div><div class="bb">
+        <h4>Start the editor</h4>
+        <div class="cmd"><span class="p">$</span> npm create vite@latest apps/editor -- --template react-ts
+<span class="p">$</span> cd apps/editor &amp;&amp; npm i reactflow
+<span class="p">$</span> npm run dev            <span class="c"># http://localhost:5173</span></div>
+      </div></div>
+
+      <div class="bstep"><div class="bn">5</div><div class="bb">
+        <h4>Our format → React Flow's, and back</h4>
+        <p>These two functions are where <em>every</em> canvas bug will live for the rest of the
+          semester. Write them once, carefully, and give them a test.</p>
+        <div class="fwrap"><span class="fname">apps/editor/src/convert.ts</span>
+<pre class="code" data-lang="ts"><code>import type { Node as RfNode, Edge } from 'reactflow';
+
+export function toReactFlow(wf) {
+  const nodes: RfNode[] = wf.nodes.map(n => ({
+    id: n.name, type: 'workflowNode', position: n.position ?? { x: 0, y: 0 }, data: { node: n },
+  }));
+  const edges: Edge[] = Object.entries(wf.connections).flatMap(([from, branches]) =>
+    (branches as string[][]).flatMap((targets, branchIndex) =>
+      targets.map(to => ({
+        id: `${from}:${branchIndex}->${to}`,
+        source: from, target: to, sourceHandle: String(branchIndex),
+      }))));
+  return { nodes, edges };
+}
+
+export function fromReactFlow(nodes: RfNode[], edges: Edge[]) {
+  const connections: Record&lt;string, string[][]&gt; = {};
+  for (const e of edges) {
+    const branch = Number(e.sourceHandle ?? 0);
+    connections[e.source] ??= [];
+    connections[e.source][branch] ??= [];
+    connections[e.source][branch].push(e.target);
+  }
+  return {
+    nodes: nodes.map(n => ({ ...n.data.node, position: n.position })),
+    connections,
+  };
+}</code></pre></div>
+      </div></div>
+
+      <div class="bstep"><div class="bn">6</div><div class="bb">
+        <h4>Wire the canvas to the server</h4>
+        <div class="fwrap"><span class="fname">apps/editor/src/Editor.tsx — the parts that matter</span>
+<pre class="code" data-lang="ts"><code>const [nodes, setNodes, onNodesChange] = useNodesState([]);
+const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+
+useEffect(() => {                                   // load
+  fetch(`/rest/workflows/${id}`).then(r => r.json()).then(wf => {
+    const { nodes, edges } = toReactFlow(wf);
+    setNodes(nodes); setEdges(edges);
+  });
+}, [id]);
+
+const save = () => fetch(`/rest/workflows/${id}`, {  // save
+  method: 'PATCH',
+  headers: { 'content-type': 'application/json' },
+  body: JSON.stringify(fromReactFlow(nodes, edges)),
+});
+
+const run = () => fetch(`/rest/workflows/${id}/run`, { method: 'POST' })
+  .then(r => r.json()).then(setRunResult);</code></pre></div>
+        <p>Add <code>server: { proxy: { '/rest': 'http://localhost:5678' } }</code> to
+          <code>vite.config.ts</code> so the browser can call the API without cross-origin trouble.</p>
+      </div></div>
+    </div>
+
+    <div class="chk"><b>Check it works</b>Drag two nodes out, connect them, press Save, refresh the
+      browser — they are still there. Press Run and the result of each node appears. That is Phase 2
+      finished and the Week 5 hard gate met.</div>
+  </div>
+</div>

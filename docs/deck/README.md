@@ -1,44 +1,53 @@
-# Presentation deck
+# The complete build guide
 
-`ELEC3111-AI-Automation-Platform-Plan.pdf` — 25 A4 pages, 22 diagrams, written to be presented and to
-be read by someone who has *used* n8n but never built one. Staffed for eight people.
+`ELEC3111-AI-Automation-Platform-Plan.pdf` — **50 A4 pages, 22 diagrams**, written for a team that has
+*used* n8n and is now going to build one. It is deliberately a hybrid: every part is explained twice,
+once as a concept and once as the code.
 
-| Part | Pages | What it covers |
-|---|---|---|
-| 0 · The vocabulary | 3–4 | Sixteen terms — node, item, trigger, canvas, engine, server, API, endpoint, JSON, database, token, container — each with a plain definition and where you already met it in n8n |
-| 1 · How it all works | 5–11 | What a workflow, a node, an item, the engine, the canvas and the API really are, before any code |
-| 2 · Building it | 12–18 | Six phases, each with its own colour: what we are doing, what it was in n8n, the tools, how to proceed, and a “done when” |
-| 3 · Putting it together | 19–21 | Integration, four levels of testing, and the demo-day runbook with an acceptance checklist |
-| 4 · Running the project | 22–25 | Eight people in four pairs, the Weeks 4–6 idle-hands problem and its fix, the three risks that end demos, six habits, and one task each for this week |
+| Part | What it covers |
+|---|---|
+| 0 · The vocabulary | Sixteen terms — node, item, trigger, canvas, engine, server, API, endpoint, JSON, database, token, container — each with a plain definition and where you already met it in n8n |
+| 1 · How it all works | What a workflow, a node, an item, the engine and the canvas/API split really are, before any code |
+| 2 · Building it | Six phases. Each has a **concept page** (what, why, what it was in n8n, tools, how to proceed, done-when) followed by a **build page** with the actual commands and code |
+| 3 · Putting it together | Repository layout and the one-command start, four levels of testing with real test code and the CI workflow, then the demo-day runbook and acceptance checklist |
+| 4 · Running the project | Eight people in four pairs, the Weeks 4–6 idle-hands problem and its fix, risks, habits, this week |
 
-Colour is introduced gradually: Parts 0 and 1 are a quiet single accent, and each phase in Part 2
-carries its own colour through its heading and every diagram belonging to it.
+## Design
 
-## Editing and regenerating
+Colour is functional, not decoration. Parts 0 and 1 use one quiet slate accent; each phase in Part 2
+owns a colour from a cool blue → azure → cyan → teal ramp, carried through its heading, its file-name
+chips and every diagram belonging to it. Warm tones (coral) are reserved for genuine warnings — the
+hard gate, the feature freeze, demo-day risks — so they still mean something when they appear. Code is
+syntax-highlighted from the same palette.
 
-The document is assembled from `src/body1.html` … `src/body9.html` plus `src/fonts.html` (the three
+## Regenerating it
+
+The document is assembled from per-page fragments in `src/pages/`, plus `src/fonts.html` (three
 typefaces embedded as data URIs, so it renders identically anywhere).
 
 ```bash
-python3 assemble.py     # concatenates, numbers the figures, fills in the contents page
-node measure.js         # every page must be under 1024 px tall or it spills onto a second sheet
-node audit.js           # must print nothing — see below
-node render.js .        # writes the PDF
+python3 assemble.py     # concatenate, highlight code, number figures, build the contents
+node measure.js         # page-height check
+node audit.js           # diagram check — must print nothing
+node render.js .        # write the PDF
+python3 paginate.py     # read the PDF back and record each section's real page number
+python3 assemble.py && node render.js .    # second pass, so the contents page numbers are exact
 ```
 
-`assemble.py` numbers figures sequentially in document order (write `<b>Figure @.</b>` in a caption
-and it fills in the number) and rewrites the contents page with real page numbers and figure
-references, so neither can drift out of date.
+`assemble.py` numbers figures sequentially (write `<b>Figure @.</b>` in a caption and it fills the
+number in), builds the whole contents page from the pages themselves, and syntax-highlights any
+`<pre class="code" data-lang="js">` block. `paginate.py` then reads the rendered PDF with PyMuPDF and
+finds which printed page each section actually starts on — so the contents stays correct even though
+code sections run across two pages.
 
 ## What audit.js checks
 
 Two classes of bug that are invisible until someone prints the document:
 
-1. **Text escaping its shape.** For every `<text>` it finds the rectangle the text actually sits
+1. **Text escaping its shape** — for every `<text>` it finds the rectangle the text actually sits
    inside and reports anything overflowing that shape or the viewBox.
-2. **Unreadable colour.** It reports any text below 4.5:1 contrast against the shape behind it.
+2. **Unreadable colour** — any text below 4.5:1 contrast against the shape behind it.
 
-It reads the **computed** fill, not the `fill` attribute. That matters: in SVG a CSS class beats a
-presentation attribute, so `class="s2" fill="#e8eaed"` renders in the class colour, not the one you
-asked for. Seventy-two labels in this document were silently wrong for exactly that reason — they are
-now written as `style="fill:…"`, which does win. Keep it that way.
+It reads the **computed** fill, not the `fill` attribute. In SVG a CSS class beats a presentation
+attribute, so `class="s2" fill="#e8eaed"` renders in the class colour. Keep in-figure colours as
+`style="fill:…"`, which does win.

@@ -1,0 +1,79 @@
+<!-- ============================== 1.1 ============================== -->
+<div class="page">
+  <div class="rh"><span>Part 1 · How it all works</span><span class="r">1.1 — What a workflow really is</span></div>
+  <div class="h-wrap"><span class="secno">1.1</span><h2>What a workflow really is</h2></div>
+  <div class="band"></div>
+
+  <div class="stack">
+    <p class="lede">A workflow feels like a picture. It is actually <b>a piece of text</b> — a list of
+      boxes and a list of lines, written down in JSON. The picture is only how we look at it.</p>
+
+    <div class="n8n"><b>Familiar from n8n</b>When you clicked “Download” on a workflow, n8n handed you a
+      <code>.json</code> file. That file <em>was</em> the workflow — you could email it to a friend, they
+      could import it, and the same picture appeared on their screen. Nothing else was needed. That is
+      the single most important thing to understand before we start.</div>
+
+    <figure>
+      <svg viewBox="0 0 760 272" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="w1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#7c8492"/></marker>
+        </defs>
+        <text x="10" y="16" class="e" style="fill:#34558f">WHAT WE SEE — THE CANVAS</text>
+        <text x="330" y="16" class="e" style="fill:#34558f">WHAT IS ACTUALLY STORED — ONE PIECE OF TEXT</text>
+
+        <rect x="10" y="26" width="300" height="238" rx="6" fill="#f7f8fa" stroke="#dcdfe5"/>
+        <rect x="10" y="26" width="300" height="18" rx="6" fill="#e4e8ef"/>
+        <circle cx="24" cy="35" r="3.2" fill="#c3c9d4"/><circle cx="35" cy="35" r="3.2" fill="#c3c9d4"/><circle cx="46" cy="35" r="3.2" fill="#c3c9d4"/>
+
+        <rect x="34" y="58" width="196" height="44" rx="5" fill="#fff" stroke="#34558f" stroke-width="1.6"/>
+        <text x="50" y="79" class="t">Webhook</text><text x="50" y="94" class="s">path: new-order</text>
+        <path d="M132 102L132 128" stroke="#7c8492" fill="none" marker-end="url(#w1)"/>
+        <rect x="34" y="130" width="196" height="44" rx="5" fill="#fff" stroke="#dcdfe5"/>
+        <text x="50" y="151" class="t">Code</text><text x="50" y="166" class="s">jsCode: return items</text>
+        <path d="M132 174L132 200" stroke="#7c8492" fill="none" marker-end="url(#w1)"/>
+        <rect x="34" y="202" width="196" height="44" rx="5" fill="#fff" stroke="#dcdfe5"/>
+        <text x="50" y="223" class="t">Gmail</text><text x="50" y="238" class="s">operation: send</text>
+
+        <rect x="330" y="52" width="424" height="106" rx="3" fill="#e8edf6" opacity="0.55"/>
+        <rect x="330" y="176" width="424" height="52" rx="3" fill="#f0f1f4" opacity="0.9"/>
+        <text x="336" y="42" class="s2">{</text>
+        <text x="336" y="64" class="s2">  "nodes": [</text>
+        <text x="336" y="86" class="s2">    { "name": "Webhook", "type": "webhook",</text>
+        <text x="336" y="103" class="s2">      "parameters": { "path": "new-order" } },</text>
+        <text x="336" y="125" class="s2">    { "name": "Code", "type": "code", ... },</text>
+        <text x="336" y="147" class="s2">    { "name": "Gmail", "type": "gmail", ... }</text>
+        <text x="336" y="169" class="s2">  ],</text>
+        <text x="336" y="191" class="s2">  "connections": {</text>
+        <text x="336" y="208" class="s2">    "Webhook": [ ["Code"]  ],</text>
+        <text x="336" y="225" class="s2">    "Code":    [ ["Gmail"] ]</text>
+        <text x="336" y="247" class="s2">  }</text>
+        <text x="336" y="264" class="s2">}</text>
+
+        <path d="M232 76 C 280 76, 290 88, 324 86" stroke="#34558f" fill="none" stroke-dasharray="3 3"/>
+        <circle cx="326" cy="86" r="2.6" fill="#34558f"/>
+        <path d="M232 148 C 280 148, 290 126, 324 122" stroke="#34558f" fill="none" stroke-dasharray="3 3"/>
+        <circle cx="326" cy="122" r="2.6" fill="#34558f"/>
+        <path d="M232 220 C 285 220, 292 150, 324 144" stroke="#34558f" fill="none" stroke-dasharray="3 3"/>
+        <circle cx="326" cy="144" r="2.6" fill="#34558f"/>
+        <path d="M144 112 C 250 112, 250 206, 324 206" stroke="#9aa3b2" fill="none" stroke-dasharray="3 3"/>
+        <circle cx="326" cy="206" r="2.6" fill="#9aa3b2"/>
+
+        <text x="640" y="46" class="e" style="fill:#34558f">THE BOXES</text>
+        <text x="640" y="186" class="e">THE LINES</text>
+      </svg>
+      <figcaption><b>Figure 2.</b> Every box you drag becomes one entry in <b>nodes</b>; every line you
+        draw becomes one entry in <b>connections</b>. That is the whole file format — and it is all the
+        engine ever receives.</figcaption>
+    </figure>
+
+    <div class="row2">
+      <div class="call why"><b>Why this is good news</b>Because a workflow is just text, the two halves
+        of our project can be built by different people at the same time. The canvas only has to
+        <em>produce</em> this text; the engine only has to <em>read</em> it. Neither needs to know how
+        the other works — they only have to agree on the shape above.</div>
+      <div class="call"><b>What it means for us</b>Our database will store this text in a single column.
+        Saving a workflow is one write; loading it is one read; making a copy is copying a row. Big
+        commercial platforms do exactly the same thing, for exactly this reason.</div>
+    </div>
+  </div>
+</div>
