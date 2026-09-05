@@ -1,0 +1,123 @@
+<!-- ============================== 1.1 BIG PICTURE ============================== -->
+<div class="page" style="--acc:#0d72b4;--accs:#dfeef8">
+  <div class="rh"><span>Part 1 · The big picture</span><span class="r">1.1 — Everything, on one page</span></div>
+  <div class="h-wrap"><span class="secno">1.1</span><h2>Everything we are building, on one page</h2></div>
+  <div class="partline" style="background:linear-gradient(90deg,#4b46c0,#2a5fce,#0d72b4,#087f99,#0a7a70,#14624f)"></div>
+
+  <div class="stack">
+    <p class="lede">This is the whole project. Nine boxes, and every one of them is built in a phase you
+      can point at. <b>Nothing else exists.</b> When you feel lost later, come back to this page and find
+      the box you are working on.</p>
+
+    <figure>
+      <svg viewBox="0 0 760 404" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="bp" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0L10 5L0 10z" fill="#6b7686"/></marker>
+          <linearGradient id="srv" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#f5fafd"/><stop offset="100%" stop-color="#e8f2f8"/>
+          </linearGradient>
+        </defs>
+
+        <text x="10" y="16" class="e">WHAT STARTS A WORKFLOW</text>
+        <rect x="10" y="26" width="150" height="44" rx="6" fill="#ddf0f4" stroke="#087f99" stroke-width="1.4"/>
+        <text x="24" y="46" class="t">A web request</text><text x="24" y="61" class="s">from anywhere</text>
+        <rect x="10" y="78" width="150" height="44" rx="6" fill="#ddf0f4" stroke="#087f99" stroke-width="1.4"/>
+        <text x="24" y="98" class="t">A clock</text><text x="24" y="113" class="s">inside our server</text>
+        <rect x="10" y="130" width="150" height="44" rx="6" fill="#e3ebfb" stroke="#2a5fce" stroke-width="1.4"/>
+        <text x="24" y="150" class="t">A person</text><text x="24" y="165" class="s">pressing Run</text>
+
+        <rect x="10" y="212" width="176" height="120" rx="7" fill="#e3ebfb" stroke="#2a5fce" stroke-width="1.6"/>
+        <rect x="10" y="212" width="176" height="15" rx="7" fill="#c3d3f4"/>
+        <circle cx="24" cy="220" r="2.6" fill="#7f9ada"/><circle cx="33" cy="220" r="2.6" fill="#7f9ada"/><circle cx="42" cy="220" r="2.6" fill="#7f9ada"/>
+        <text x="24" y="248" class="t">The editor</text>
+        <text x="24" y="266" class="s2">the canvas you draw on</text>
+        <text x="24" y="282" class="s2">the settings sidebar</text>
+        <text x="24" y="298" class="s2">the list of past runs</text>
+        <text x="24" y="320" class="s" style="fill:#1f4aa8">phases 2 and 3</text>
+
+        <rect x="240" y="26" width="300" height="306" rx="8" fill="url(#srv)" stroke="#0d72b4" stroke-width="1.8"/>
+        <rect x="240" y="26" width="300" height="24" rx="8" fill="#0d72b4"/>
+        <text x="254" y="43" class="e" style="fill:#ffffff">OUR SERVER — ONE NODE.JS PROGRAM</text>
+
+        <rect x="254" y="62" width="272" height="44" rx="5" fill="#ddf0f4" stroke="#087f99"/>
+        <text x="268" y="81" class="t">The way in</text>
+        <text x="268" y="97" class="s2">five addresses · webhooks · the clock</text>
+        <text x="470" y="81" class="s" style="fill:#066476">ph 2·4</text>
+
+        <rect x="254" y="114" width="272" height="50" rx="5" fill="#e8e7f9" stroke="#4b46c0" stroke-width="1.6"/>
+        <text x="268" y="134" class="t">The engine</text>
+        <text x="268" y="150" class="s2">runs the boxes in the right order</text>
+        <text x="470" y="134" class="s" style="fill:#3a36a0">phase 1</text>
+
+        <rect x="254" y="172" width="272" height="50" rx="5" fill="#dcf0ee" stroke="#0a7a70" stroke-width="1.6"/>
+        <text x="268" y="192" class="t">The nodes</text>
+        <text x="268" y="208" class="s2">Sheets · Drive · Docs · Gmail</text>
+        <text x="470" y="192" class="s" style="fill:#075f57">phase 5</text>
+
+        <rect x="254" y="230" width="272" height="42" rx="5" fill="#dfeef8" stroke="#0d72b4"/>
+        <text x="268" y="249" class="t">The keys</text>
+        <text x="268" y="265" class="s2">Google logins, scrambled</text>
+        <text x="470" y="249" class="s" style="fill:#0a5b90">phase 5</text>
+
+        <rect x="254" y="280" width="272" height="38" rx="5" fill="#dceee8" stroke="#14624f"/>
+        <text x="268" y="304" class="t">Tests and deployment</text>
+        <text x="470" y="304" class="s" style="fill:#0f4d3e">phase 6</text>
+
+        <ellipse cx="648" cy="240" rx="44" ry="11" fill="#e3ebfb" stroke="#2a5fce" stroke-width="1.5"/>
+        <path d="M604 240 L604 294 A44 11 0 0 0 692 294 L692 240" fill="#e3ebfb" stroke="#2a5fce" stroke-width="1.5"/>
+        <ellipse cx="648" cy="240" rx="44" ry="11" fill="#fff" stroke="#2a5fce" stroke-width="1.5"/>
+        <text x="616" y="270" class="t">Database</text>
+        <text x="600" y="318" class="s2">the drawings, and</text>
+        <text x="600" y="332" class="s2">every past run</text>
+
+        <text x="572" y="16" class="e">WHAT THE NODES CALL</text>
+        <rect x="572" y="26" width="178" height="58" rx="6" fill="#dcf0ee" stroke="#0a7a70" stroke-width="1.4"/>
+        <text x="586" y="46" class="t">Google</text>
+        <text x="586" y="62" class="s">Sheets · Docs</text><text x="586" y="76" class="s">Drive · Gmail</text>
+        <rect x="572" y="92" width="178" height="44" rx="6" fill="#dcf0ee" stroke="#0a7a70" stroke-width="1.4"/>
+        <text x="586" y="112" class="t">An AI model</text><text x="586" y="128" class="s">hosted, or local</text>
+
+        <path d="M160 48 L234 58" stroke="#6b7686" fill="none" marker-end="url(#bp)"/>
+        <path d="M160 100 L234 86" stroke="#6b7686" fill="none" marker-end="url(#bp)"/>
+        <path d="M160 152 L200 152 L200 190 L234 142" stroke="#6b7686" fill="none" marker-end="url(#bp)"/>
+        <path d="M186 250 L234 196" stroke="#6b7686" fill="none" marker-end="url(#bp)"/>
+        <path d="M234 216 L188 284" stroke="#6b7686" fill="none" marker-end="url(#bp)"/>
+        <path d="M540 196 L566 122" stroke="#6b7686" fill="none" marker-end="url(#bp)"/>
+        <path d="M540 186 L566 66" stroke="#6b7686" fill="none" marker-end="url(#bp)"/>
+        <path d="M540 252 L598 256" stroke="#6b7686" fill="none" marker-end="url(#bp)"/>
+        <text x="548" y="242" class="e">REMEMBERS</text>
+
+        <line x1="10" y1="352" x2="750" y2="352" stroke="#e6e9ee"/>
+        <text x="10" y="374" class="s2">Everything travels the same way: something starts a workflow, the engine walks the drawing box by box,</text>
+        <text x="10" y="390" class="s2">each box does one job — often calling Google or an AI model — and the run is written down.</text>
+      </svg>
+      <figcaption><b>Figure @.</b> The whole system. Each box is coloured by the phase that builds it,
+        and every later diagram in this book is a close-up of one of them.</figcaption>
+    </figure>
+
+    <div class="row3" style="margin-top:4px">
+      <div class="box" style="border-left:3px solid #2a5fce"><span class="tag">Every phase, first page</span>
+        <h4>What and why</h4>
+        <p>What we are doing, what it was in n8n, <b>who builds it</b>, what you need to know to build
+          it, the tools, how to proceed, and a “done when”.</p></div>
+      <div class="box" style="border-left:3px solid #0d72b4"><span class="tag">Every phase, second page</span>
+        <h4>How, exactly</h4>
+        <p>The commands to type, the files to create, the code to write, and — where a website is
+          involved — <b>every click, in order</b>.</p></div>
+      <div class="box" style="border-left:3px solid #087f99"><span class="tag">Throughout</span>
+        <h4>Words, where you meet them</h4>
+        <p>Every term is defined the first time it appears, in a box that says what it is, what it does
+          <em>there</em>, and how it connects to the rest.</p></div>
+    </div>
+
+    <div class="legend">
+      <span><i style="background:#4b46c0"></i>Phase 1 · the engine</span>
+      <span><i style="background:#2a5fce"></i>Phase 2 · database, server, canvas</span>
+      <span><i style="background:#0d72b4"></i>Phase 3 · sidebar, expressions</span>
+      <span><i style="background:#087f99"></i>Phase 4 · webhooks, clock</span>
+      <span><i style="background:#0a7a70"></i>Phase 5 · nodes, keys</span>
+      <span><i style="background:#14624f"></i>Phase 6 · tests, deployment</span>
+    </div>
+  </div>
+</div>

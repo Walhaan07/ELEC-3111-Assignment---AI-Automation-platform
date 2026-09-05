@@ -1,7 +1,7 @@
 <!-- ============================== 1.5 ============================== -->
 <div class="page">
-  <div class="rh"><span>Part 1 · How it all works</span><span class="r">1.5 — The canvas and the API</span></div>
-  <div class="h-wrap"><span class="secno">1.5</span><h2>The canvas and the API — the two halves of the app</h2></div>
+  <div class="rh"><span>Part 1 · How it all works</span><span class="r">1.6 — The canvas and the API</span></div>
+  <div class="h-wrap"><span class="secno">1.6</span><h2>The canvas and the API — the two halves of the app</h2></div>
   <div class="band"></div>
 
   <div class="stack">
@@ -15,6 +15,9 @@
       is because the workflows were never <em>in</em> the page. The page asked the server for them, and
       the server read them from its database. Every screen you saw in n8n was assembled that way.</div>
 
+
+    <div class="tgrid2"><div class="tbox"><span class="tname">server</span><p><b>What it is.</b> A program that waits and answers when something asks it a question. No screen — it listens on a numbered door called a port.</p><p><b>What it does in this section.</b> Ours listens on port 5678 and holds the engine, the nodes and the keys.</p><p><b>How it connects.</b> Everything except the canvas runs inside it, which is why Phase 2 builds it before anything else can be wired up.</p></div><div class="tbox"><span class="tname">API</span><p><b>What it is.</b> The list of questions a server agrees to answer, and the exact wording each needs. A menu, not the kitchen.</p><p><b>What it does in this section.</b> We publish one with five entries; Google publishes one our nodes will call.</p><p><b>How it connects.</b> It is the only thing the canvas and the server have to agree on — freeze it in Phase 2 and both halves can change freely.</p></div></div>
+    <div class="tgrid2"><div class="tbox"><span class="tname">endpoint</span><p><b>What it is.</b> One item on that menu: a verb plus a path, such as <code>POST /rest/workflows</code>.</p><p><b>What it does in this section.</b> Each of our five does one job — list, fetch, create, save, run.</p><p><b>How it connects.</b> Phase 4 adds two more of a different shape: <code>/webhook/:path</code> and its test twin.</p></div><div class="tbox"><span class="tname">database</span><p><b>What it is.</b> A program whose only job is to remember things after everything else is switched off.</p><p><b>What it does in this section.</b> Ours holds two tables: the drawings, and every past run.</p><p><b>How it connects.</b> It is the reason a workflow is still there tomorrow, and the reason Phase 6 can deploy without losing anything.</p></div></div>
     <figure>
       <svg viewBox="0 0 760 250" xmlns="http://www.w3.org/2000/svg">
         <defs><marker id="q1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#34558f"/></marker></defs>

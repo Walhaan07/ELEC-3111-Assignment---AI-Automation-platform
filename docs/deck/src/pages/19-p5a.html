@@ -5,11 +5,17 @@
     <span class="stages">Stage 9 · Weeks 7–8 · lead: C2</span></div>
   <div class="h-wrap"><span class="secno">2.5</span><h2>First, permission to use a Google account</h2></div>
   <div class="band"></div>
+  <div class="band-meta">
+    <div class="bm"><span class="lbl">Who builds this part</span><div class="who-chips"><span class="wc">C2</span><span class="wc ghost">D2 keeps the runbook</span></div></div>
+    <div class="bm"><span class="lbl">What you need to know</span><p class="sk">Reading <b>API documentation</b> carefully · the idea of <b>OAuth</b> (this page teaches it) · Node's built-in crypto · genuine care with secrets — this is the one place a mistake is expensive.</p></div>
+  </div>
 
   <div class="stack">
     <p class="lede"><b>What we are doing.</b> Getting permission to act for somebody — <b>without ever
       seeing their password</b>. The step most likely to cost us a week, so we do it early and once.</p>
 
+
+    <div class="tgrid2"><div class="tbox"><span class="tname">OAuth 2.0</span><p><b>What it is.</b> The agreed way of saying “let this app act for me” without handing over a password.</p><p><b>What it does in this section.</b> The seven arrows in Figure 13 are the whole of it.</p><p><b>How it connects.</b> Every Google node depends on it, which is why this is the first thing built in Phase 5 and the earliest task in Week 4.</p></div><div class="tbox"><span class="tname">token</span><p><b>What it is.</b> A temporary key a service gives you after login, used instead of a password.</p><p><b>What it does in this section.</b> Google returns two: one lasting an hour, one lasting much longer.</p><p><b>How it connects.</b> The long one is scrambled and stored; the shared helper in the next section quietly swaps it for a fresh short one whenever needed.</p></div></div>
     <figure>
       <svg viewBox="0 0 760 274" xmlns="http://www.w3.org/2000/svg">
         <defs><marker id="o1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#0a7a70"/></marker></defs>

@@ -1,0 +1,81 @@
+<!-- ============================== 1.9 SETUP ============================== -->
+<div class="page" style="--acc:#0d72b4;--accs:#dfeef8">
+  <div class="rh"><span>Part 1 · The big picture</span><span class="r">1.9 — Install everything, click by click</span></div>
+  <div class="h-wrap"><span class="secno">1.9</span><h2>Install everything, click by click</h2></div>
+  <div class="partline" style="background:linear-gradient(90deg,#2a5fce,#0d72b4,#087f99)"></div>
+  <div class="band-meta">
+    <div class="bm"><span class="lbl">Who does this part</span>
+      <div class="who-chips"><span class="wc">all eight</span><span class="wc ghost">D2 checks everyone finished</span></div></div>
+    <div class="bm"><span class="lbl">What you need to know</span>
+      <p class="sk">Nothing. This page assumes an empty laptop. Allow about an hour, once.</p></div>
+  </div>
+
+  <div class="stack">
+    <p class="lede">Do this before the first Monday. If any step fails, say so in the group chat the same
+      day — half of these have a licence, an account or a restart in the way.</p>
+
+    <div class="bsteps">
+      <div class="bstep"><div class="bn">1</div><div class="bb">
+        <h4>Node.js 22 — the language everything is written in</h4>
+        <div class="clicks">
+          <div class="click"><span class="cn">1</span><span>Go to <span class="path">nodejs.org</span></span></div>
+          <div class="click"><span class="cn">2</span><span>Click the big green <span class="ui">LTS</span> button — <b>not</b> Current</span></div>
+          <div class="click"><span class="cn">3</span><span>Run the installer, accept every default, and let it add Node to your PATH</span></div>
+          <div class="click"><span class="cn">4</span><span>Close every terminal window and open a new one — the PATH only updates in new windows</span></div>
+        </div>
+        <div class="cmd"><span class="p">$</span> node -v     <span class="c"># must print v22.something</span>
+<span class="p">$</span> npm -v      <span class="c"># must print 10 or higher</span></div>
+      </div></div>
+
+      <div class="bstep"><div class="bn">2</div><div class="bb">
+        <h4>VS Code, and the four extensions we all use</h4>
+        <div class="clicks">
+          <div class="click"><span class="cn">1</span><span><span class="path">code.visualstudio.com</span> → <span class="ui">Download</span> → install</span></div>
+          <div class="click"><span class="cn">2</span><span>Open it, then press <span class="ui">Ctrl+Shift+X</span> (<span class="ui">Cmd+Shift+X</span> on a Mac) for the Extensions panel</span></div>
+          <div class="click"><span class="cn">3</span><span>Search and install each: <b>ESLint</b> · <b>Prettier</b> · <b>Docker</b> · <b>GitLens</b></span></div>
+          <div class="click"><span class="cn">4</span><span><span class="path">File → Preferences → Settings</span>, search <span class="ui">format on save</span>, tick it. Now nobody argues about spacing in a review.</span></div>
+        </div>
+      </div></div>
+
+      <div class="bstep"><div class="bn">3</div><div class="bb">
+        <h4>Docker Desktop — how we run the database</h4>
+        <div class="clicks">
+          <div class="click"><span class="cn">1</span><span><span class="path">docker.com/products/docker-desktop</span> → download for your operating system</span></div>
+          <div class="click"><span class="cn">2</span><span>On Windows, when it asks, leave <span class="ui">Use WSL 2</span> ticked. It will make you restart.</span></div>
+          <div class="click"><span class="cn">3</span><span>Open Docker Desktop once and wait until the whale icon stops animating — nothing works until it has started</span></div>
+          <div class="click"><span class="cn">4</span><span><span class="path">Settings → Resources</span> → give it at least <b>4&nbsp;GB</b> of memory</span></div>
+        </div>
+        <div class="cmd"><span class="p">$</span> docker run --rm hello-world    <span class="c"># prints "Hello from Docker!"</span></div>
+      </div></div>
+
+      <div class="bstep"><div class="bn">4</div><div class="bb">
+        <h4>Git and GitHub — one repository, eight people</h4>
+        <div class="clicks">
+          <div class="click"><span class="cn">1</span><span>Install Git from <span class="path">git-scm.com</span> (on a Mac, <code>xcode-select --install</code> is enough)</span></div>
+          <div class="click"><span class="cn">2</span><span>Make a GitHub account each. <b>D2</b> then clicks <span class="ui">New repository</span> → name it <code>ai-automation</code> → <span class="ui">Private</span> → <span class="ui">Create</span></span></div>
+          <div class="click"><span class="cn">3</span><span><span class="path">Settings → Collaborators → Add people</span> → add the other seven</span></div>
+          <div class="click"><span class="cn">4</span><span><span class="path">Settings → Branches → Add branch protection rule</span> → pattern <code>main</code> → tick <span class="ui">Require a pull request before merging</span> and <span class="ui">Require status checks to pass</span> → <span class="ui">Create</span></span></div>
+        </div>
+        <div class="cmd"><span class="p">$</span> git config --global user.name  "Your Name"
+<span class="p">$</span> git config --global user.email "you@example.com"
+<span class="p">$</span> git clone https://github.com/&lt;org&gt;/ai-automation &amp;&amp; cd ai-automation
+<span class="p">$</span> git checkout -b your-name/first-change   <span class="c"># never commit straight to main</span></div>
+      </div></div>
+
+      <div class="bstep"><div class="bn">5</div><div class="bb">
+        <h4>Postman — for poking our own server, and Google's</h4>
+        <div class="clicks">
+          <div class="click"><span class="cn">1</span><span><span class="path">postman.com/downloads</span> → install → sign in (free)</span></div>
+          <div class="click"><span class="cn">2</span><span><span class="ui">New</span> → <span class="ui">Collection</span> → name it <code>ai-automation</code>. Everything we try by hand lives here.</span></div>
+          <div class="click"><span class="cn">3</span><span>Inside it, <span class="ui">Add request</span> → set the verb to <span class="ui">POST</span>, the URL to <code>http://localhost:5678/rest/workflows</code></span></div>
+          <div class="click"><span class="cn">4</span><span>Open the <span class="ui">Body</span> tab → choose <span class="ui">raw</span> → change <span class="ui">Text</span> to <span class="ui">JSON</span> → paste your JSON → <span class="ui">Send</span></span></div>
+          <div class="click"><span class="cn">5</span><span><span class="path">Collection → … → Export</span> and commit the file, so all eight of us share the same requests</span></div>
+        </div>
+      </div></div>
+    </div>
+
+    <div class="chk"><b>Done when</b>All five commands above print what they should, on all eight laptops.
+      D2 keeps a tick-list — it is much cheaper to fix a broken install now than on the Thursday somebody
+      is blocked by it.</div>
+  </div>
+</div>

@@ -5,11 +5,17 @@
     <span class="stages">Stages 5–6 · Week 6 · lead: B2 · A1</span></div>
   <div class="h-wrap"><span class="secno">2.3</span><h2>Nodes describe themselves, and fields carry live data</h2></div>
   <div class="band"></div>
+  <div class="band-meta">
+    <div class="bm"><span class="lbl">Who builds this part</span><div class="who-chips"><span class="wc">B2</span><span class="wc">A1</span><span class="wc ghost">B1 reviews</span></div></div>
+    <div class="bm"><span class="lbl">What you need to know</span><p class="sk"><b>React</b> conditional rendering and controlled inputs · a little <b>regular-expression</b> reading for the expression resolver · above all, patience for detail: this is the fiddliest phase and the most valuable.</p></div>
+  </div>
 
   <div class="stack">
     <p class="lede"><b>What we are doing.</b> The two mechanisms that look small and decide everything:
       the settings panel that <b>draws itself</b>, and <b>expressions</b>.</p>
 
+
+    <div class="tgrid2"><div class="tbox"><span class="tname">expression</span><p><b>What it is.</b> A small piece of text in a settings box, in double braces, replaced with real data just before the node runs.</p><p><b>What it does in this section.</b> It is how one field becomes a different value for every item.</p><p><b>How it connects.</b> The engine resolves it inside <code>getNodeParameter</code>, so nodes never see the braces — which is why Phase 1's contract did not need to change.</p></div><div class="tbox"><span class="tname">schema-driven UI</span><p><b>What it is.</b> A screen built from a description of the data rather than hand-written for each case.</p><p><b>What it does in this section.</b> Our sidebar reads a node's property list and draws the form from it.</p><p><b>How it connects.</b> It is the single reason six people can add six nodes in Weeks 8–10 without touching the editor once.</p></div></div>
     <figure>
       <svg viewBox="0 0 760 232" xmlns="http://www.w3.org/2000/svg">
         <rect x="10" y="26" width="282" height="196" rx="6" fill="#fff" stroke="#0d72b4" stroke-width="1.6"/>

@@ -1,16 +1,19 @@
 <!-- ============================== 1.4 ============================== -->
 <div class="page">
-  <div class="rh"><span>Part 1 · How it all works</span><span class="r">1.4 — What the engine really is</span></div>
-  <div class="h-wrap"><span class="secno">1.4</span><h2>What the engine really is</h2></div>
+  <div class="rh"><span>Part 1 · How it all works</span><span class="r">1.5 — What the engine really is</span></div>
+  <div class="h-wrap"><span class="secno">1.5</span><h2>What the engine really is</h2></div>
   <div class="band"></div>
 
   <div class="stack">
     <p class="lede">An <b>engine</b> is a program that reads a set of instructions and carries them out in
       the right order. A chess engine reads a position; a search engine reads a query. <b>Our engine
-      reads a workflow</b> — the JSON from section 1.1 — and calls each node's execute function at the
+      reads a workflow</b> — the JSON from section 1.2 — and calls each node's execute function at the
       right moment, with the right data. It is about forty lines long, and it is the heart of the whole
       project.</p>
 
+
+    <div class="tgrid2"><div class="tbox"><span class="tname">engine</span><p><b>What it is.</b> A program that reads instructions and carries them out in the right order.</p><p><b>What it does in this section.</b> Ours reads a workflow and calls each node's function at the right moment with the right data.</p><p><b>How it connects.</b> Phase 1 builds it and then nobody touches it again — Phases 2, 4 and 6 only add new ways to <em>call</em> it.</p></div><div class="tbox"><span class="tname">trigger</span><p><b>What it is.</b> A node with nothing before it: the thing that starts a workflow.</p><p><b>What it does in this section.</b> The engine finds it, hands it one empty item, and the run begins from there.</p><p><b>How it connects.</b> Phase 4 builds two real ones — a web address and a clock — and neither requires changing the engine.</p></div></div>
+    <div class="tbox"><span class="tname">execution</span><p><b>What it is.</b> One occasion on which a workflow actually ran, recorded so you can look back at it.</p><p><b>What it does in this section.</b> The engine returns what every node produced; the server writes that down as a row.</p><p><b>How it connects.</b> It is what the run list in the editor shows, and what the benchmark in Phase 6 measures.</p></div>
     <figure>
       <svg viewBox="0 0 760 322" xmlns="http://www.w3.org/2000/svg">
         <defs><marker id="e1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#7c8492"/></marker></defs>

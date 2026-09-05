@@ -5,12 +5,18 @@
     <span class="stages">Stages 3–4 · Weeks 5–6 · lead: C1 · B1</span></div>
   <div class="h-wrap"><span class="secno">2.2</span><h2>Workflows survive a restart, and we can draw them</h2></div>
   <div class="band"></div>
+  <div class="band-meta">
+    <div class="bm"><span class="lbl">Who builds this part</span><div class="who-chips"><span class="wc">C1</span><span class="wc">B1</span><span class="wc ghost">D2 helps with Docker</span></div></div>
+    <div class="bm"><span class="lbl">What you need to know</span><p class="sk"><b>SQL</b> enough to create a table and write five queries · <b>HTTP verbs</b> (GET, POST, PATCH) · <b>React</b> basics — components, state, effects · running one Docker command.</p></div>
+  </div>
 
   <div class="stack">
     <p class="lede"><b>What we are doing.</b> Giving the engine a home. A <b>database</b> remembers
-      workflows, a <b>server</b> hands them out through the five addresses from section 1.5, and a
+      workflows, a <b>server</b> hands them out through the five addresses from section 1.6, and a
       <b>canvas</b> lets us draw one instead of typing JSON by hand.</p>
 
+
+    <div class="tgrid2"><div class="tbox"><span class="tname">container</span><p><b>What it is.</b> A program packed with everything it needs, so it behaves identically on every machine.</p><p><b>What it does in this section.</b> We start Postgres as one, so nobody installs a database by hand.</p><p><b>How it connects.</b> The same idea deploys the finished platform in Phase 6 — the container that runs on your laptop is the one that runs on the server.</p></div><div class="tbox"><span class="tname">migration</span><p><b>What it is.</b> A file of SQL that creates or changes tables, kept in the repository and run in order.</p><p><b>What it does in this section.</b> <code>schema.sql</code> is our first one; every later table change adds another.</p><p><b>How it connects.</b> It means all eight laptops and the live server end up with exactly the same database shape.</p></div></div>
     <figure>
       <svg viewBox="0 0 760 216" xmlns="http://www.w3.org/2000/svg">
         <defs><marker id="p2a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#2a5fce"/></marker></defs>

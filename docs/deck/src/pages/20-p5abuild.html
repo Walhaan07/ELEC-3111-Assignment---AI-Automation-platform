@@ -7,16 +7,40 @@
   <div class="stack">
     <div class="bsteps">
       <div class="bstep"><div class="bn">1</div><div class="bb">
-        <h4>In the Google Cloud Console, once</h4>
-        <p><b>APIs &amp; Services → Library</b>: enable Google Sheets, Drive, Docs and Gmail. →
-          <b>OAuth consent screen</b>: External, <em>Testing</em>, add all eight of us and the
-          demonstrator as Test Users. → <b>Credentials → Create OAuth client ID → Web application</b>,
-          with this exact redirect URI:</p>
-        <div class="cmd">http://localhost:5678/rest/oauth2-credential/callback
-https://your-domain.com/rest/oauth2-credential/callback   <span class="c"># add the live one too</span></div>
+        <h4>Create the project and switch on the four APIs</h4>
+        <div class="clicks">
+          <div class="click"><span class="cn">1</span><span>Go to <span class="path">console.cloud.google.com</span> and sign in with the account that will own this</span></div>
+          <div class="click"><span class="cn">2</span><span>Click the <b>project dropdown</b> in the top bar → <span class="ui">NEW PROJECT</span> → name it <code>ai-automation</code> → <span class="ui">CREATE</span></span></div>
+          <div class="click"><span class="cn">3</span><span>Wait for the notification, then use the same dropdown to <b>select the new project</b>. Everything after this happens inside it — this is the step people miss.</span></div>
+          <div class="click"><span class="cn">4</span><span>In the search bar type <span class="ui">Google Sheets API</span> → open it → <span class="ui">ENABLE</span></span></div>
+          <div class="click"><span class="cn">5</span><span>Repeat step 4 for <b>Google Drive API</b>, <b>Google Docs API</b> and <b>Gmail API</b>. Four separate enables.</span></div>
+        </div>
       </div></div>
 
       <div class="bstep"><div class="bn">2</div><div class="bb">
+        <h4>The consent screen, and the test-user list that makes it work</h4>
+        <div class="clicks">
+          <div class="click"><span class="cn">1</span><span><span class="path">Left menu → APIs &amp; Services → OAuth consent screen</span></span></div>
+          <div class="click"><span class="cn">2</span><span>Choose <span class="ui">External</span> → <span class="ui">CREATE</span>. Leave the publishing status as <b>Testing</b> — we never publish.</span></div>
+          <div class="click"><span class="cn">3</span><span>App name <code>AI Automation Platform</code>, your email for both support and developer contact → <span class="ui">SAVE AND CONTINUE</span></span></div>
+          <div class="click"><span class="cn">4</span><span><span class="ui">ADD OR REMOVE SCOPES</span> → filter and tick <code>.../auth/spreadsheets</code>, <code>.../auth/drive.file</code>, <code>.../auth/documents</code>, <code>.../auth/gmail.send</code> → <span class="ui">UPDATE</span> → <span class="ui">SAVE AND CONTINUE</span></span></div>
+          <div class="click"><span class="cn">5</span><span><b>Test users</b> → <span class="ui">ADD USERS</span> → paste all eight Gmail addresses <b>and the demonstrator's</b> → <span class="ui">SAVE AND CONTINUE</span>. Anybody not on this list simply cannot connect.</span></div>
+        </div>
+      </div></div>
+
+      <div class="bstep"><div class="bn">3</div><div class="bb">
+        <h4>The client ID, and the exact redirect address</h4>
+        <div class="clicks">
+          <div class="click"><span class="cn">1</span><span><span class="path">APIs &amp; Services → Credentials</span> → <span class="ui">CREATE CREDENTIALS</span> → <span class="ui">OAuth client ID</span></span></div>
+          <div class="click"><span class="cn">2</span><span>Application type <span class="ui">Web application</span>, name it <code>server</code></span></div>
+          <div class="click"><span class="cn">3</span><span>Under <b>Authorised redirect URIs</b> click <span class="ui">ADD URI</span> twice and paste both addresses below — character for character, including the trailing path</span></div>
+          <div class="click"><span class="cn">4</span><span><span class="ui">CREATE</span>, then copy the <b>Client ID</b> and <b>Client secret</b> straight into <code>.env</code>. The secret is shown once.</span></div>
+        </div>
+        <div class="cmd">http://localhost:5678/rest/oauth2-credential/callback
+https://your-domain.com/rest/oauth2-credential/callback   <span class="c"># add the live one now too</span></div>
+      </div></div>
+
+      <div class="bstep"><div class="bn">4</div><div class="bb">
         <h4>Send the user to Google</h4>
         <div class="fwrap"><span class="fname">apps/api/oauth.js</span>
 <pre class="code" data-lang="js"><code>const SCOPES = {
@@ -40,7 +64,7 @@ app.get('/rest/oauth2-credential/auth', (req, res) => {
 });</code></pre></div>
       </div></div>
 
-      <div class="bstep"><div class="bn">3</div><div class="bb">
+      <div class="bstep"><div class="bn">5</div><div class="bb">
         <h4>Trade the code for keys, and store them scrambled</h4>
         <div class="fwrap"><span class="fname">apps/api/oauth.js — continued</span>
 <pre class="code" data-lang="js"><code>app.get('/rest/oauth2-credential/callback', async (req, res) => {

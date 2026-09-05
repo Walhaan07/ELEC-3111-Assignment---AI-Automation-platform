@@ -36,7 +36,25 @@ volumes:
       </div></div>
 
       <div class="bstep"><div class="bn">2</div><div class="bb">
-        <h4>Put it on the machine</h4>
+        <h4>Rent the machine — the AWS console, click by click</h4>
+        <div class="clicks">
+          <div class="click"><span class="cn">1</span><span><span class="path">console.aws.amazon.com</span> → search <span class="ui">EC2</span> → <span class="ui">Instances</span> → <span class="ui">Launch instances</span></span></div>
+          <div class="click"><span class="cn">2</span><span>Name <code>automation-prod</code> · image <b>Ubuntu Server 24.04 LTS</b> · instance type <b>t3.small</b></span></div>
+          <div class="click"><span class="cn">3</span><span><b>Key pair</b> → <span class="ui">Create new key pair</span> → RSA, <code>.pem</code> → it downloads once. Lose it and you lose the machine.</span></div>
+          <div class="click"><span class="cn">4</span><span><b>Network settings</b> → <span class="ui">Edit</span> → allow <span class="ui">SSH</span> from <b>My IP</b>, and <span class="ui">HTTP</span> + <span class="ui">HTTPS</span> from anywhere</span></div>
+          <div class="click"><span class="cn">5</span><span>Storage <b>20 GiB gp3</b> → <span class="ui">Launch instance</span></span></div>
+          <div class="click"><span class="cn">6</span><span><span class="path">EC2 → Elastic IPs → Allocate Elastic IP address</span> → <span class="ui">Associate</span> it with the instance, so the address survives a reboot</span></div>
+          <div class="click"><span class="cn">7</span><span>At your domain registrar add one <b>A record</b> pointing <code>your-domain.com</code> at that address</span></div>
+          <div class="click"><span class="cn">8</span><span><b>Before anything else:</b> <span class="path">Billing → Budgets → Create budget</span> → cost budget, <b>$50</b>, alert to all eight emails</span></div>
+        </div>
+        <div class="cmd"><span class="p">$</span> chmod 400 automation-prod.pem
+<span class="p">$</span> ssh -i automation-prod.pem ubuntu@your-domain.com
+<span class="p">$</span> curl -fsSL https://get.docker.com | sh &amp;&amp; sudo usermod -aG docker ubuntu
+<span class="p">$</span> exit &amp;&amp; ssh -i automation-prod.pem ubuntu@your-domain.com   <span class="c"># re-login for the group</span></div>
+      </div></div>
+
+      <div class="bstep"><div class="bn">3</div><div class="bb">
+        <h4>Put the project on it</h4>
         <div class="cmd"><span class="p">$</span> ssh ubuntu@your-server
 <span class="p">$</span> git clone https://github.com/&lt;org&gt;/ai-automation &amp;&amp; cd ai-automation
 <span class="p">$</span> cp .env.example .env &amp;&amp; nano .env        <span class="c"># real keys go here only</span>
@@ -45,7 +63,7 @@ volumes:
 <span class="p">$</span> git pull &amp;&amp; docker compose -f docker-compose.prod.yml up -d --build</code></pre></div>
       </div></div>
 
-      <div class="bstep"><div class="bn">3</div><div class="bb">
+      <div class="bstep"><div class="bn">4</div><div class="bb">
         <h4>Stand n8n up beside it, configured the same way</h4>
         <div class="fwrap"><span class="fname">benchmarks/n8n/docker-compose.yml</span>
 <pre class="code" data-lang="yaml"><code>services:
@@ -66,7 +84,7 @@ volumes:
           comparison is not a comparison.</p>
       </div></div>
 
-      <div class="bstep"><div class="bn">4</div><div class="bb">
+      <div class="bstep"><div class="bn">5</div><div class="bb">
         <h4>Measure both with the same script</h4>
         <div class="fwrap"><span class="fname">benchmarks/k6/w1.js</span>
 <pre class="code" data-lang="js"><code>import http from 'k6/http';

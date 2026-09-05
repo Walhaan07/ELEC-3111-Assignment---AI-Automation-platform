@@ -181,4 +181,40 @@
   .chk>b:first-child{font-family:var(--fm);font-size:7pt;letter-spacing:.1em;text-transform:uppercase;
                      display:block;margin-bottom:2px;color:#1f7a4d;}
   .twocol{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:start;}
+  /* ---------- inline term definitions ---------- */
+  .tbox{border:1px solid var(--line);border-left:3px solid var(--acc);border-radius:0 4px 4px 0;
+        background:linear-gradient(90deg,var(--accs),#ffffff 62%);padding:8px 11px;break-inside:avoid;}
+  .tbox .tname{font-family:var(--fm);font-size:8.6pt;font-weight:600;color:var(--acc);
+               letter-spacing:.02em;display:block;margin-bottom:3px;}
+  .tbox p{font-size:9.1pt;color:var(--ink2);}
+  .tbox p+p{margin-top:3px;}
+  .tbox b{color:var(--ink);}
+  .tgrid2{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+
+  /* ---------- who / skills band ---------- */
+  .band-meta{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 11px;break-inside:avoid;}
+  .bm{border-radius:4px;padding:7px 11px;background:linear-gradient(135deg,var(--accs),#ffffff);
+      border:1px solid var(--line);}
+  .bm .lbl{font-family:var(--fm);font-size:7pt;letter-spacing:.12em;text-transform:uppercase;
+           color:var(--acc);display:block;margin-bottom:4px;}
+  .who-chips{display:flex;flex-wrap:wrap;gap:5px;}
+  .wc{font-family:var(--fm);font-size:8pt;font-weight:600;color:#fff;background:var(--acc);
+      border-radius:12px;padding:2px 9px;}
+  .wc.ghost{background:transparent;color:var(--acc);border:1px solid var(--acc);}
+  .sk{font-size:8.8pt;color:var(--ink2);}
+  .sk b{color:var(--ink);}
+
+  /* ---------- click paths ---------- */
+  .clicks{display:flex;flex-direction:column;gap:4px;break-inside:avoid;}
+  .click{display:grid;grid-template-columns:18px 1fr;gap:8px;font-size:9.1pt;color:var(--ink2);}
+  .click .cn{font-family:var(--fm);font-size:7.6pt;font-weight:600;color:var(--acc);padding-top:2px;}
+  .ui{font-family:var(--fm);font-size:8.4pt;background:var(--accs);border:1px solid var(--line2);
+      border-radius:3px;padding:0 5px;color:var(--ink);white-space:nowrap;}
+  .path{font-family:var(--fm);font-size:8.4pt;color:var(--acc);}
+
+  /* ---------- book-like part dividers ---------- */
+  .partline{height:5px;border-radius:3px;margin:0 0 12px;}
+  .legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:8.6pt;color:var(--ink2);}
+  .legend span{display:inline-flex;align-items:center;gap:5px;}
+  .legend i{width:11px;height:11px;border-radius:3px;display:inline-block;}
 </style>

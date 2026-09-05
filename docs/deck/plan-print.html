@@ -239,6 +239,42 @@
   .chk>b:first-child{font-family:var(--fm);font-size:7pt;letter-spacing:.1em;text-transform:uppercase;
                      display:block;margin-bottom:2px;color:#1f7a4d;}
   .twocol{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:start;}
+  /* ---------- inline term definitions ---------- */
+  .tbox{border:1px solid var(--line);border-left:3px solid var(--acc);border-radius:0 4px 4px 0;
+        background:linear-gradient(90deg,var(--accs),#ffffff 62%);padding:8px 11px;break-inside:avoid;}
+  .tbox .tname{font-family:var(--fm);font-size:8.6pt;font-weight:600;color:var(--acc);
+               letter-spacing:.02em;display:block;margin-bottom:3px;}
+  .tbox p{font-size:9.1pt;color:var(--ink2);}
+  .tbox p+p{margin-top:3px;}
+  .tbox b{color:var(--ink);}
+  .tgrid2{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+
+  /* ---------- who / skills band ---------- */
+  .band-meta{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 11px;break-inside:avoid;}
+  .bm{border-radius:4px;padding:7px 11px;background:linear-gradient(135deg,var(--accs),#ffffff);
+      border:1px solid var(--line);}
+  .bm .lbl{font-family:var(--fm);font-size:7pt;letter-spacing:.12em;text-transform:uppercase;
+           color:var(--acc);display:block;margin-bottom:4px;}
+  .who-chips{display:flex;flex-wrap:wrap;gap:5px;}
+  .wc{font-family:var(--fm);font-size:8pt;font-weight:600;color:#fff;background:var(--acc);
+      border-radius:12px;padding:2px 9px;}
+  .wc.ghost{background:transparent;color:var(--acc);border:1px solid var(--acc);}
+  .sk{font-size:8.8pt;color:var(--ink2);}
+  .sk b{color:var(--ink);}
+
+  /* ---------- click paths ---------- */
+  .clicks{display:flex;flex-direction:column;gap:4px;break-inside:avoid;}
+  .click{display:grid;grid-template-columns:18px 1fr;gap:8px;font-size:9.1pt;color:var(--ink2);}
+  .click .cn{font-family:var(--fm);font-size:7.6pt;font-weight:600;color:var(--acc);padding-top:2px;}
+  .ui{font-family:var(--fm);font-size:8.4pt;background:var(--accs);border:1px solid var(--line2);
+      border-radius:3px;padding:0 5px;color:var(--ink);white-space:nowrap;}
+  .path{font-family:var(--fm);font-size:8.4pt;color:var(--acc);}
+
+  /* ---------- book-like part dividers ---------- */
+  .partline{height:5px;border-radius:3px;margin:0 0 12px;}
+  .legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:8.6pt;color:var(--ink2);}
+  .legend span{display:inline-flex;align-items:center;gap:5px;}
+  .legend i{width:11px;height:11px;border-radius:3px;display:inline-block;}
 </style></head><body>
 <!-- ============================== COVER ============================== -->
 <div class="page cover">
@@ -319,7 +355,7 @@
   <div class="rh"><span>ELEC 3111 · Group 2</span><span class="r">Contents</span></div>
   <div class="h-wrap"><h2>Contents</h2></div>
   <div class="band" style="background:linear-gradient(90deg,#4b46c0,#2a5fce,#0d72b4,#087f99,#0a7a70,#14624f)"></div>
-  <div class="toc"><div class="grp">Part 0 — The vocabulary</div><div class="row"><span class="n">0.1</span><span><b>The words we will keep using</b></span><span class="pg">3</span></div><div class="row"><span class="n">0.2</span><span><b>The words behind the screen</b> · Figure 1</span><span class="pg">4</span></div><div class="grp">Part 1 — How it all works</div><div class="row"><span class="n">1.1</span><span><b>What a workflow really is</b> · Figure 2</span><span class="pg">5</span></div><div class="row"><span class="n">1.2</span><span><b>What a node really is</b> · Figure 3</span><span class="pg">6</span></div><div class="row"><span class="n">1.3</span><span><b>What an item really is</b> · Figure 4</span><span class="pg">7</span></div><div class="row"><span class="n">1.4</span><span><b>What the engine really is</b> · Figure 5</span><span class="pg">8</span></div><div class="row"><span class="n">1.5</span><span><b>The canvas and the API — the two halves of the app</b> · Figure 6</span><span class="pg">9</span></div><div class="row"><span class="n">1.6</span><span><b>The six phases</b> · Figure 7</span><span class="pg">10</span></div><div class="row"><span class="n">1.7</span><span><b>The toolkit — what we install, and when</b> · Figure 8</span><span class="pg">11</span></div><div class="grp">Part 2 — Building it, phase by phase</div><div class="row"><span class="n">2.1</span><span><b>A workflow runs, from a single file</b> · Figure 9</span><span class="pg">12</span></div><div class="row" class="bld"><span class="n">2.1b</span><span><b>Build it: the engine, line by line</b></span><span class="pg">13</span></div><div class="row"><span class="n">2.2</span><span><b>Workflows survive a restart, and we can draw them</b> · Figure 10</span><span class="pg">14</span></div><div class="row" class="bld"><span class="n">2.2b</span><span><b>Build it: database, server and canvas</b></span><span class="pg">15</span></div><div class="row" class="bld"><span class="n">2.2c</span><span><b>Build it: the canvas, and the two functions that matter</b></span><span class="pg">16</span></div><div class="row"><span class="n">2.3</span><span><b>Nodes describe themselves, and fields carry live data</b> · Figures 11–12</span><span class="pg">17</span></div><div class="row" class="bld"><span class="n">2.3b</span><span><b>Build it: forms that draw themselves, and expressions</b></span><span class="pg">18</span></div><div class="row"><span class="n">2.4</span><span><b>Workflows that run without anyone pressing a button</b> · Figure 13</span><span class="pg">19</span></div><div class="row" class="bld"><span class="n">2.4b</span><span><b>Build it: webhooks and schedules</b></span><span class="pg">20</span></div><div class="row"><span class="n">2.5</span><span><b>First, permission to use a Google account</b> · Figure 14</span><span class="pg">21</span></div><div class="row" class="bld"><span class="n">2.5b</span><span><b>Build it: the Google permission round trip</b></span><span class="pg">22</span></div><div class="row"><span class="n">2.6</span><span><b>Then the nodes people actually came for</b> · Figures 15–16</span><span class="pg">23</span></div><div class="row" class="bld"><span class="n">2.6b</span><span><b>Build it: one helper, then four Google nodes</b></span><span class="pg">24</span></div><div class="row" class="bld"><span class="n">2.6c</span><span><b>Build it: Gmail, the sandbox, and the AI node</b></span><span class="pg">25</span></div><div class="row"><span class="n">2.7</span><span><b>Online, measured, and written up</b> · Figure 17</span><span class="pg">26</span></div><div class="row" class="bld"><span class="n">2.7b</span><span><b>Build it: online, and measured against n8n</b></span><span class="pg">27</span></div><div class="grp">Part 3 — Putting it together</div><div class="row"><span class="n">3.1</span><span><b>How six phases become one working system</b> · Figure 18</span><span class="pg">28</span></div><div class="row" class="bld"><span class="n">3.1b</span><span><b>Build it: one repository, one command</b></span><span class="pg">29</span></div><div class="row"><span class="n">3.2</span><span><b>Four levels of testing, and what each one catches</b> · Figure 19</span><span class="pg">30</span></div><div class="row" class="bld"><span class="n">3.2b</span><span><b>Build it: the four levels, in code</b></span><span class="pg">31</span></div><div class="row" class="bld"><span class="n">3.2c</span><span><b>Build it: the browser test, and running it all automatically</b></span><span class="pg">32</span></div><div class="row"><span class="n">3.3</span><span><b>Proving the whole thing works, on the day</b> · Figure 20</span><span class="pg">33</span></div><div class="grp">Part 4 — Running the project</div><div class="row"><span class="n">4.1</span><span><b>Eight people, eight areas</b> · Figure 21</span><span class="pg">34</span></div><div class="row"><span class="n">4.2</span><span><b>The hard part of being eight, and how we solve it</b> · Figure 22</span><span class="pg">35</span></div><div class="row"><span class="n">4.3</span><span><b>Three risks that end projects, and six habits that save them</b></span><span class="pg">36</span></div><div class="row"><span class="n">4.4</span><span><b>What each of us does this week</b></span><span class="pg">37</span></div></div>
+  <div class="toc"><div class="grp">Part 1 — The big picture, and how it works</div><div class="row"><span class="n">1.1</span><span><b>Everything we are building, on one page</b> · Figure 1</span><span class="pg">3</span></div><div class="row"><span class="n">1.2</span><span><b>What a workflow really is</b> · Figure 2</span><span class="pg">4</span></div><div class="row"><span class="n">1.3</span><span><b>What a node really is</b> · Figure 3</span><span class="pg">5</span></div><div class="row"><span class="n">1.4</span><span><b>What an item really is</b> · Figure 4</span><span class="pg">6</span></div><div class="row"><span class="n">1.5</span><span><b>What the engine really is</b> · Figure 5</span><span class="pg">7</span></div><div class="row"><span class="n">1.6</span><span><b>The canvas and the API — the two halves of the app</b> · Figure 6</span><span class="pg">8</span></div><div class="row"><span class="n">1.7</span><span><b>The six phases</b> · Figure 7</span><span class="pg">9</span></div><div class="row"><span class="n">1.8</span><span><b>The toolkit — what we install, and when</b> · Figure 8</span><span class="pg">10</span></div><div class="row"><span class="n">1.9</span><span><b>Install everything, click by click</b></span><span class="pg">11</span></div><div class="grp">Part 2 — Building it, phase by phase</div><div class="row"><span class="n">2.1</span><span><b>A workflow runs, from a single file</b> · Figure 9</span><span class="pg">12</span></div><div class="row" class="bld"><span class="n">2.1b</span><span><b>Build it: the engine, line by line</b></span><span class="pg">13</span></div><div class="row"><span class="n">2.2</span><span><b>Workflows survive a restart, and we can draw them</b> · Figure 10</span><span class="pg">14</span></div><div class="row" class="bld"><span class="n">2.2b</span><span><b>Build it: database, server and canvas</b></span><span class="pg">15</span></div><div class="row" class="bld"><span class="n">2.2c</span><span><b>Build it: the canvas, and the two functions that matter</b></span><span class="pg">16</span></div><div class="row"><span class="n">2.3</span><span><b>Nodes describe themselves, and fields carry live data</b> · Figures 11–12</span><span class="pg">17</span></div><div class="row" class="bld"><span class="n">2.3b</span><span><b>Build it: forms that draw themselves, and expressions</b></span><span class="pg">18</span></div><div class="row"><span class="n">2.4</span><span><b>Workflows that run without anyone pressing a button</b> · Figure 13</span><span class="pg">19</span></div><div class="row" class="bld"><span class="n">2.4b</span><span><b>Build it: webhooks and schedules</b></span><span class="pg">20</span></div><div class="row"><span class="n">2.5</span><span><b>First, permission to use a Google account</b> · Figure 14</span><span class="pg">21</span></div><div class="row" class="bld"><span class="n">2.5b</span><span><b>Build it: the Google permission round trip</b></span><span class="pg">22</span></div><div class="row"><span class="n">2.6</span><span><b>Then the nodes people actually came for</b> · Figures 15–16</span><span class="pg">23</span></div><div class="row" class="bld"><span class="n">2.6b</span><span><b>Build it: one helper, then four Google nodes</b></span><span class="pg">24</span></div><div class="row" class="bld"><span class="n">2.6c</span><span><b>Build it: Gmail, the sandbox, and the AI node</b></span><span class="pg">25</span></div><div class="row"><span class="n">2.7</span><span><b>Online, measured, and written up</b> · Figure 17</span><span class="pg">26</span></div><div class="row" class="bld"><span class="n">2.7b</span><span><b>Build it: online, and measured against n8n</b></span><span class="pg">27</span></div><div class="grp">Part 3 — Putting it together</div><div class="row"><span class="n">3.1</span><span><b>How six phases become one working system</b> · Figure 18</span><span class="pg">28</span></div><div class="row" class="bld"><span class="n">3.1b</span><span><b>Build it: one repository, one command</b></span><span class="pg">29</span></div><div class="row"><span class="n">3.2</span><span><b>Four levels of testing, and what each one catches</b> · Figure 19</span><span class="pg">30</span></div><div class="row" class="bld"><span class="n">3.2b</span><span><b>Build it: the four levels, in code</b></span><span class="pg">31</span></div><div class="row" class="bld"><span class="n">3.2c</span><span><b>Build it: the browser test, and running it all automatically</b></span><span class="pg">32</span></div><div class="row"><span class="n">3.3</span><span><b>Proving the whole thing works, on the day</b> · Figure 20</span><span class="pg">33</span></div><div class="grp">Part 4 — Running the project</div><div class="row"><span class="n">4.1</span><span><b>Eight people, eight areas</b> · Figure 21</span><span class="pg">34</span></div><div class="row"><span class="n">4.2</span><span><b>The hard part of being eight, and how we solve it</b> · Figure 22</span><span class="pg">35</span></div><div class="row"><span class="n">4.3</span><span><b>Three risks that end projects, and six habits that save them</b></span><span class="pg">36</span></div><div class="row"><span class="n">4.4</span><span><b>What each of us does this week</b></span><span class="pg">37</span></div></div>
   <div class="call why" style="margin-top:14px"><b>How to read this</b>Parts 0 and 1 explain how the
     thing works and are worth reading before anyone writes code. From Part 2 onwards each phase has
     <b>two pages</b>: the first says what we are doing and why, the second gives the actual commands and
@@ -327,167 +363,134 @@
     where you are.</div>
 </div>
 
-<!-- ============================== 0.1 ============================== -->
-<div class="page">
-  <div class="rh"><span>Part 0 · The vocabulary</span><span class="r">0.1 — The words on the screen</span></div>
-  <div class="h-wrap"><span class="secno">0.1</span><h2>The words we will keep using</h2></div>
-  <div class="band"></div>
+<!-- ============================== 1.1 BIG PICTURE ============================== -->
+<div class="page" style="--acc:#0d72b4;--accs:#dfeef8">
+  <div class="rh"><span>Part 1 · The big picture</span><span class="r">1.1 — Everything, on one page</span></div>
+  <div class="h-wrap"><span class="secno">1.1</span><h2>Everything we are building, on one page</h2></div>
+  <div class="partline" style="background:linear-gradient(90deg,#4b46c0,#2a5fce,#0d72b4,#087f99,#0a7a70,#14624f)"></div>
 
   <div class="stack">
-    <p class="lede">Most of the confusion in a project like this comes from words, not from ideas. These
-      eight describe things you have <b>already seen with your own eyes</b> in n8n — we are only giving
-      them their proper names so the rest of this document can be short.</p>
-
-    <table>
-      <thead><tr><th style="width:104px">Word</th><th>What it means, plainly</th><th style="width:214px">Where you met it in n8n</th></tr></thead>
-      <tbody>
-        <tr><td class="term">Workflow</td>
-            <td>One complete automation, from the thing that starts it to the last thing it does. It is
-                just a drawing: some boxes and some lines.</td>
-            <td class="n8ncol">Your weather automation. One tab, one name, one on/off switch.</td></tr>
-        <tr><td class="term">Node</td>
-            <td>One step in that drawing. A node takes some data in, does one job, and passes data out.
-                Every node works the same way, whether it sends an email or adds two numbers.</td>
-            <td class="n8ncol">Every box you dragged from the panel on the left.</td></tr>
-        <tr><td class="term">Trigger</td>
-            <td>A special node with nothing before it. It is what <em>starts</em> a workflow — a clock
-                reaching a certain time, or a message arriving from outside.</td>
-            <td class="n8ncol">Your Schedule Trigger. Also the Webhook node.</td></tr>
-        <tr><td class="term">Item</td>
-            <td>One single piece of data travelling between nodes — one row, one email, one order. Nodes
-                always pass a <em>list</em> of items, even when the list has only one thing in it.</td>
-            <td class="n8ncol">The numbered rows in the OUTPUT panel when you clicked a node.</td></tr>
-        <tr><td class="term">Canvas</td>
-            <td>The big area where you drag boxes and draw lines between them. It is only a drawing
-                tool — the canvas never runs anything itself.</td>
-            <td class="n8ncol">The grey grid that filled most of the n8n screen.</td></tr>
-        <tr><td class="term">Execution<br>(a “run”)</td>
-            <td>One occasion on which a workflow actually ran. Each run is recorded so you can look
-                back at it: what came in, what each node produced, whether it worked.</td>
-            <td class="n8ncol">The Executions list, with green ticks and red crosses.</td></tr>
-        <tr><td class="term">Expression</td>
-            <td>A small piece of text inside a settings box, written between double braces, that gets
-                replaced with real data just before the node runs.</td>
-            <td class="n8ncol"><code>{{ $json.city }}</code> — what appeared when you dragged a field
-                into a box.</td></tr>
-        <tr><td class="term">Credential</td>
-            <td>A saved login for an outside service, stored once and reused by any node that needs it.
-                Kept scrambled so that reading the database does not reveal it.</td>
-            <td class="n8ncol">The Credentials screen where you connected your accounts.</td></tr>
-      </tbody>
-    </table>
-
-    <div class="n8n"><b>Why this matters more than it looks</b>Three of these words carry the whole
-      project. <b>Node</b> tells us what four of us will spend Weeks 8–10 writing. <b>Item</b> decides
-      the shape of every piece of code we write, and cannot be changed later. And <b>execution</b> is
-      the thing our database exists to remember. If those three are clear to everyone, the rest of this
-      document is mostly detail.</div>
-  </div>
-</div>
-
-<!-- ============================== 0.2 ============================== -->
-<div class="page">
-  <div class="rh"><span>Part 0 · The vocabulary</span><span class="r">0.2 — The words behind the screen</span></div>
-  <div class="h-wrap"><span class="secno">0.2</span><h2>The words behind the screen</h2></div>
-  <div class="band"></div>
-
-  <div class="stack">
-    <p class="lede">These eight describe machinery you <b>used without seeing</b>. When you opened n8n
-      at <code>localhost:5678</code>, every one of these was already working for you.</p>
-
-    <table>
-      <thead><tr><th style="width:104px">Word</th><th>What it means, plainly</th><th style="width:214px">Where it was in n8n</th></tr></thead>
-      <tbody>
-        <tr><td class="term">Server</td>
-            <td>A program that sits waiting and answers when something asks it a question. It does not
-                have a screen; it just listens on a numbered door called a <em>port</em>.</td>
-            <td class="n8ncol">The thing you started, listening on port 5678.</td></tr>
-        <tr><td class="term">API</td>
-            <td>The list of questions a server agrees to answer, and the exact wording each one needs.
-                Think of it as a menu: not the kitchen, just what you are allowed to order.</td>
-            <td class="n8ncol">Two of them at once — n8n's own, used by its screen, and the weather
-                service's, used by your HTTP node.</td></tr>
-        <tr><td class="term">Endpoint</td>
-            <td>One single item on that menu. An address plus a verb — for example “GET me the list of
-                workflows”, or “POST this new workflow and save it”.</td>
-            <td class="n8ncol"><code>/rest/workflows</code>, called every time you opened the
-                workflow list.</td></tr>
-        <tr><td class="term">Request &amp;<br>response</td>
-            <td>The question and the answer. One request goes out, one response comes back, and the
-                conversation is over. Nothing stays connected in between.</td>
-            <td class="n8ncol">Every click you made sent one and waited for the other.</td></tr>
-        <tr><td class="term">JSON</td>
-            <td>A plain-text way of writing down data that both people and programs can read. Curly
-                braces for a thing, square brackets for a list of things.</td>
-            <td class="n8ncol">The OUTPUT panel, and the file you get from “Download workflow”.</td></tr>
-        <tr><td class="term">Database</td>
-            <td>A program whose only job is to remember things after everything else has been switched
-                off, and to find them again quickly.</td>
-            <td class="n8ncol">Quietly holding your workflows so they were still there tomorrow.</td></tr>
-        <tr><td class="term">Token</td>
-            <td>A temporary key that a service hands you after you log in, so that later requests do not
-                need your password. Most expire after about an hour.</td>
-            <td class="n8ncol">What n8n silently refreshed behind your Google credential.</td></tr>
-        <tr><td class="term">Container<br>(Docker)</td>
-            <td>A program packed up with everything it needs to run, so it behaves identically on every
-                machine. Started with one command, thrown away with another.</td>
-            <td class="n8ncol"><code>docker run n8nio/n8n</code> — why it worked first time.</td></tr>
-      </tbody>
-    </table>
+    <p class="lede">This is the whole project. Nine boxes, and every one of them is built in a phase you
+      can point at. <b>Nothing else exists.</b> When you feel lost later, come back to this page and find
+      the box you are working on.</p>
 
     <figure>
-      <svg viewBox="0 0 760 258" xmlns="http://www.w3.org/2000/svg">
-        <defs><marker id="g1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#7c8492"/></marker></defs>
-        <rect x="10" y="24" width="420" height="64" rx="5" fill="#e8edf6" stroke="#34558f" stroke-width="1.5"/>
-        <rect x="10" y="24" width="420" height="15" rx="5" fill="#cfd9ea"/>
-        <circle cx="24" cy="32" r="2.8" fill="#8fa2c2"/><circle cx="34" cy="32" r="2.8" fill="#8fa2c2"/><circle cx="44" cy="32" r="2.8" fill="#8fa2c2"/>
-        <text x="26" y="58" class="t">Your browser</text>
-        <rect x="220" y="46" width="60" height="16" rx="3" fill="#fff" stroke="#b9c6de"/>
-        <rect x="220" y="66" width="60" height="16" rx="3" fill="#fff" stroke="#b9c6de"/>
-        <rect x="308" y="56" width="60" height="16" rx="3" fill="#fff" stroke="#b9c6de"/>
-        <path d="M280 54L306 60" stroke="#7c8492" fill="none"/><path d="M280 74L306 68" stroke="#7c8492" fill="none"/>
-        <text x="26" y="76" class="s">the canvas — it only draws</text>
+      <svg viewBox="0 0 760 404" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="bp" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0L10 5L0 10z" fill="#6b7686"/></marker>
+          <linearGradient id="srv" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#f5fafd"/><stop offset="100%" stop-color="#e8f2f8"/>
+          </linearGradient>
+        </defs>
 
-        <path d="M150 88L150 106" stroke="#7c8492" fill="none" marker-end="url(#g1)"/>
-        <text x="158" y="101" class="e">REQUEST</text>
-        <path d="M300 106L300 88" stroke="#7c8492" fill="none" marker-end="url(#g1)"/>
-        <text x="308" y="101" class="e">RESPONSE</text>
+        <text x="10" y="16" class="e">WHAT STARTS A WORKFLOW</text>
+        <rect x="10" y="26" width="150" height="44" rx="6" fill="#ddf0f4" stroke="#087f99" stroke-width="1.4"/>
+        <text x="24" y="46" class="t">A web request</text><text x="24" y="61" class="s">from anywhere</text>
+        <rect x="10" y="78" width="150" height="44" rx="6" fill="#ddf0f4" stroke="#087f99" stroke-width="1.4"/>
+        <text x="24" y="98" class="t">A clock</text><text x="24" y="113" class="s">inside our server</text>
+        <rect x="10" y="130" width="150" height="44" rx="6" fill="#e3ebfb" stroke="#2a5fce" stroke-width="1.4"/>
+        <text x="24" y="150" class="t">A person</text><text x="24" y="165" class="s">pressing Run</text>
 
-        <rect x="10" y="108" width="420" height="76" rx="5" fill="#fff" stroke="#dcdfe5" stroke-width="1.5"/>
-        <text x="26" y="128" class="t">Our server</text>
-        <rect x="26" y="138" width="118" height="32" rx="4" fill="#f7f8fa" stroke="#ecEEF1"/>
-        <text x="38" y="158" class="s2">the API</text>
-        <rect x="152" y="138" width="118" height="32" rx="4" fill="#f7f8fa" stroke="#ecEEF1"/>
-        <text x="164" y="158" class="s2">the engine</text>
-        <rect x="278" y="138" width="140" height="32" rx="4" fill="#f7f8fa" stroke="#ecEEF1"/>
-        <text x="290" y="158" class="s2">the nodes</text>
+        <rect x="10" y="212" width="176" height="120" rx="7" fill="#e3ebfb" stroke="#2a5fce" stroke-width="1.6"/>
+        <rect x="10" y="212" width="176" height="15" rx="7" fill="#c3d3f4"/>
+        <circle cx="24" cy="220" r="2.6" fill="#7f9ada"/><circle cx="33" cy="220" r="2.6" fill="#7f9ada"/><circle cx="42" cy="220" r="2.6" fill="#7f9ada"/>
+        <text x="24" y="248" class="t">The editor</text>
+        <text x="24" y="266" class="s2">the canvas you draw on</text>
+        <text x="24" y="282" class="s2">the settings sidebar</text>
+        <text x="24" y="298" class="s2">the list of past runs</text>
+        <text x="24" y="320" class="s" style="fill:#1f4aa8">phases 2 and 3</text>
 
-        <path d="M220 184L220 202" stroke="#7c8492" fill="none" marker-end="url(#g1)"/>
-        <rect x="10" y="204" width="420" height="46" rx="5" fill="#fff" stroke="#dcdfe5" stroke-width="1.5"/>
-        <text x="26" y="224" class="t">The database</text>
-        <text x="26" y="241" class="s">workflows · every past run · credentials</text>
-        <ellipse cx="382" cy="216" rx="26" ry="7" fill="#e8edf6" stroke="#34558f"/>
-        <path d="M356 216 L356 238 A26 7 0 0 0 408 238 L408 216" fill="#e8edf6" stroke="#34558f"/>
-        <ellipse cx="382" cy="216" rx="26" ry="7" fill="#fff" stroke="#34558f"/>
+        <rect x="240" y="26" width="300" height="306" rx="8" fill="url(#srv)" stroke="#0d72b4" stroke-width="1.8"/>
+        <rect x="240" y="26" width="300" height="24" rx="8" fill="#0d72b4"/>
+        <text x="254" y="43" class="e" style="fill:#ffffff">OUR SERVER — ONE NODE.JS PROGRAM</text>
 
-        <text x="448" y="44" class="s2">canvas — the drawing area</text>
-        <text x="448" y="62" class="s2">node — one box on it</text>
-        <text x="448" y="80" class="s2">workflow — the whole drawing</text>
-        <text x="448" y="128" class="s2">server — the program that answers</text>
-        <text x="448" y="146" class="s2">API — the list of things it answers</text>
-        <text x="448" y="164" class="s2">engine — the part that runs workflows</text>
-        <text x="448" y="228" class="s2">database — what survives a restart</text>
+        <rect x="254" y="62" width="272" height="44" rx="5" fill="#ddf0f4" stroke="#087f99"/>
+        <text x="268" y="81" class="t">The way in</text>
+        <text x="268" y="97" class="s2">five addresses · webhooks · the clock</text>
+        <text x="470" y="81" class="s" style="fill:#066476">ph 2·4</text>
+
+        <rect x="254" y="114" width="272" height="50" rx="5" fill="#e8e7f9" stroke="#4b46c0" stroke-width="1.6"/>
+        <text x="268" y="134" class="t">The engine</text>
+        <text x="268" y="150" class="s2">runs the boxes in the right order</text>
+        <text x="470" y="134" class="s" style="fill:#3a36a0">phase 1</text>
+
+        <rect x="254" y="172" width="272" height="50" rx="5" fill="#dcf0ee" stroke="#0a7a70" stroke-width="1.6"/>
+        <text x="268" y="192" class="t">The nodes</text>
+        <text x="268" y="208" class="s2">Sheets · Drive · Docs · Gmail</text>
+        <text x="470" y="192" class="s" style="fill:#075f57">phase 5</text>
+
+        <rect x="254" y="230" width="272" height="42" rx="5" fill="#dfeef8" stroke="#0d72b4"/>
+        <text x="268" y="249" class="t">The keys</text>
+        <text x="268" y="265" class="s2">Google logins, scrambled</text>
+        <text x="470" y="249" class="s" style="fill:#0a5b90">phase 5</text>
+
+        <rect x="254" y="280" width="272" height="38" rx="5" fill="#dceee8" stroke="#14624f"/>
+        <text x="268" y="304" class="t">Tests and deployment</text>
+        <text x="470" y="304" class="s" style="fill:#0f4d3e">phase 6</text>
+
+        <ellipse cx="648" cy="240" rx="44" ry="11" fill="#e3ebfb" stroke="#2a5fce" stroke-width="1.5"/>
+        <path d="M604 240 L604 294 A44 11 0 0 0 692 294 L692 240" fill="#e3ebfb" stroke="#2a5fce" stroke-width="1.5"/>
+        <ellipse cx="648" cy="240" rx="44" ry="11" fill="#fff" stroke="#2a5fce" stroke-width="1.5"/>
+        <text x="616" y="270" class="t">Database</text>
+        <text x="600" y="318" class="s2">the drawings, and</text>
+        <text x="600" y="332" class="s2">every past run</text>
+
+        <text x="572" y="16" class="e">WHAT THE NODES CALL</text>
+        <rect x="572" y="26" width="178" height="58" rx="6" fill="#dcf0ee" stroke="#0a7a70" stroke-width="1.4"/>
+        <text x="586" y="46" class="t">Google</text>
+        <text x="586" y="62" class="s">Sheets · Docs</text><text x="586" y="76" class="s">Drive · Gmail</text>
+        <rect x="572" y="92" width="178" height="44" rx="6" fill="#dcf0ee" stroke="#0a7a70" stroke-width="1.4"/>
+        <text x="586" y="112" class="t">An AI model</text><text x="586" y="128" class="s">hosted, or local</text>
+
+        <path d="M160 48 L234 58" stroke="#6b7686" fill="none" marker-end="url(#bp)"/>
+        <path d="M160 100 L234 86" stroke="#6b7686" fill="none" marker-end="url(#bp)"/>
+        <path d="M160 152 L200 152 L200 190 L234 142" stroke="#6b7686" fill="none" marker-end="url(#bp)"/>
+        <path d="M186 250 L234 196" stroke="#6b7686" fill="none" marker-end="url(#bp)"/>
+        <path d="M234 216 L188 284" stroke="#6b7686" fill="none" marker-end="url(#bp)"/>
+        <path d="M540 196 L566 122" stroke="#6b7686" fill="none" marker-end="url(#bp)"/>
+        <path d="M540 186 L566 66" stroke="#6b7686" fill="none" marker-end="url(#bp)"/>
+        <path d="M540 252 L598 256" stroke="#6b7686" fill="none" marker-end="url(#bp)"/>
+        <text x="548" y="242" class="e">REMEMBERS</text>
+
+        <line x1="10" y1="352" x2="750" y2="352" stroke="#e6e9ee"/>
+        <text x="10" y="374" class="s2">Everything travels the same way: something starts a workflow, the engine walks the drawing box by box,</text>
+        <text x="10" y="390" class="s2">each box does one job — often calling Google or an AI model — and the run is written down.</text>
       </svg>
-      <figcaption><b>Figure 1.</b> Where every word lives. The browser draws, the server does the work,
-        the database remembers. Almost everything in this document sits in one of these three boxes.</figcaption>
+      <figcaption><b>Figure 1.</b> The whole system. Each box is coloured by the phase that builds it,
+        and every later diagram in this book is a close-up of one of them.</figcaption>
     </figure>
+
+    <div class="row3" style="margin-top:4px">
+      <div class="box" style="border-left:3px solid #2a5fce"><span class="tag">Every phase, first page</span>
+        <h4>What and why</h4>
+        <p>What we are doing, what it was in n8n, <b>who builds it</b>, what you need to know to build
+          it, the tools, how to proceed, and a “done when”.</p></div>
+      <div class="box" style="border-left:3px solid #0d72b4"><span class="tag">Every phase, second page</span>
+        <h4>How, exactly</h4>
+        <p>The commands to type, the files to create, the code to write, and — where a website is
+          involved — <b>every click, in order</b>.</p></div>
+      <div class="box" style="border-left:3px solid #087f99"><span class="tag">Throughout</span>
+        <h4>Words, where you meet them</h4>
+        <p>Every term is defined the first time it appears, in a box that says what it is, what it does
+          <em>there</em>, and how it connects to the rest.</p></div>
+    </div>
+
+    <div class="legend">
+      <span><i style="background:#4b46c0"></i>Phase 1 · the engine</span>
+      <span><i style="background:#2a5fce"></i>Phase 2 · database, server, canvas</span>
+      <span><i style="background:#0d72b4"></i>Phase 3 · sidebar, expressions</span>
+      <span><i style="background:#087f99"></i>Phase 4 · webhooks, clock</span>
+      <span><i style="background:#0a7a70"></i>Phase 5 · nodes, keys</span>
+      <span><i style="background:#14624f"></i>Phase 6 · tests, deployment</span>
+    </div>
   </div>
 </div>
 
 <!-- ============================== 1.1 ============================== -->
 <div class="page">
-  <div class="rh"><span>Part 1 · How it all works</span><span class="r">1.1 — What a workflow really is</span></div>
-  <div class="h-wrap"><span class="secno">1.1</span><h2>What a workflow really is</h2></div>
+  <div class="rh"><span>Part 1 · How it all works</span><span class="r">1.2 — What a workflow really is</span></div>
+  <div class="h-wrap"><span class="secno">1.2</span><h2>What a workflow really is</h2></div>
   <div class="band"></div>
 
   <div class="stack">
@@ -499,6 +502,8 @@
       could import it, and the same picture appeared on their screen. Nothing else was needed. That is
       the single most important thing to understand before we start.</div>
 
+
+    <div class="tgrid2"><div class="tbox"><span class="tname">workflow</span><p><b>What it is.</b> One complete automation — the thing you switch on and leave running.</p><p><b>What it does in this section.</b> It is the JSON on the right of Figure 2: a list of boxes and a list of lines, nothing more.</p><p><b>How it connects.</b> The database stores one row per workflow; the engine is handed exactly this object and nothing else.</p></div><div class="tbox"><span class="tname">JSON</span><p><b>What it is.</b> A plain-text way of writing data down. Curly braces for a thing, square brackets for a list.</p><p><b>What it does in this section.</b> It is the format the drawing is saved in, and the format every node passes its data along in.</p><p><b>How it connects.</b> The canvas produces it, the database keeps it, the engine reads it — it is the common language of the whole project.</p></div></div>
     <figure>
       <svg viewBox="0 0 760 272" xmlns="http://www.w3.org/2000/svg">
         <defs>
@@ -566,8 +571,8 @@
 
 <!-- ============================== 1.2 ============================== -->
 <div class="page">
-  <div class="rh"><span>Part 1 · How it all works</span><span class="r">1.2 — What a node really is</span></div>
-  <div class="h-wrap"><span class="secno">1.2</span><h2>What a node really is</h2></div>
+  <div class="rh"><span>Part 1 · How it all works</span><span class="r">1.3 — What a node really is</span></div>
+  <div class="h-wrap"><span class="secno">1.3</span><h2>What a node really is</h2></div>
   <div class="band"></div>
 
   <div class="stack">
@@ -576,6 +581,8 @@
       <em>does the work</em> when the engine calls it. Nothing else. Once this is clear, adding a node to
       our platform stops being mysterious.</p>
 
+
+    <div class="tgrid2"><div class="tbox"><span class="tname">node</span><p><b>What it is.</b> One step of a workflow: a small object with a description and one function.</p><p><b>What it does in this section.</b> The description tells the sidebar what settings to draw; the function does the actual job when the engine calls it.</p><p><b>How it connects.</b> Everything in Phase 5 is a node. Because the shape never varies, the engine can run a node written five minutes ago.</p></div><div class="tbox"><span class="tname">parameters</span><p><b>What it is.</b> The settings a node was given — the URL typed into a box, the operation chosen from a dropdown.</p><p><b>What it does in this section.</b> They live on the node inside the workflow JSON, and the node reads them with <code>getNodeParameter</code>.</p><p><b>How it connects.</b> Phase 3 makes the sidebar that fills them in; Phase 1 froze the way a node asks for them.</p></div></div>
     <figure>
       <svg viewBox="0 0 760 226" xmlns="http://www.w3.org/2000/svg">
         <defs><marker id="n1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#7c8492"/></marker></defs>
@@ -638,8 +645,8 @@
 
 <!-- ============================== 1.3 ============================== -->
 <div class="page">
-  <div class="rh"><span>Part 1 · How it all works</span><span class="r">1.3 — What an item really is</span></div>
-  <div class="h-wrap"><span class="secno">1.3</span><h2>What an item really is</h2></div>
+  <div class="rh"><span>Part 1 · How it all works</span><span class="r">1.4 — What an item really is</span></div>
+  <div class="h-wrap"><span class="secno">1.4</span><h2>What an item really is</h2></div>
   <div class="band"></div>
 
   <div class="stack">
@@ -647,6 +654,8 @@
       pass a single item; they always pass a <b>list</b> of them, even when the list is one item long.
       This sounds like a small detail. It is the decision that shapes every line of code we write.</p>
 
+
+    <div class="tgrid2"><div class="tbox"><span class="tname">item</span><p><b>What it is.</b> One single thing travelling between nodes: one row, one email, one order.</p><p><b>What it does in this section.</b> Nodes always pass a <em>list</em> of items, even when the list holds one thing.</p><p><b>How it connects.</b> This is why fifty spreadsheet rows become fifty emails with no extra code anywhere.</p></div><div class="tbox"><span class="tname">branch</span><p><b>What it is.</b> One exit from a node. Most nodes have one; a node that splits the flow has two.</p><p><b>What it does in this section.</b> A node returns one list per branch — the outer list is the exits, the inner list is the items.</p><p><b>How it connects.</b> An empty branch stops everything after it, which is how the IF node makes half a workflow go quiet.</p></div></div>
     <figure>
       <svg viewBox="0 0 760 244" xmlns="http://www.w3.org/2000/svg">
         <defs><marker id="i1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#7c8492"/></marker></defs>
@@ -728,17 +737,20 @@
 
 <!-- ============================== 1.4 ============================== -->
 <div class="page">
-  <div class="rh"><span>Part 1 · How it all works</span><span class="r">1.4 — What the engine really is</span></div>
-  <div class="h-wrap"><span class="secno">1.4</span><h2>What the engine really is</h2></div>
+  <div class="rh"><span>Part 1 · How it all works</span><span class="r">1.5 — What the engine really is</span></div>
+  <div class="h-wrap"><span class="secno">1.5</span><h2>What the engine really is</h2></div>
   <div class="band"></div>
 
   <div class="stack">
     <p class="lede">An <b>engine</b> is a program that reads a set of instructions and carries them out in
       the right order. A chess engine reads a position; a search engine reads a query. <b>Our engine
-      reads a workflow</b> — the JSON from section 1.1 — and calls each node's execute function at the
+      reads a workflow</b> — the JSON from section 1.2 — and calls each node's execute function at the
       right moment, with the right data. It is about forty lines long, and it is the heart of the whole
       project.</p>
 
+
+    <div class="tgrid2"><div class="tbox"><span class="tname">engine</span><p><b>What it is.</b> A program that reads instructions and carries them out in the right order.</p><p><b>What it does in this section.</b> Ours reads a workflow and calls each node's function at the right moment with the right data.</p><p><b>How it connects.</b> Phase 1 builds it and then nobody touches it again — Phases 2, 4 and 6 only add new ways to <em>call</em> it.</p></div><div class="tbox"><span class="tname">trigger</span><p><b>What it is.</b> A node with nothing before it: the thing that starts a workflow.</p><p><b>What it does in this section.</b> The engine finds it, hands it one empty item, and the run begins from there.</p><p><b>How it connects.</b> Phase 4 builds two real ones — a web address and a clock — and neither requires changing the engine.</p></div></div>
+    <div class="tbox"><span class="tname">execution</span><p><b>What it is.</b> One occasion on which a workflow actually ran, recorded so you can look back at it.</p><p><b>What it does in this section.</b> The engine returns what every node produced; the server writes that down as a row.</p><p><b>How it connects.</b> It is what the run list in the editor shows, and what the benchmark in Phase 6 measures.</p></div>
     <figure>
       <svg viewBox="0 0 760 322" xmlns="http://www.w3.org/2000/svg">
         <defs><marker id="e1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#7c8492"/></marker></defs>
@@ -804,8 +816,8 @@
 
 <!-- ============================== 1.5 ============================== -->
 <div class="page">
-  <div class="rh"><span>Part 1 · How it all works</span><span class="r">1.5 — The canvas and the API</span></div>
-  <div class="h-wrap"><span class="secno">1.5</span><h2>The canvas and the API — the two halves of the app</h2></div>
+  <div class="rh"><span>Part 1 · How it all works</span><span class="r">1.6 — The canvas and the API</span></div>
+  <div class="h-wrap"><span class="secno">1.6</span><h2>The canvas and the API — the two halves of the app</h2></div>
   <div class="band"></div>
 
   <div class="stack">
@@ -819,6 +831,9 @@
       is because the workflows were never <em>in</em> the page. The page asked the server for them, and
       the server read them from its database. Every screen you saw in n8n was assembled that way.</div>
 
+
+    <div class="tgrid2"><div class="tbox"><span class="tname">server</span><p><b>What it is.</b> A program that waits and answers when something asks it a question. No screen — it listens on a numbered door called a port.</p><p><b>What it does in this section.</b> Ours listens on port 5678 and holds the engine, the nodes and the keys.</p><p><b>How it connects.</b> Everything except the canvas runs inside it, which is why Phase 2 builds it before anything else can be wired up.</p></div><div class="tbox"><span class="tname">API</span><p><b>What it is.</b> The list of questions a server agrees to answer, and the exact wording each needs. A menu, not the kitchen.</p><p><b>What it does in this section.</b> We publish one with five entries; Google publishes one our nodes will call.</p><p><b>How it connects.</b> It is the only thing the canvas and the server have to agree on — freeze it in Phase 2 and both halves can change freely.</p></div></div>
+    <div class="tgrid2"><div class="tbox"><span class="tname">endpoint</span><p><b>What it is.</b> One item on that menu: a verb plus a path, such as <code>POST /rest/workflows</code>.</p><p><b>What it does in this section.</b> Each of our five does one job — list, fetch, create, save, run.</p><p><b>How it connects.</b> Phase 4 adds two more of a different shape: <code>/webhook/:path</code> and its test twin.</p></div><div class="tbox"><span class="tname">database</span><p><b>What it is.</b> A program whose only job is to remember things after everything else is switched off.</p><p><b>What it does in this section.</b> Ours holds two tables: the drawings, and every past run.</p><p><b>How it connects.</b> It is the reason a workflow is still there tomorrow, and the reason Phase 6 can deploy without losing anything.</p></div></div>
     <figure>
       <svg viewBox="0 0 760 250" xmlns="http://www.w3.org/2000/svg">
         <defs><marker id="q1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#34558f"/></marker></defs>
@@ -875,8 +890,8 @@
 
 <!-- ============================== 1.6 ============================== -->
 <div class="page">
-  <div class="rh"><span>Part 1 · How it all works</span><span class="r">1.6 — The six phases</span></div>
-  <div class="h-wrap"><span class="secno">1.6</span><h2>The six phases</h2></div>
+  <div class="rh"><span>Part 1 · How it all works</span><span class="r">1.7 — The six phases</span></div>
+  <div class="h-wrap"><span class="secno">1.7</span><h2>The six phases</h2></div>
   <div class="band" style="background:linear-gradient(90deg,#4b46c0,#2a5fce,#0d72b4,#087f99,#0a7a70,#14624f)"></div>
 
   <div class="stack">
@@ -951,8 +966,8 @@
 
 <!-- ============================== 1.7 ============================== -->
 <div class="page">
-  <div class="rh"><span>Part 1 · How it all works</span><span class="r">1.7 — The toolkit</span></div>
-  <div class="h-wrap"><span class="secno">1.7</span><h2>The toolkit — what we install, and when</h2></div>
+  <div class="rh"><span>Part 1 · How it all works</span><span class="r">1.8 — The toolkit</span></div>
+  <div class="h-wrap"><span class="secno">1.8</span><h2>The toolkit — what we install, and when</h2></div>
   <div class="band"></div>
 
   <div class="stack">
@@ -1007,6 +1022,88 @@
   </div>
 </div>
 
+<!-- ============================== 1.9 SETUP ============================== -->
+<div class="page" style="--acc:#0d72b4;--accs:#dfeef8">
+  <div class="rh"><span>Part 1 · The big picture</span><span class="r">1.9 — Install everything, click by click</span></div>
+  <div class="h-wrap"><span class="secno">1.9</span><h2>Install everything, click by click</h2></div>
+  <div class="partline" style="background:linear-gradient(90deg,#2a5fce,#0d72b4,#087f99)"></div>
+  <div class="band-meta">
+    <div class="bm"><span class="lbl">Who does this part</span>
+      <div class="who-chips"><span class="wc">all eight</span><span class="wc ghost">D2 checks everyone finished</span></div></div>
+    <div class="bm"><span class="lbl">What you need to know</span>
+      <p class="sk">Nothing. This page assumes an empty laptop. Allow about an hour, once.</p></div>
+  </div>
+
+  <div class="stack">
+    <p class="lede">Do this before the first Monday. If any step fails, say so in the group chat the same
+      day — half of these have a licence, an account or a restart in the way.</p>
+
+    <div class="bsteps">
+      <div class="bstep"><div class="bn">1</div><div class="bb">
+        <h4>Node.js 22 — the language everything is written in</h4>
+        <div class="clicks">
+          <div class="click"><span class="cn">1</span><span>Go to <span class="path">nodejs.org</span></span></div>
+          <div class="click"><span class="cn">2</span><span>Click the big green <span class="ui">LTS</span> button — <b>not</b> Current</span></div>
+          <div class="click"><span class="cn">3</span><span>Run the installer, accept every default, and let it add Node to your PATH</span></div>
+          <div class="click"><span class="cn">4</span><span>Close every terminal window and open a new one — the PATH only updates in new windows</span></div>
+        </div>
+        <div class="cmd"><span class="p">$</span> node -v     <span class="c"># must print v22.something</span>
+<span class="p">$</span> npm -v      <span class="c"># must print 10 or higher</span></div>
+      </div></div>
+
+      <div class="bstep"><div class="bn">2</div><div class="bb">
+        <h4>VS Code, and the four extensions we all use</h4>
+        <div class="clicks">
+          <div class="click"><span class="cn">1</span><span><span class="path">code.visualstudio.com</span> → <span class="ui">Download</span> → install</span></div>
+          <div class="click"><span class="cn">2</span><span>Open it, then press <span class="ui">Ctrl+Shift+X</span> (<span class="ui">Cmd+Shift+X</span> on a Mac) for the Extensions panel</span></div>
+          <div class="click"><span class="cn">3</span><span>Search and install each: <b>ESLint</b> · <b>Prettier</b> · <b>Docker</b> · <b>GitLens</b></span></div>
+          <div class="click"><span class="cn">4</span><span><span class="path">File → Preferences → Settings</span>, search <span class="ui">format on save</span>, tick it. Now nobody argues about spacing in a review.</span></div>
+        </div>
+      </div></div>
+
+      <div class="bstep"><div class="bn">3</div><div class="bb">
+        <h4>Docker Desktop — how we run the database</h4>
+        <div class="clicks">
+          <div class="click"><span class="cn">1</span><span><span class="path">docker.com/products/docker-desktop</span> → download for your operating system</span></div>
+          <div class="click"><span class="cn">2</span><span>On Windows, when it asks, leave <span class="ui">Use WSL 2</span> ticked. It will make you restart.</span></div>
+          <div class="click"><span class="cn">3</span><span>Open Docker Desktop once and wait until the whale icon stops animating — nothing works until it has started</span></div>
+          <div class="click"><span class="cn">4</span><span><span class="path">Settings → Resources</span> → give it at least <b>4&nbsp;GB</b> of memory</span></div>
+        </div>
+        <div class="cmd"><span class="p">$</span> docker run --rm hello-world    <span class="c"># prints "Hello from Docker!"</span></div>
+      </div></div>
+
+      <div class="bstep"><div class="bn">4</div><div class="bb">
+        <h4>Git and GitHub — one repository, eight people</h4>
+        <div class="clicks">
+          <div class="click"><span class="cn">1</span><span>Install Git from <span class="path">git-scm.com</span> (on a Mac, <code>xcode-select --install</code> is enough)</span></div>
+          <div class="click"><span class="cn">2</span><span>Make a GitHub account each. <b>D2</b> then clicks <span class="ui">New repository</span> → name it <code>ai-automation</code> → <span class="ui">Private</span> → <span class="ui">Create</span></span></div>
+          <div class="click"><span class="cn">3</span><span><span class="path">Settings → Collaborators → Add people</span> → add the other seven</span></div>
+          <div class="click"><span class="cn">4</span><span><span class="path">Settings → Branches → Add branch protection rule</span> → pattern <code>main</code> → tick <span class="ui">Require a pull request before merging</span> and <span class="ui">Require status checks to pass</span> → <span class="ui">Create</span></span></div>
+        </div>
+        <div class="cmd"><span class="p">$</span> git config --global user.name  "Your Name"
+<span class="p">$</span> git config --global user.email "you@example.com"
+<span class="p">$</span> git clone https://github.com/&lt;org&gt;/ai-automation &amp;&amp; cd ai-automation
+<span class="p">$</span> git checkout -b your-name/first-change   <span class="c"># never commit straight to main</span></div>
+      </div></div>
+
+      <div class="bstep"><div class="bn">5</div><div class="bb">
+        <h4>Postman — for poking our own server, and Google's</h4>
+        <div class="clicks">
+          <div class="click"><span class="cn">1</span><span><span class="path">postman.com/downloads</span> → install → sign in (free)</span></div>
+          <div class="click"><span class="cn">2</span><span><span class="ui">New</span> → <span class="ui">Collection</span> → name it <code>ai-automation</code>. Everything we try by hand lives here.</span></div>
+          <div class="click"><span class="cn">3</span><span>Inside it, <span class="ui">Add request</span> → set the verb to <span class="ui">POST</span>, the URL to <code>http://localhost:5678/rest/workflows</code></span></div>
+          <div class="click"><span class="cn">4</span><span>Open the <span class="ui">Body</span> tab → choose <span class="ui">raw</span> → change <span class="ui">Text</span> to <span class="ui">JSON</span> → paste your JSON → <span class="ui">Send</span></span></div>
+          <div class="click"><span class="cn">5</span><span><span class="path">Collection → … → Export</span> and commit the file, so all eight of us share the same requests</span></div>
+        </div>
+      </div></div>
+    </div>
+
+    <div class="chk"><b>Done when</b>All five commands above print what they should, on all eight laptops.
+      D2 keeps a tick-list — it is much cheaper to fix a broken install now than on the Thursday somebody
+      is blocked by it.</div>
+  </div>
+</div>
+
 <!-- ============================== 2.1 PHASE 1 ============================== -->
 <div class="page" style="--acc:#4b46c0;--accs:#e8e7f9">
   <div class="rh"><span>Part 2 · Building it</span><span class="r">2.1 — Phase 1 · Make it run</span></div>
@@ -1014,9 +1111,13 @@
     <span class="stages">Stages 1–2 · Weeks 4–5 · lead: A1, reviewed by A2</span></div>
   <div class="h-wrap"><span class="secno">2.1</span><h2>A workflow runs, from a single file</h2></div>
   <div class="band"></div>
+  <div class="band-meta">
+    <div class="bm"><span class="lbl">Who builds this part</span><div class="who-chips"><span class="wc">A1</span><span class="wc ghost">A2 reviews</span></div></div>
+    <div class="bm"><span class="lbl">What you need to know</span><p class="sk">Plain JavaScript — arrays, objects, <b>async/await</b>. No framework, no database, no React. If you can read a <code>for</code> loop and a promise, you can write this phase.</p></div>
+  </div>
 
   <div class="stack">
-    <p class="lede"><b>What we are doing.</b> Writing the loop from section 1.4 as one small program, and
+    <p class="lede"><b>What we are doing.</b> Writing the loop from section 1.5 as one small program, and
       agreeing the exact shape every node will have. <b>No web page, no database, no canvas</b> — just a
       file we run from the terminal and watch print real results.</p>
 
@@ -1197,12 +1298,18 @@ done</div>
     <span class="stages">Stages 3–4 · Weeks 5–6 · lead: C1 · B1</span></div>
   <div class="h-wrap"><span class="secno">2.2</span><h2>Workflows survive a restart, and we can draw them</h2></div>
   <div class="band"></div>
+  <div class="band-meta">
+    <div class="bm"><span class="lbl">Who builds this part</span><div class="who-chips"><span class="wc">C1</span><span class="wc">B1</span><span class="wc ghost">D2 helps with Docker</span></div></div>
+    <div class="bm"><span class="lbl">What you need to know</span><p class="sk"><b>SQL</b> enough to create a table and write five queries · <b>HTTP verbs</b> (GET, POST, PATCH) · <b>React</b> basics — components, state, effects · running one Docker command.</p></div>
+  </div>
 
   <div class="stack">
     <p class="lede"><b>What we are doing.</b> Giving the engine a home. A <b>database</b> remembers
-      workflows, a <b>server</b> hands them out through the five addresses from section 1.5, and a
+      workflows, a <b>server</b> hands them out through the five addresses from section 1.6, and a
       <b>canvas</b> lets us draw one instead of typing JSON by hand.</p>
 
+
+    <div class="tgrid2"><div class="tbox"><span class="tname">container</span><p><b>What it is.</b> A program packed with everything it needs, so it behaves identically on every machine.</p><p><b>What it does in this section.</b> We start Postgres as one, so nobody installs a database by hand.</p><p><b>How it connects.</b> The same idea deploys the finished platform in Phase 6 — the container that runs on your laptop is the one that runs on the server.</p></div><div class="tbox"><span class="tname">migration</span><p><b>What it is.</b> A file of SQL that creates or changes tables, kept in the repository and run in order.</p><p><b>What it does in this section.</b> <code>schema.sql</code> is our first one; every later table change adds another.</p><p><b>How it connects.</b> It means all eight laptops and the live server end up with exactly the same database shape.</p></div></div>
     <figure>
       <svg viewBox="0 0 760 216" xmlns="http://www.w3.org/2000/svg">
         <defs><marker id="p2a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#2a5fce"/></marker></defs>
@@ -1486,11 +1593,17 @@ const run = () =&gt; <span class="tk-f">fetch</span>(<span class="tk-s">`/rest/w
     <span class="stages">Stages 5–6 · Week 6 · lead: B2 · A1</span></div>
   <div class="h-wrap"><span class="secno">2.3</span><h2>Nodes describe themselves, and fields carry live data</h2></div>
   <div class="band"></div>
+  <div class="band-meta">
+    <div class="bm"><span class="lbl">Who builds this part</span><div class="who-chips"><span class="wc">B2</span><span class="wc">A1</span><span class="wc ghost">B1 reviews</span></div></div>
+    <div class="bm"><span class="lbl">What you need to know</span><p class="sk"><b>React</b> conditional rendering and controlled inputs · a little <b>regular-expression</b> reading for the expression resolver · above all, patience for detail: this is the fiddliest phase and the most valuable.</p></div>
+  </div>
 
   <div class="stack">
     <p class="lede"><b>What we are doing.</b> The two mechanisms that look small and decide everything:
       the settings panel that <b>draws itself</b>, and <b>expressions</b>.</p>
 
+
+    <div class="tgrid2"><div class="tbox"><span class="tname">expression</span><p><b>What it is.</b> A small piece of text in a settings box, in double braces, replaced with real data just before the node runs.</p><p><b>What it does in this section.</b> It is how one field becomes a different value for every item.</p><p><b>How it connects.</b> The engine resolves it inside <code>getNodeParameter</code>, so nodes never see the braces — which is why Phase 1's contract did not need to change.</p></div><div class="tbox"><span class="tname">schema-driven UI</span><p><b>What it is.</b> A screen built from a description of the data rather than hand-written for each case.</p><p><b>What it does in this section.</b> Our sidebar reads a node's property list and draws the form from it.</p><p><b>How it connects.</b> It is the single reason six people can add six nodes in Weeks 8–10 without touching the editor once.</p></div></div>
     <figure>
       <svg viewBox="0 0 760 232" xmlns="http://www.w3.org/2000/svg">
         <rect x="10" y="26" width="282" height="196" rx="6" fill="#fff" stroke="#0d72b4" stroke-width="1.6"/>
@@ -1701,6 +1814,10 @@ export function <span class="tk-f">ParameterPanel</span>({ properties, values, o
     <span class="stages">Stages 7–8 · Week 7 · lead: C2</span></div>
   <div class="h-wrap"><span class="secno">2.4</span><h2>Workflows that run without anyone pressing a button</h2></div>
   <div class="band"></div>
+  <div class="band-meta">
+    <div class="bm"><span class="lbl">Who builds this part</span><div class="who-chips"><span class="wc">C2</span><span class="wc ghost">C1 reviews</span></div></div>
+    <div class="bm"><span class="lbl">What you need to know</span><p class="sk"><b>HTTP</b> request and response, in detail · <b>cron</b> syntax · timezones · comfort with networking that fails for boring reasons (ports, tunnels, firewalls).</p></div>
+  </div>
 
   <div class="stack">
     <p class="lede"><b>What we are doing.</b> Building the two <b>triggers</b> from section 0.1. One is a
@@ -1708,6 +1825,8 @@ export function <span class="tk-f">ParameterPanel</span>({ properties, values, o
       own server. These are the two the assignment names, and together they are what turns a tool into a
       platform.</p>
 
+
+    <div class="tgrid2"><div class="tbox"><span class="tname">webhook</span><p><b>What it is.</b> A web address that belongs to one workflow. Anything that can send a request can start it.</p><p><b>What it does in this section.</b> The server looks the address up, then starts the workflow with the request as its first item.</p><p><b>How it connects.</b> Each workflow gets two — a test one while editing and a live one once switched on — so experiments never send real email.</p></div><div class="tbox"><span class="tname">cron</span><p><b>What it is.</b> A five-field way of writing a repeating time. <code>* * * * *</code> means every minute.</p><p><b>What it does in this section.</b> It is what a Schedule trigger stores, alongside a timezone.</p><p><b>How it connects.</b> The scheduler keeps one timer per active workflow and rebuilds them all on boot — otherwise schedules stop silently after a deploy.</p></div></div>
     <figure>
       <svg viewBox="0 0 760 244" xmlns="http://www.w3.org/2000/svg">
         <defs><marker id="t1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#087f99"/></marker></defs>
@@ -1887,11 +2006,17 @@ export function <span class="tk-f">ParameterPanel</span>({ properties, values, o
     <span class="stages">Stage 9 · Weeks 7–8 · lead: C2</span></div>
   <div class="h-wrap"><span class="secno">2.5</span><h2>First, permission to use a Google account</h2></div>
   <div class="band"></div>
+  <div class="band-meta">
+    <div class="bm"><span class="lbl">Who builds this part</span><div class="who-chips"><span class="wc">C2</span><span class="wc ghost">D2 keeps the runbook</span></div></div>
+    <div class="bm"><span class="lbl">What you need to know</span><p class="sk">Reading <b>API documentation</b> carefully · the idea of <b>OAuth</b> (this page teaches it) · Node's built-in crypto · genuine care with secrets — this is the one place a mistake is expensive.</p></div>
+  </div>
 
   <div class="stack">
     <p class="lede"><b>What we are doing.</b> Getting permission to act for somebody — <b>without ever
       seeing their password</b>. The step most likely to cost us a week, so we do it early and once.</p>
 
+
+    <div class="tgrid2"><div class="tbox"><span class="tname">OAuth 2.0</span><p><b>What it is.</b> The agreed way of saying “let this app act for me” without handing over a password.</p><p><b>What it does in this section.</b> The seven arrows in Figure 13 are the whole of it.</p><p><b>How it connects.</b> Every Google node depends on it, which is why this is the first thing built in Phase 5 and the earliest task in Week 4.</p></div><div class="tbox"><span class="tname">token</span><p><b>What it is.</b> A temporary key a service gives you after login, used instead of a password.</p><p><b>What it does in this section.</b> Google returns two: one lasting an hour, one lasting much longer.</p><p><b>How it connects.</b> The long one is scrambled and stored; the shared helper in the next section quietly swaps it for a fresh short one whenever needed.</p></div></div>
     <figure>
       <svg viewBox="0 0 760 274" xmlns="http://www.w3.org/2000/svg">
         <defs><marker id="o1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#0a7a70"/></marker></defs>
@@ -1973,16 +2098,40 @@ export function <span class="tk-f">ParameterPanel</span>({ properties, values, o
   <div class="stack">
     <div class="bsteps">
       <div class="bstep"><div class="bn">1</div><div class="bb">
-        <h4>In the Google Cloud Console, once</h4>
-        <p><b>APIs &amp; Services → Library</b>: enable Google Sheets, Drive, Docs and Gmail. →
-          <b>OAuth consent screen</b>: External, <em>Testing</em>, add all eight of us and the
-          demonstrator as Test Users. → <b>Credentials → Create OAuth client ID → Web application</b>,
-          with this exact redirect URI:</p>
-        <div class="cmd">http://localhost:5678/rest/oauth2-credential/callback
-https://your-domain.com/rest/oauth2-credential/callback   <span class="c"># add the live one too</span></div>
+        <h4>Create the project and switch on the four APIs</h4>
+        <div class="clicks">
+          <div class="click"><span class="cn">1</span><span>Go to <span class="path">console.cloud.google.com</span> and sign in with the account that will own this</span></div>
+          <div class="click"><span class="cn">2</span><span>Click the <b>project dropdown</b> in the top bar → <span class="ui">NEW PROJECT</span> → name it <code>ai-automation</code> → <span class="ui">CREATE</span></span></div>
+          <div class="click"><span class="cn">3</span><span>Wait for the notification, then use the same dropdown to <b>select the new project</b>. Everything after this happens inside it — this is the step people miss.</span></div>
+          <div class="click"><span class="cn">4</span><span>In the search bar type <span class="ui">Google Sheets API</span> → open it → <span class="ui">ENABLE</span></span></div>
+          <div class="click"><span class="cn">5</span><span>Repeat step 4 for <b>Google Drive API</b>, <b>Google Docs API</b> and <b>Gmail API</b>. Four separate enables.</span></div>
+        </div>
       </div></div>
 
       <div class="bstep"><div class="bn">2</div><div class="bb">
+        <h4>The consent screen, and the test-user list that makes it work</h4>
+        <div class="clicks">
+          <div class="click"><span class="cn">1</span><span><span class="path">Left menu → APIs &amp; Services → OAuth consent screen</span></span></div>
+          <div class="click"><span class="cn">2</span><span>Choose <span class="ui">External</span> → <span class="ui">CREATE</span>. Leave the publishing status as <b>Testing</b> — we never publish.</span></div>
+          <div class="click"><span class="cn">3</span><span>App name <code>AI Automation Platform</code>, your email for both support and developer contact → <span class="ui">SAVE AND CONTINUE</span></span></div>
+          <div class="click"><span class="cn">4</span><span><span class="ui">ADD OR REMOVE SCOPES</span> → filter and tick <code>.../auth/spreadsheets</code>, <code>.../auth/drive.file</code>, <code>.../auth/documents</code>, <code>.../auth/gmail.send</code> → <span class="ui">UPDATE</span> → <span class="ui">SAVE AND CONTINUE</span></span></div>
+          <div class="click"><span class="cn">5</span><span><b>Test users</b> → <span class="ui">ADD USERS</span> → paste all eight Gmail addresses <b>and the demonstrator's</b> → <span class="ui">SAVE AND CONTINUE</span>. Anybody not on this list simply cannot connect.</span></div>
+        </div>
+      </div></div>
+
+      <div class="bstep"><div class="bn">3</div><div class="bb">
+        <h4>The client ID, and the exact redirect address</h4>
+        <div class="clicks">
+          <div class="click"><span class="cn">1</span><span><span class="path">APIs &amp; Services → Credentials</span> → <span class="ui">CREATE CREDENTIALS</span> → <span class="ui">OAuth client ID</span></span></div>
+          <div class="click"><span class="cn">2</span><span>Application type <span class="ui">Web application</span>, name it <code>server</code></span></div>
+          <div class="click"><span class="cn">3</span><span>Under <b>Authorised redirect URIs</b> click <span class="ui">ADD URI</span> twice and paste both addresses below — character for character, including the trailing path</span></div>
+          <div class="click"><span class="cn">4</span><span><span class="ui">CREATE</span>, then copy the <b>Client ID</b> and <b>Client secret</b> straight into <code>.env</code>. The secret is shown once.</span></div>
+        </div>
+        <div class="cmd">http://localhost:5678/rest/oauth2-credential/callback
+https://your-domain.com/rest/oauth2-credential/callback   <span class="c"># add the live one now too</span></div>
+      </div></div>
+
+      <div class="bstep"><div class="bn">4</div><div class="bb">
         <h4>Send the user to Google</h4>
         <div class="fwrap"><span class="fname">apps/api/oauth.js</span>
 <pre class="code"><code><span class="tk-k">const</span> SCOPES = {
@@ -2006,7 +2155,7 @@ app.<span class="tk-f">get</span>(<span class="tk-s">&#x27;/rest/oauth2-credenti
 });</code></pre></div>
       </div></div>
 
-      <div class="bstep"><div class="bn">3</div><div class="bb">
+      <div class="bstep"><div class="bn">5</div><div class="bb">
         <h4>Trade the code for keys, and store them scrambled</h4>
         <div class="fwrap"><span class="fname">apps/api/oauth.js — continued</span>
 <pre class="code"><code>app.<span class="tk-f">get</span>(<span class="tk-s">&#x27;/rest/oauth2-credential/callback&#x27;</span>, <span class="tk-k">async</span> (req, res) =&gt; {
@@ -2057,12 +2206,18 @@ app.<span class="tk-f">get</span>(<span class="tk-s">&#x27;/rest/oauth2-credenti
     <span class="stages">Stages 10–12 · Weeks 8–10 · D1 leads, six of us build</span></div>
   <div class="h-wrap"><span class="secno">2.6</span><h2>Then the nodes people actually came for</h2></div>
   <div class="band"></div>
+  <div class="band-meta">
+    <div class="bm"><span class="lbl">Who builds this part</span><div class="who-chips"><span class="wc">D1 leads</span><span class="wc">A1 A2 B2 C1 C2 build</span><span class="wc ghost">one node each</span></div></div>
+    <div class="bm"><span class="lbl">What you need to know</span><p class="sk">Reading <b>Google's API reference</b> · <code>fetch</code> and JSON shaping · for Gmail, patience with <b>MIME</b> · for the Code node, curiosity about how sandboxes fail.</p></div>
+  </div>
 
   <div class="stack">
     <p class="lede"><b>What we are doing.</b> Building the four Google nodes, the Code node and the AI
       node. With Phases 1–4 finished, each of these is a small, self-contained job — which is exactly why
       four of us can now work at the same time without getting in each other's way.</p>
 
+
+    <div class="tgrid2"><div class="tbox"><span class="tname">sandbox</span><p><b>What it is.</b> A restricted place to run code you do not trust, where it cannot reach the rest of the program.</p><p><b>What it does in this section.</b> Ours is a separate thread we can stop after five seconds, running the user's JavaScript in an isolated context.</p><p><b>How it connects.</b> It is what makes the Code node safe enough for us — and being able to explain its limits is worth real marks in the report.</p></div><div class="tbox"><span class="tname">MIME</span><p><b>What it is.</b> The old, strict format an email is written in before it is sent.</p><p><b>What it does in this section.</b> Gmail wants the whole message as one encoded string, so we build the headers and parts by hand.</p><p><b>How it connects.</b> It is the only genuinely fiddly part of Phase 5 — budget a day for it and it stops being a surprise.</p></div></div>
     <figure>
       <svg viewBox="0 0 760 176" xmlns="http://www.w3.org/2000/svg">
         <defs><marker id="d2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#7c8492"/></marker></defs>
@@ -2355,6 +2510,10 @@ out.<span class="tk-f">push</span>({ json: { <span class="tk-p">text</span>: dat
     <span class="stages">Stages 13–15 · Weeks 11–15 · lead: D2 · all hands</span></div>
   <div class="h-wrap"><span class="secno">2.7</span><h2>Online, measured, and written up</h2></div>
   <div class="band"></div>
+  <div class="band-meta">
+    <div class="bm"><span class="lbl">Who builds this part</span><div class="who-chips"><span class="wc">D2 leads</span><span class="wc ghost">all hands</span></div></div>
+    <div class="bm"><span class="lbl">What you need to know</span><p class="sk"><b>Docker Compose</b> · the Linux command line over <b>SSH</b> · basic <b>DNS</b> (one A record) · reading a load-test summary without over-claiming.</p></div>
+  </div>
 
   <div class="stack">
     <p class="lede"><b>What we are doing.</b> Putting the platform on a real computer so our web addresses
@@ -2476,7 +2635,25 @@ out.<span class="tk-f">push</span>({ json: { <span class="tk-p">text</span>: dat
       </div></div>
 
       <div class="bstep"><div class="bn">2</div><div class="bb">
-        <h4>Put it on the machine</h4>
+        <h4>Rent the machine — the AWS console, click by click</h4>
+        <div class="clicks">
+          <div class="click"><span class="cn">1</span><span><span class="path">console.aws.amazon.com</span> → search <span class="ui">EC2</span> → <span class="ui">Instances</span> → <span class="ui">Launch instances</span></span></div>
+          <div class="click"><span class="cn">2</span><span>Name <code>automation-prod</code> · image <b>Ubuntu Server 24.04 LTS</b> · instance type <b>t3.small</b></span></div>
+          <div class="click"><span class="cn">3</span><span><b>Key pair</b> → <span class="ui">Create new key pair</span> → RSA, <code>.pem</code> → it downloads once. Lose it and you lose the machine.</span></div>
+          <div class="click"><span class="cn">4</span><span><b>Network settings</b> → <span class="ui">Edit</span> → allow <span class="ui">SSH</span> from <b>My IP</b>, and <span class="ui">HTTP</span> + <span class="ui">HTTPS</span> from anywhere</span></div>
+          <div class="click"><span class="cn">5</span><span>Storage <b>20 GiB gp3</b> → <span class="ui">Launch instance</span></span></div>
+          <div class="click"><span class="cn">6</span><span><span class="path">EC2 → Elastic IPs → Allocate Elastic IP address</span> → <span class="ui">Associate</span> it with the instance, so the address survives a reboot</span></div>
+          <div class="click"><span class="cn">7</span><span>At your domain registrar add one <b>A record</b> pointing <code>your-domain.com</code> at that address</span></div>
+          <div class="click"><span class="cn">8</span><span><b>Before anything else:</b> <span class="path">Billing → Budgets → Create budget</span> → cost budget, <b>$50</b>, alert to all eight emails</span></div>
+        </div>
+        <div class="cmd"><span class="p">$</span> chmod 400 automation-prod.pem
+<span class="p">$</span> ssh -i automation-prod.pem ubuntu@your-domain.com
+<span class="p">$</span> curl -fsSL https://get.docker.com | sh &amp;&amp; sudo usermod -aG docker ubuntu
+<span class="p">$</span> exit &amp;&amp; ssh -i automation-prod.pem ubuntu@your-domain.com   <span class="c"># re-login for the group</span></div>
+      </div></div>
+
+      <div class="bstep"><div class="bn">3</div><div class="bb">
+        <h4>Put the project on it</h4>
         <div class="cmd"><span class="p">$</span> ssh ubuntu@your-server
 <span class="p">$</span> git clone https://github.com/&lt;org&gt;/ai-automation &amp;&amp; cd ai-automation
 <span class="p">$</span> cp .env.example .env &amp;&amp; nano .env        <span class="c"># real keys go here only</span>
@@ -2485,7 +2662,7 @@ out.<span class="tk-f">push</span>({ json: { <span class="tk-p">text</span>: dat
 <span class="p">$</span> git pull &amp;&amp; docker compose -f docker-compose.prod.yml up -d --build</code></pre></div>
       </div></div>
 
-      <div class="bstep"><div class="bn">3</div><div class="bb">
+      <div class="bstep"><div class="bn">4</div><div class="bb">
         <h4>Stand n8n up beside it, configured the same way</h4>
         <div class="fwrap"><span class="fname">benchmarks/n8n/docker-compose.yml</span>
 <pre class="code"><code><span class="tk-f">services</span>:
@@ -2506,7 +2683,7 @@ out.<span class="tk-f">push</span>({ json: { <span class="tk-p">text</span>: dat
           comparison is not a comparison.</p>
       </div></div>
 
-      <div class="bstep"><div class="bn">4</div><div class="bb">
+      <div class="bstep"><div class="bn">5</div><div class="bb">
         <h4>Measure both with the same script</h4>
         <div class="fwrap"><span class="fname">benchmarks/k6/w1.js</span>
 <pre class="code"><code><span class="tk-k">import</span> http <span class="tk-k">from</span> <span class="tk-s">&#x27;k6/http&#x27;</span>;
@@ -2535,6 +2712,10 @@ out.<span class="tk-f">push</span>({ json: { <span class="tk-p">text</span>: dat
   <div class="rh"><span>Part 3 · Putting it together</span><span class="r">3.1 — One system</span></div>
   <div class="h-wrap"><span class="secno">3.1</span><h2>How six phases become one working system</h2></div>
   <div class="band" style="background:linear-gradient(90deg,#4b46c0,#2a5fce,#0d72b4,#087f99,#0a7a70,#14624f)"></div>
+  <div class="band-meta">
+    <div class="bm"><span class="lbl">Who builds this part</span><div class="who-chips"><span class="wc">D2</span><span class="wc ghost">one of the eight rotates each week</span></div></div>
+    <div class="bm"><span class="lbl">What you need to know</span><p class="sk"><b>git</b> branches and merges · npm workspaces · Docker Compose · the discipline to run the whole thing from a clean clone every Thursday.</p></div>
+  </div>
 
   <div class="stack">
     <p class="lede">Each phase produced a piece, and each of us has been working in our own folder.
@@ -2699,6 +2880,10 @@ ANTHROPIC_API_KEY=replace-me</code></pre></div>
   <div class="rh"><span>Part 3 · Putting it together</span><span class="r">3.2 — Testing</span></div>
   <div class="h-wrap"><span class="secno">3.2</span><h2>Four levels of testing, and what each one catches</h2></div>
   <div class="band" style="background:linear-gradient(90deg,#4b46c0,#0d72b4,#087f99,#0a7a70)"></div>
+  <div class="band-meta">
+    <div class="bm"><span class="lbl">Who builds this part</span><div class="who-chips"><span class="wc">D2 sets it up</span><span class="wc ghost">every owner writes their own</span></div></div>
+    <div class="bm"><span class="lbl">What you need to know</span><p class="sk"><b>Vitest</b> · a little Node <code>http</code> for the fake server · <b>Playwright</b> · <b>YAML</b> for the CI file.</p></div>
+  </div>
 
   <div class="stack">
     <p class="lede">Not testing everything — testing the things that break quietly. The rule: <b>the lower
@@ -2917,6 +3102,10 @@ ANTHROPIC_API_KEY=replace-me</code></pre></div>
   <div class="rh"><span>Part 3 · Putting it together</span><span class="r">3.3 — The dress rehearsal</span></div>
   <div class="h-wrap"><span class="secno">3.3</span><h2>Proving the whole thing works, on the day</h2></div>
   <div class="band" style="background:linear-gradient(90deg,#087f99,#0a7a70,#14624f)"></div>
+  <div class="band-meta">
+    <div class="bm"><span class="lbl">Who builds this part</span><div class="who-chips"><span class="wc">D2 directs</span><span class="wc ghost">A1 · D1 present</span></div></div>
+    <div class="bm"><span class="lbl">What you need to know</span><p class="sk">Nothing technical — a printed checklist, a second laptop, a phone hotspot, and somebody willing to say “stop, do it again”.</p></div>
+  </div>
 
   <div class="stack">
     <p class="lede">The last two weeks are not for building. They are for making sure that what we built
@@ -3182,7 +3371,7 @@ ANTHROPIC_API_KEY=replace-me</code></pre></div>
           permission or a wrong header — nothing to do with our code.</span></li>
         <li><span class="m" style="color:#0a7a70">05</span><span><b>Print the data between nodes,
           constantly.</b> Almost every confusing bug is the shape of the data, not the logic — and
-          section 1.3 explains the shape it should have.</span></li>
+          section 1.4 explains the shape it should have.</span></li>
         <li><span class="m" style="color:#14624f">06</span><span><b>Copy n8n's good ideas deliberately,
           and say so in the report.</b> Explaining <em>why</em> a design is right is exactly what the
           assignment asks for. Copying without understanding is what costs marks.</span></li>

@@ -1,7 +1,7 @@
 <!-- ============================== 1.2 ============================== -->
 <div class="page">
-  <div class="rh"><span>Part 1 · How it all works</span><span class="r">1.2 — What a node really is</span></div>
-  <div class="h-wrap"><span class="secno">1.2</span><h2>What a node really is</h2></div>
+  <div class="rh"><span>Part 1 · How it all works</span><span class="r">1.3 — What a node really is</span></div>
+  <div class="h-wrap"><span class="secno">1.3</span><h2>What a node really is</h2></div>
   <div class="band"></div>
 
   <div class="stack">
@@ -10,6 +10,8 @@
       <em>does the work</em> when the engine calls it. Nothing else. Once this is clear, adding a node to
       our platform stops being mysterious.</p>
 
+
+    <div class="tgrid2"><div class="tbox"><span class="tname">node</span><p><b>What it is.</b> One step of a workflow: a small object with a description and one function.</p><p><b>What it does in this section.</b> The description tells the sidebar what settings to draw; the function does the actual job when the engine calls it.</p><p><b>How it connects.</b> Everything in Phase 5 is a node. Because the shape never varies, the engine can run a node written five minutes ago.</p></div><div class="tbox"><span class="tname">parameters</span><p><b>What it is.</b> The settings a node was given — the URL typed into a box, the operation chosen from a dropdown.</p><p><b>What it does in this section.</b> They live on the node inside the workflow JSON, and the node reads them with <code>getNodeParameter</code>.</p><p><b>How it connects.</b> Phase 3 makes the sidebar that fills them in; Phase 1 froze the way a node asks for them.</p></div></div>
     <figure>
       <svg viewBox="0 0 760 226" xmlns="http://www.w3.org/2000/svg">
         <defs><marker id="n1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#7c8492"/></marker></defs>

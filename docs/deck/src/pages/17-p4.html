@@ -5,6 +5,10 @@
     <span class="stages">Stages 7–8 · Week 7 · lead: C2</span></div>
   <div class="h-wrap"><span class="secno">2.4</span><h2>Workflows that run without anyone pressing a button</h2></div>
   <div class="band"></div>
+  <div class="band-meta">
+    <div class="bm"><span class="lbl">Who builds this part</span><div class="who-chips"><span class="wc">C2</span><span class="wc ghost">C1 reviews</span></div></div>
+    <div class="bm"><span class="lbl">What you need to know</span><p class="sk"><b>HTTP</b> request and response, in detail · <b>cron</b> syntax · timezones · comfort with networking that fails for boring reasons (ports, tunnels, firewalls).</p></div>
+  </div>
 
   <div class="stack">
     <p class="lede"><b>What we are doing.</b> Building the two <b>triggers</b> from section 0.1. One is a
@@ -12,6 +16,8 @@
       own server. These are the two the assignment names, and together they are what turns a tool into a
       platform.</p>
 
+
+    <div class="tgrid2"><div class="tbox"><span class="tname">webhook</span><p><b>What it is.</b> A web address that belongs to one workflow. Anything that can send a request can start it.</p><p><b>What it does in this section.</b> The server looks the address up, then starts the workflow with the request as its first item.</p><p><b>How it connects.</b> Each workflow gets two — a test one while editing and a live one once switched on — so experiments never send real email.</p></div><div class="tbox"><span class="tname">cron</span><p><b>What it is.</b> A five-field way of writing a repeating time. <code>* * * * *</code> means every minute.</p><p><b>What it does in this section.</b> It is what a Schedule trigger stores, alongside a timezone.</p><p><b>How it connects.</b> The scheduler keeps one timer per active workflow and rebuilds them all on boot — otherwise schedules stop silently after a deploy.</p></div></div>
     <figure>
       <svg viewBox="0 0 760 244" xmlns="http://www.w3.org/2000/svg">
         <defs><marker id="t1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#087f99"/></marker></defs>

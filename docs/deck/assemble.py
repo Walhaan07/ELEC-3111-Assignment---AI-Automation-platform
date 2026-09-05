@@ -85,7 +85,7 @@ if pathlib.Path("pages.json").exists():
 def printed_page(i):
     return REAL.get(i, i + 1)
 
-GROUPS = {"0": "Part 0 — The vocabulary", "1": "Part 1 — How it all works",
+GROUPS = {"1": "Part 1 — The big picture, and how it works",
           "2": "Part 2 — Building it, phase by phase", "3": "Part 3 — Putting it together",
           "4": "Part 4 — Running the project"}
 rows, last = [], None
