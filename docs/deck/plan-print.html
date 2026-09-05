@@ -214,11 +214,11 @@
      hit the same trap on .code alone — it tries the next page, still doesn't
      fit, and Chromium skips a WHOLE further page before finally giving up and
      breaking mid-block, again stranding whatever sits just before it. So .code
-     is unbreak-preferred (line-height/orphans, not the CSS break property) but
-     never break-inside:avoid; break-after:avoid on .fname is what keeps label
-     and code glued together across ordinary page boundaries — the browser then
-     breaks tall blocks wherever they naturally land, which is what already
-     happens safely for every block long enough to span two pages. */
+     carries no break-inside rule at all — a short block never comes near a page
+     edge to begin with, and a tall one simply reflows onto the next page at
+     whichever line lands there, the same way ordinary paragraphs already do.
+     break-after:avoid on .fname is the piece that actually keeps a label glued
+     to the code under it across an ordinary page boundary. */
   .fwrap{margin:0;}
   .fname{display:inline-block;font-family:var(--fm);font-size:7.2pt;letter-spacing:.05em;
          color:#fff;background:var(--acc);padding:2px 9px;border-radius:3px 3px 0 0;
@@ -1672,7 +1672,7 @@
       validates, it times out, it retries, and it tells you which node went wrong.</p>
 
     <div class="where">
-      <span class="wl">Program</span><span class="wv">VS&nbsp;Code — see §1.10 for the window, §1.11 for the loop</span>
+      <span class="wl">Program</span><span class="wv">VS&nbsp;Code — see Sec. 1.10 for the window, Sec. 1.11 for the loop</span>
       <span class="wl">Files</span><span class="wv"><code>packages/engine/errors.js</code>, <code>packages/engine/http.js</code>, <code>packages/engine/engine.js</code></span>
       <span class="wl">Create them</span><span class="wv">In the Explorer, right-click <code>packages/engine</code> → <span class="ui">New&nbsp;File</span> → type the name with its extension → paste → <span class="kbd">Ctrl&nbsp;S</span></span>
     </div>
@@ -1963,15 +1963,15 @@ Weather → {"current_condition":[{"temp_C":"18",…}]} …
       <div class="hs">
         <div class="hsbox"><span class="hsn">Nothing yet</span><span class="hsd">a workflow object typed by hand</span></div>
         <div class="hsar"><span>hard-coded<br>workflow</span><i></i></div>
-        <div class="hsbox now"><span class="hsn">§2.1b — the engine</span><span class="hsd">runWorkflow(wf, nodeTypes)</span></div>
+        <div class="hsbox now"><span class="hsn">2.1b — the engine</span><span class="hsd">runWorkflow(wf, nodeTypes)</span></div>
         <div class="hsar"><span>{ results, log,<br>steps }</span><i></i></div>
-        <div class="hsbox"><span class="hsn">§2.2b — the server</span><span class="hsd">stores it, runs it, records it</span></div>
+        <div class="hsbox"><span class="hsn">2.2b — the server</span><span class="hsd">stores it, runs it, records it</span></div>
       </div>
       <div class="wires">
       <span class="wl">Hands out</span><span class="wv">the <code>ctx</code> object — <b>every node ever written depends on these four names</b>: <code>getInputData</code>, <code>getNodeParameter</code>, <code>helpers</code>, <code>logger</code>. Freeze it in Week 3 and nobody is ever blocked waiting for anybody.</span>
-      <span class="wl">Hands on</span><span class="wv">a plain object <code>{ results, log, steps }</code>. §2.2b writes <code>results</code> into <code>executions.data</code> and <code>log</code> into <code>executions.log</code> — no translation step in between.</span>
+      <span class="wl">Hands on</span><span class="wv">a plain object <code>{ results, log, steps }</code>. Sec. 2.2b writes <code>results</code> into <code>executions.data</code> and <code>log</code> into <code>executions.log</code> — no translation step in between.</span>
       <span class="wl">Shared by all</span><span class="wv"><code>errors.js</code> and <code>http.js</code>. Every later part imports these two rather than writing its own retry loop or its own error class.</span>
-      <span class="wl">Seam to agree</span><span class="wv">a node returns <b>an array of branches, each an array of items</b>. §2.2c draws one edge handle per branch; §2.4b prunes on an empty one. Change this and four people rewrite code.</span>
+      <span class="wl">Seam to agree</span><span class="wv">a node returns <b>an array of branches, each an array of items</b>. Sec. 2.2c draws one edge handle per branch; Sec. 2.4b prunes on an empty one. Change this and four people rewrite code.</span>
       </div>
     </div>
 
@@ -2103,7 +2103,7 @@ Weather → {"current_condition":[{"temp_C":"18",…}]} …
 
   <div class="stack">
     <div class="where">
-      <span class="wl">Program</span><span class="wv">VS&nbsp;Code — see §1.10 for the window, §1.11 for the loop</span>
+      <span class="wl">Program</span><span class="wv">VS&nbsp;Code — see Sec. 1.10 for the window, Sec. 1.11 for the loop</span>
       <span class="wl">Files</span><span class="wv"><code>docker-compose.yml</code>, <code>schema.sql</code>, <code>apps/api/db.js</code>, <code>apps/api/server.js</code></span>
       <span class="wl">Create them</span><span class="wv">In the Explorer, right-click <code>the project root, then apps/api</code> → <span class="ui">New&nbsp;File</span> → type the name with its extension → paste → <span class="kbd">Ctrl&nbsp;S</span></span>
     </div>
@@ -2229,9 +2229,9 @@ db.<span class="tk-f">on</span>(<span class="tk-s">&#x27;error&#x27;</span>, (er
     <span class="tk-k">async</span> <span class="tk-f">execute</span>() { <span class="tk-k">return</span> [[{ json: {} }]]; },
   },
 };
-<span class="tk-c">// §2.3b adds httpRequest here, §2.6b adds the four Google nodes, §2.6c adds</span>
+<span class="tk-c">// Sec. 2.3b adds httpRequest here, Sec. 2.6b adds the four Google nodes, Sec. 2.6c adds</span>
 <span class="tk-c">// the Code and AI nodes — always the same move: import the file, add one line.</span></code></pre></div>
-        <p><code>manualTrigger</code> is copied straight from §2.1b's <code>engine.js</code> — the one
+        <p><code>manualTrigger</code> is copied straight from Sec. 2.1b's <code>engine.js</code> — the one
           node type every workflow needs before it can have anything else, which is why it is the only
           one that exists here on day one.</p>
       </div></div>
@@ -2442,16 +2442,16 @@ ai-automation-db    postgres:16   Up 12 seconds <span class="g">(healthy)</span>
     <div class="conn">
       <h5>How this part connects to the others</h5>
       <div class="hs">
-        <div class="hsbox"><span class="hsn">§2.1b — the engine</span><span class="hsd">runWorkflow()</span></div>
+        <div class="hsbox"><span class="hsn">2.1b — the engine</span><span class="hsd">runWorkflow()</span></div>
         <div class="hsar"><span>imported<br>directly</span><i></i></div>
-        <div class="hsbox now"><span class="hsn">§2.2b — server + database</span><span class="hsd">5 routes · 2 tables</span></div>
+        <div class="hsbox now"><span class="hsn">2.2b — server + database</span><span class="hsd">5 routes · 2 tables</span></div>
         <div class="hsar"><span>HTTP + JSON</span><i></i></div>
-        <div class="hsbox"><span class="hsn">§2.2c — the canvas</span><span class="hsd">fetch('/rest/workflows/…')</span></div>
+        <div class="hsbox"><span class="hsn">2.2c — the canvas</span><span class="hsd">fetch('/rest/workflows/…')</span></div>
       </div>
       <div class="wires">
-      <span class="wl">Receives</span><span class="wv">the engine as a normal <code>import</code> — same process, no queue. §2.4b later reuses the very same <code>runById()</code> wrapper for webhooks and schedules.</span>
+      <span class="wl">Receives</span><span class="wv">the engine as a normal <code>import</code> — same process, no queue. Sec. 2.4b later reuses the very same <code>runById()</code> wrapper for webhooks and schedules.</span>
       <span class="wl">Hands on</span><span class="wv">the workflow JSON <code>{ id, name, nodes[], connections{}, version }</code>. That object is the single shared vocabulary between the server, the canvas and the engine.</span>
-      <span class="wl">Shared by all</span><span class="wv"><code>db.js</code> — one pool, one <code>withTransaction()</code>. §2.4b, §2.5b and §2.6b all import it instead of opening connections of their own.</span>
+      <span class="wl">Shared by all</span><span class="wv"><code>db.js</code> — one pool, one <code>withTransaction()</code>. Sec. 2.4b, Sec. 2.5b and Sec. 2.6b all import it instead of opening connections of their own.</span>
       <span class="wl">Seam to agree</span><span class="wv"><code>version</code>. The canvas sends the number it loaded; the server refuses a stale save with 409. Agree it in Week 5, or two people overwrite each other in Week 11.</span>
       </div>
     </div>
@@ -2472,7 +2472,7 @@ ai-automation-db    postgres:16   Up 12 seconds <span class="g">(healthy)</span>
 
   <div class="stack">
     <div class="where">
-      <span class="wl">Program</span><span class="wv">VS&nbsp;Code — see §1.10 for the window, §1.11 for the loop</span>
+      <span class="wl">Program</span><span class="wv">VS&nbsp;Code — see Sec. 1.10 for the window, Sec. 1.11 for the loop</span>
       <span class="wl">Files</span><span class="wv"><code>apps/editor/src/convert.ts</code>, <code>api.ts</code>, <code>Editor.tsx</code></span>
       <span class="wl">Create them</span><span class="wv">In the Explorer, right-click <code>apps/editor/src</code> → <span class="ui">New&nbsp;File</span> → type the name with its extension → paste → <span class="kbd">Ctrl&nbsp;S</span></span>
     </div>
@@ -2725,16 +2725,16 @@ const run = async () =&gt; {
     <div class="conn">
       <h5>How this part connects to the others</h5>
       <div class="hs">
-        <div class="hsbox"><span class="hsn">§2.2b — the server</span><span class="hsd">GET / PATCH /rest/workflows/:id</span></div>
+        <div class="hsbox"><span class="hsn">2.2b — the server</span><span class="hsd">GET / PATCH /rest/workflows/:id</span></div>
         <div class="hsar"><span>workflow<br>JSON</span><i></i></div>
-        <div class="hsbox now"><span class="hsn">§2.2c — the canvas</span><span class="hsd">toReactFlow ⇄ fromReactFlow</span></div>
+        <div class="hsbox now"><span class="hsn">2.2c — the canvas</span><span class="hsd">toReactFlow ⇄ fromReactFlow</span></div>
         <div class="hsar"><span>node.parameters</span><i></i></div>
-        <div class="hsbox"><span class="hsn">§2.3b — the settings panel</span><span class="hsd">renders properties[]</span></div>
+        <div class="hsbox"><span class="hsn">2.3b — the settings panel</span><span class="hsd">renders properties[]</span></div>
       </div>
       <div class="wires">
-      <span class="wl">Receives</span><span class="wv">exactly the row §2.2b returns. Nothing is reshaped on the way in — <code>toReactFlow</code> is the only translator in the project, and §3.2b tests it both ways.</span>
-      <span class="wl">Hands on</span><span class="wv">each node object to the panel of §2.3b, which writes straight into <code>node.parameters</code>. The canvas never needs to know what a setting <em>means</em>.</span>
-      <span class="wl">Talks to</span><span class="wv">§2.4b: the executions list is the same <code>api()</code> helper pointed at <code>/rest/executions</code>, so error handling and timeouts were written once.</span>
+      <span class="wl">Receives</span><span class="wv">exactly the row Sec. 2.2b returns. Nothing is reshaped on the way in — <code>toReactFlow</code> is the only translator in the project, and Sec. 3.2b tests it both ways.</span>
+      <span class="wl">Hands on</span><span class="wv">each node object to the panel of Sec. 2.3b, which writes straight into <code>node.parameters</code>. The canvas never needs to know what a setting <em>means</em>.</span>
+      <span class="wl">Talks to</span><span class="wv">Sec. 2.4b: the executions list is the same <code>api()</code> helper pointed at <code>/rest/executions</code>, so error handling and timeouts were written once.</span>
       <span class="wl">Seam to agree</span><span class="wv">branch index = React Flow <code>sourceHandle</code>, and branch&nbsp;0 is the IF node&#8217;s <em>true</em> output. B1/B2 and A2 must write this down in Week 6.</span>
       </div>
     </div>
@@ -2874,7 +2874,7 @@ const run = async () =&gt; {
 
   <div class="stack">
     <div class="where">
-      <span class="wl">Program</span><span class="wv">VS&nbsp;Code — see §1.10 for the window, §1.11 for the loop</span>
+      <span class="wl">Program</span><span class="wv">VS&nbsp;Code — see Sec. 1.10 for the window, Sec. 1.11 for the loop</span>
       <span class="wl">Files</span><span class="wv"><code>packages/nodes/core/httpRequest.ts</code>, <code>packages/engine/expressions.js</code>, <code>apps/editor/src/ParameterPanel.tsx</code></span>
       <span class="wl">Create them</span><span class="wv">In the Explorer, right-click <code>packages/nodes/core and apps/editor/src</code> → <span class="ui">New&nbsp;File</span> → type the name with its extension → paste → <span class="kbd">Ctrl&nbsp;S</span></span>
     </div>
@@ -3104,7 +3104,7 @@ function <span class="tk-f">previewOf</span>(value, sampleItem) {
   <span class="tk-k">if</span> (whole) <span class="tk-k">return</span> <span class="tk-f">evaluate</span>(whole[<span class="tk-n">1</span>]);                      <span class="tk-c">// …so keep the real type</span>
   <span class="tk-k">return</span> value.<span class="tk-f">replace</span>(/\{\{([\s\S]+?)\}\}/g, (_, e) =&gt; <span class="tk-f">String</span>(<span class="tk-f">evaluate</span>(e) ?? <span class="tk-s">&#x27;&#x27;</span>));
 }</code></pre></div>
-        <p>Now wire it into the engine. This is the whole change to §2.1b — three lines, and from
+        <p>Now wire it into the engine. This is the whole change to Sec. 2.1b — three lines, and from
           this moment every setting of every node supports expressions, forever:</p>
         <div class="fwrap"><span class="fname">packages/engine/engine.js — inside the ctx object</span>
 <pre class="code"><code><span class="tk-f">getNodeParameter</span>(name, i = <span class="tk-n">0</span>, fallback = <span class="tk-k">undefined</span>) {
@@ -3115,7 +3115,7 @@ function <span class="tk-f">previewOf</span>(value, sampleItem) {
   <span class="tk-k">return</span> <span class="tk-f">resolve</span>(raw, items[i], results, i);        <span class="tk-c">// &lt;- the only new line</span>
 },</code></pre></div>
         <p>Node authors never see braces. <b>Say plainly in the report</b> that shadowing is a speed
-          bump, not a sandbox — the real isolation story is the Code node in §2.6c.</p>
+          bump, not a sandbox — the real isolation story is the Code node in Sec. 2.6c.</p>
       </div></div>
     </div>
 
@@ -3190,16 +3190,16 @@ function <span class="tk-f">previewOf</span>(value, sampleItem) {
     <div class="conn">
       <h5>How this part connects to the others</h5>
       <div class="hs">
-        <div class="hsbox"><span class="hsn">§2.2b — /rest/node-types</span><span class="hsd">every description, as JSON</span></div>
+        <div class="hsbox"><span class="hsn">2.2b — /rest/node-types</span><span class="hsd">every description, as JSON</span></div>
         <div class="hsar"><span>properties[]</span><i></i></div>
-        <div class="hsbox now"><span class="hsn">§2.3b — schema-driven UI</span><span class="hsd">one panel · expressions</span></div>
+        <div class="hsbox now"><span class="hsn">2.3b — schema-driven UI</span><span class="hsd">one panel · expressions</span></div>
         <div class="hsar"><span>parameters{}</span><i></i></div>
-        <div class="hsbox"><span class="hsn">§2.6b / §2.6c — six new nodes</span><span class="hsd">written by six people at once</span></div>
+        <div class="hsbox"><span class="hsn">2.6b / 2.6c — six new nodes</span><span class="hsd">written by six people at once</span></div>
       </div>
       <div class="wires">
       <span class="wl">Receives</span><span class="wv">the <code>description</code> of every registered node. Add a file to <code>packages/nodes</code>, restart, refresh — the form exists. <b>This is the single thing that makes the Week 8 node surge possible.</b></span>
-      <span class="wl">Hands on</span><span class="wv">a filled <code>parameters</code> object into the workflow JSON of §2.2b, saved by the canvas of §2.2c.</span>
-      <span class="wl">Changes the engine</span><span class="wv">by exactly one line: <code>getNodeParameter</code> now calls <code>resolve()</code>. From here, every node in §2.6b and §2.6c gets expressions for free without knowing they exist.</span>
+      <span class="wl">Hands on</span><span class="wv">a filled <code>parameters</code> object into the workflow JSON of Sec. 2.2b, saved by the canvas of Sec. 2.2c.</span>
+      <span class="wl">Changes the engine</span><span class="wv">by exactly one line: <code>getNodeParameter</code> now calls <code>resolve()</code>. From here, every node in Sec. 2.6b and Sec. 2.6c gets expressions for free without knowing they exist.</span>
       <span class="wl">Seam to agree</span><span class="wv">the property <code>type</code> vocabulary — <code>string · number · boolean · options · json</code>. A node author who invents a seventh type gets a blank field, so add it to the panel first.</span>
       </div>
     </div>
@@ -3317,7 +3317,7 @@ function <span class="tk-f">previewOf</span>(value, sampleItem) {
 
   <div class="stack">
     <div class="where">
-      <span class="wl">Program</span><span class="wv">VS&nbsp;Code — see §1.10 for the window, §1.11 for the loop</span>
+      <span class="wl">Program</span><span class="wv">VS&nbsp;Code — see Sec. 1.10 for the window, Sec. 1.11 for the loop</span>
       <span class="wl">Files</span><span class="wv"><code>apps/api/webhooks.js</code>, <code>apps/api/schedules.js</code>, <code>apps/api/runner.js</code></span>
       <span class="wl">Create them</span><span class="wv">In the Explorer, right-click <code>apps/api</code> → <span class="ui">New&nbsp;File</span> → type the name with its extension → paste → <span class="kbd">Ctrl&nbsp;S</span></span>
     </div>
@@ -3641,16 +3641,16 @@ restored <span class="b">1</span> schedule(s)
     <div class="conn">
       <h5>How this part connects to the others</h5>
       <div class="hs">
-        <div class="hsbox"><span class="hsn">§2.2b db.js · §2.1b engine</span><span class="hsd">pool · runWorkflow()</span></div>
+        <div class="hsbox"><span class="hsn">2.2b db.js · 2.1b engine</span><span class="hsd">pool · runWorkflow()</span></div>
         <div class="hsar"><span>runById()</span><i></i></div>
-        <div class="hsbox now"><span class="hsn">§2.4b — the triggers</span><span class="hsd">webhook · cron · runner</span></div>
+        <div class="hsbox now"><span class="hsn">2.4b — the triggers</span><span class="hsd">webhook · cron · runner</span></div>
         <div class="hsar"><span>executions rows</span><i></i></div>
-        <div class="hsbox"><span class="hsn">§2.2c — the executions list</span><span class="hsd">and §2.7b&#8217;s k6 benchmark</span></div>
+        <div class="hsbox"><span class="hsn">2.2c — the executions list</span><span class="hsd">and Sec. 2.7b&#8217;s k6 benchmark</span></div>
       </div>
       <div class="wires">
       <span class="wl">Receives</span><span class="wv">the database pool and the engine, unchanged. This part adds no new way of running a workflow — it adds new <em>reasons</em> to run one.</span>
       <span class="wl">Hands out</span><span class="wv"><code>runById(workflowId, triggerItems, mode)</code>. The manual Run route, the webhook and the scheduler all funnel through it, so the concurrency limit and the execution row exist once.</span>
-      <span class="wl">Hands on</span><span class="wv">a row in <code>executions</code> with <code>mode</code> set. §2.2c lists it, §2.7b measures it, and the report quotes it.</span>
+      <span class="wl">Hands on</span><span class="wv">a row in <code>executions</code> with <code>mode</code> set. Sec. 2.2c lists it, Sec. 2.7b measures it, and the report quotes it.</span>
       <span class="wl">Seam to agree</span><span class="wv">the trigger item shape <code>{ headers, query, body, method, receivedAt }</code>. Every workflow the group builds writes <code>{{ $json.body.… }}</code> against it, so changing it later breaks all of them at once.</span>
       </div>
     </div>
@@ -3762,7 +3762,7 @@ restored <span class="b">1</span> schedule(s)
 
   <div class="stack">
     <div class="where">
-      <span class="wl">Program</span><span class="wv">VS&nbsp;Code — see §1.10 for the window, §1.11 for the loop</span>
+      <span class="wl">Program</span><span class="wv">VS&nbsp;Code — see Sec. 1.10 for the window, Sec. 1.11 for the loop</span>
       <span class="wl">Files</span><span class="wv"><code>apps/api/oauth.js</code>, <code>apps/api/crypto.js</code>, <code>schema.sql</code></span>
       <span class="wl">Create them</span><span class="wv">In the Explorer, right-click <code>apps/api</code> → <span class="ui">New&nbsp;File</span> → type the name with its extension → paste → <span class="kbd">Ctrl&nbsp;S</span></span>
     </div>
@@ -4047,15 +4047,15 @@ app.<span class="tk-f">get</span>(<span class="tk-s">&#x27;/rest/oauth2-credenti
     <div class="conn">
       <h5>How this part connects to the others</h5>
       <div class="hs">
-        <div class="hsbox"><span class="hsn">§2.2b — the Express app</span><span class="hsd">route() · HttpError · db</span></div>
+        <div class="hsbox"><span class="hsn">2.2b — the Express app</span><span class="hsd">route() · HttpError · db</span></div>
         <div class="hsar"><span>two routes</span><i></i></div>
-        <div class="hsbox now"><span class="hsn">§2.5b — the permission round trip</span><span class="hsd">credentials · oauth_states</span></div>
+        <div class="hsbox now"><span class="hsn">2.5b — the permission round trip</span><span class="hsd">credentials · oauth_states</span></div>
         <div class="hsar"><span>encrypted tokens</span><i></i></div>
-        <div class="hsbox"><span class="hsn">§2.6b / §2.6c — every Google node</span><span class="hsd">googleRequest()</span></div>
+        <div class="hsbox"><span class="hsn">2.6b / 2.6c — every Google node</span><span class="hsd">googleRequest()</span></div>
       </div>
       <div class="wires">
-      <span class="wl">Receives</span><span class="wv">the same Express app, the same <code>route()</code> wrapper and the same error middleware as §2.2b. OAuth adds two routes, not a second server.</span>
-      <span class="wl">Hands on</span><span class="wv">a row in <code>credentials</code> holding an encrypted envelope. <b>Nothing downstream ever sees a stored token</b> — §2.6b asks for one and is handed a fresh access token.</span>
+      <span class="wl">Receives</span><span class="wv">the same Express app, the same <code>route()</code> wrapper and the same error middleware as Sec. 2.2b. OAuth adds two routes, not a second server.</span>
+      <span class="wl">Hands on</span><span class="wv">a row in <code>credentials</code> holding an encrypted envelope. <b>Nothing downstream ever sees a stored token</b> — Sec. 2.6b asks for one and is handed a fresh access token.</span>
       <span class="wl">Shared by all</span><span class="wv"><code>crypto.js</code>. Any future credential — an API key, a database password — reuses <code>encrypt()</code> and <code>decrypt()</code> unchanged.</span>
       <span class="wl">Seam to agree</span><span class="wv"><code>node.credentials.id</code> on the workflow JSON. B1/B2 put the picker in the sidebar, D1 reads it in the node, C1 stores it: one field name, three people, agreed in Week 9.</span>
       </div>
@@ -4182,17 +4182,17 @@ app.<span class="tk-f">get</span>(<span class="tk-s">&#x27;/rest/oauth2-credenti
       logic</b> from here on — repeating <code>httpRequestNode</code>'s full <code>properties[]</code>
       block six times would triple this page for no new idea. Wrap each one in the same two pieces
       (<code>description.properties</code> for its sidebar fields, <code>async execute(ctx) { … }</code>
-      around the code shown) exactly like §2.3b did, then register it the same way Sheets is below.</p>
+      around the code shown) exactly like Sec. 2.3b did, then register it the same way Sheets is below.</p>
 
     <div class="where">
-      <span class="wl">Program</span><span class="wv">VS&nbsp;Code — see §1.10 for the window, §1.11 for the loop</span>
+      <span class="wl">Program</span><span class="wv">VS&nbsp;Code — see Sec. 1.10 for the window, Sec. 1.11 for the loop</span>
       <span class="wl">Files</span><span class="wv"><code>packages/nodes/google/request.js</code>, <code>sheets.js</code>, <code>docs.js</code>, <code>drive.js</code></span>
       <span class="wl">Create them</span><span class="wv">In the Explorer, right-click <code>packages/nodes/google</code> → <span class="ui">New&nbsp;File</span> → type the name with its extension → paste → <span class="kbd">Ctrl&nbsp;S</span></span>
     </div>
     <div class="bsteps">
       <div class="bstep"><div class="bn">0</div><div class="bb">
         <h4>First: let the engine hand a node its credential</h4>
-        <p>One more line in the <code>ctx</code> object from §2.1b, and every node from here on can pass
+        <p>One more line in the <code>ctx</code> object from Sec. 2.1b, and every node from here on can pass
           its configured credential straight to <code>googleRequest</code> below. Nothing else in the
           engine changes — the loading, decrypting and caching all happen inside the helper, not here.</p>
         <div class="fwrap"><span class="fname">packages/engine/engine.js — inside the ctx object</span>
@@ -4503,16 +4503,16 @@ done  Sheets   <span class="g">3 item(s) in 3 780 ms</span>
     <div class="conn">
       <h5>How this part connects to the others</h5>
       <div class="hs">
-        <div class="hsbox"><span class="hsn">§2.5b credentials · §2.3b properties</span><span class="hsd">decrypt() · description</span></div>
+        <div class="hsbox"><span class="hsn">2.5b credentials · 2.3b properties</span><span class="hsd">decrypt() · description</span></div>
         <div class="hsar"><span>googleRequest()</span><i></i></div>
-        <div class="hsbox now"><span class="hsn">§2.6b — the Google nodes</span><span class="hsd">Sheets · Docs · Drive</span></div>
+        <div class="hsbox now"><span class="hsn">2.6b — the Google nodes</span><span class="hsd">Sheets · Docs · Drive</span></div>
         <div class="hsar"><span>items with json{}</span><i></i></div>
-        <div class="hsbox"><span class="hsn">§2.4b triggers · §2.6c Gmail</span><span class="hsd">and the Week 14 demo workflow</span></div>
+        <div class="hsbox"><span class="hsn">2.4b triggers · 2.6c Gmail</span><span class="hsd">and the Week 14 demo workflow</span></div>
       </div>
       <div class="wires">
-      <span class="wl">Receives</span><span class="wv">a credential id from the workflow JSON, and the property vocabulary of §2.3b. It never touches OAuth itself — that is entirely §2.5b&#8217;s job.</span>
+      <span class="wl">Receives</span><span class="wv">a credential id from the workflow JSON, and the property vocabulary of Sec. 2.3b. It never touches OAuth itself — that is entirely Sec. 2.5b&#8217;s job.</span>
       <span class="wl">Hands out</span><span class="wv"><code>googleRequest(credentialId, url, options)</code> — the only function any Google node calls. Refresh, retry, rate limits and scope errors live inside it, once, for all four nodes.</span>
-      <span class="wl">Hands on</span><span class="wv">ordinary items <code>{ json, pairedItem }</code> to the next node, exactly as §2.1b requires. A Sheets node and an HTTP node are indistinguishable to the engine.</span>
+      <span class="wl">Hands on</span><span class="wv">ordinary items <code>{ json, pairedItem }</code> to the next node, exactly as Sec. 2.1b requires. A Sheets node and an HTTP node are indistinguishable to the engine.</span>
       <span class="wl">Seam to agree</span><span class="wv">who owns <code>request.js</code>. D1 writes it in Week 9 and freezes it; D2, A1 and A2 then write four nodes against it in parallel without one merge conflict.</span>
       </div>
     </div>
@@ -4533,7 +4533,7 @@ done  Sheets   <span class="g">3 item(s) in 3 780 ms</span>
 
   <div class="stack">
     <div class="where">
-      <span class="wl">Program</span><span class="wv">VS&nbsp;Code — see §1.10 for the window, §1.11 for the loop</span>
+      <span class="wl">Program</span><span class="wv">VS&nbsp;Code — see Sec. 1.10 for the window, Sec. 1.11 for the loop</span>
       <span class="wl">Files</span><span class="wv"><code>packages/nodes/google/gmail.js</code>, <code>core/code.js</code>, <code>ai/anthropic.js</code></span>
       <span class="wl">Create them</span><span class="wv">In the Explorer, right-click <code>packages/nodes</code> → <span class="ui">New&nbsp;File</span> → type the name with its extension → paste → <span class="kbd">Ctrl&nbsp;S</span></span>
     </div>
@@ -4801,16 +4801,16 @@ done  Gmail    <span class="g">messageId 18f2c… · thread 18f2c…</span></div
     <div class="conn">
       <h5>How this part connects to the others</h5>
       <div class="hs">
-        <div class="hsbox"><span class="hsn">§2.6b googleRequest() · §2.3b resolve()</span><span class="hsd">the shared helper</span></div>
+        <div class="hsbox"><span class="hsn">2.6b googleRequest() · 2.3b resolve()</span><span class="hsd">the shared helper</span></div>
         <div class="hsar"><span>same helper</span><i></i></div>
-        <div class="hsbox now"><span class="hsn">§2.6c — Gmail · Code · AI</span><span class="hsd">the three hardest nodes</span></div>
+        <div class="hsbox now"><span class="hsn">2.6c — Gmail · Code · AI</span><span class="hsd">the three hardest nodes</span></div>
         <div class="hsar"><span>classified items</span><i></i></div>
         <div class="hsbox"><span class="hsn">The Week 14 demo</span><span class="hsd">webhook → AI → IF → Gmail + Sheets</span></div>
       </div>
       <div class="wires">
       <span class="wl">Receives</span><span class="wv">the Google helper for Gmail, and the expression resolver for the AI node&#8217;s prompt — which is what lets somebody type <code>{{ $json.body.message }}</code> into a prompt box in the sidebar.</span>
-      <span class="wl">Hands on</span><span class="wv">a <code>json</code> object the IF node of A2 branches on. The AI node does not know an IF node exists; it returns items, and §2.1b&#8217;s branch pruning does the rest.</span>
-      <span class="wl">Deliberately apart</span><span class="wv">the Code node is the only part that does <em>not</em> use the shared helper. It is a worker thread with its own memory limit, isolated on purpose, and §3.2b tests it on its own.</span>
+      <span class="wl">Hands on</span><span class="wv">a <code>json</code> object the IF node of A2 branches on. The AI node does not know an IF node exists; it returns items, and Sec. 2.1b&#8217;s branch pruning does the rest.</span>
+      <span class="wl">Deliberately apart</span><span class="wv">the Code node is the only part that does <em>not</em> use the shared helper. It is a worker thread with its own memory limit, isolated on purpose, and Sec. 3.2b tests it on its own.</span>
       <span class="wl">Seam to agree</span><span class="wv">the AI node&#8217;s output key. Everything downstream reads <code>$json.urgency</code>; change the prompt to emit <code>priority</code> and three workflows break silently. Put the key in the node&#8217;s default prompt.</span>
       </div>
     </div>
@@ -5178,15 +5178,15 @@ x-content-type-options: nosniff</div>
       <div class="hs">
         <div class="hsbox"><span class="hsn">All of Part 2</span><span class="hsd">one repository, one image</span></div>
         <div class="hsar"><span>docker build</span><i></i></div>
-        <div class="hsbox now"><span class="hsn">§2.7b — production</span><span class="hsd">Caddy · api · postgres</span></div>
+        <div class="hsbox now"><span class="hsn">2.7b — production</span><span class="hsd">Caddy · api · postgres</span></div>
         <div class="hsar"><span>https + p(95)</span><i></i></div>
-        <div class="hsbox"><span class="hsn">§3.3 — the report</span><span class="hsd">the n8n comparison chapter</span></div>
+        <div class="hsbox"><span class="hsn">3.3 — the report</span><span class="hsd">the n8n comparison chapter</span></div>
       </div>
       <div class="wires">
-      <span class="wl">Receives</span><span class="wv">everything above as a single <code>Dockerfile</code>. If <code>npm run dev</code> works on a laptop (§3.1b) and CI is green (§3.2c), this step is configuration, not programming.</span>
-      <span class="wl">Hands on</span><span class="wv">a public HTTPS address. §2.4b&#8217;s webhooks only become <em>real</em> here — a phone on mobile data hitting your own domain is the moment the project stops being a demo.</span>
+      <span class="wl">Receives</span><span class="wv">everything above as a single <code>Dockerfile</code>. If <code>npm run dev</code> works on a laptop (Sec. 3.1b) and CI is green (Sec. 3.2c), this step is configuration, not programming.</span>
+      <span class="wl">Hands on</span><span class="wv">a public HTTPS address. Sec. 2.4b&#8217;s webhooks only become <em>real</em> here — a phone on mobile data hitting your own domain is the moment the project stops being a demo.</span>
       <span class="wl">Feeds</span><span class="wv">the report. The k6 numbers, the container limits and the pinned n8n version are the evidence for the comparison chapter; the raw JSON files are the appendix.</span>
-      <span class="wl">Seam to agree</span><span class="wv">deploys come <b>only from <code>main</code></b>, and <code>main</code> is protected by §3.2c. That one rule is what stops a Week 13 deploy quietly undoing a Week 12 fix.</span>
+      <span class="wl">Seam to agree</span><span class="wv">deploys come <b>only from <code>main</code></b>, and <code>main</code> is protected by Sec. 3.2c. That one rule is what stops a Week 13 deploy quietly undoing a Week 12 fix.</span>
       </div>
     </div>
 
@@ -5221,7 +5221,7 @@ x-content-type-options: nosniff</div>
         <rect x="150" y="24" width="460" height="76" rx="10" fill="#dfeef8" stroke="#0d72b4" stroke-width="1.6"/>
         <text x="166" y="48" class="t">The editor &#183; apps/editor</text>
         <text x="166" y="68" class="s2">canvas (React Flow) &#183; settings panel &#183; executions list</text>
-        <text x="166" y="86" class="s" style="fill:#0a5f92">B1 B2 &#8212; TypeScript, React, CSS &#183; &#167;2.2c and &#167;2.3b</text>
+        <text x="166" y="86" class="s" style="fill:#0a5f92">B1 B2 &#8212; TypeScript, React, CSS &#183; 2.2c and 2.3b</text>
 
         <path d="M380 100 L380 148" stroke="#7d8f9d" stroke-width="1.4" fill="none"/>
         <path d="M376 143 L380 150 L384 143 Z" fill="#7d8f9d"/>
@@ -5299,9 +5299,9 @@ x-content-type-options: nosniff</div>
       <div class="wires">
         <span class="wl">Week 3–4</span><span class="wv">Only the two purple boxes exist. A1 freezes <code>ctx</code> and the branch shape; <b>everybody else writes against a written promise, not against code that exists yet.</b></span>
         <span class="wl">Week 5</span><span class="wv">The blue and cyan boxes join, and the top arrow becomes real. This is the hard gate: the editor can save and reload a workflow.</span>
-        <span class="wl">Week 8</span><span class="wv">The right-hand purple box grows six new files at once. Nothing else changes — that is the payoff for §2.3b.</span>
+        <span class="wl">Week 8</span><span class="wv">The right-hand purple box grows six new files at once. Nothing else changes — that is the payoff for Sec. 2.3b.</span>
         <span class="wl">Week 9–10</span><span class="wv">The OAuth sub-box and the outward arrows from the nodes. D1 owns <code>request.js</code>; D2, A1 and A2 write nodes against it in parallel.</span>
-        <span class="wl">Week 12</span><span class="wv">The whole picture is put on one server (§2.7b) and measured against n8n running the same three workflows.</span>
+        <span class="wl">Week 12</span><span class="wv">The whole picture is put on one server (Sec. 2.7b) and measured against n8n running the same three workflows.</span>
       </div>
     </div>
 
@@ -5407,7 +5407,7 @@ x-content-type-options: nosniff</div>
 
   <div class="stack">
     <div class="where">
-      <span class="wl">Program</span><span class="wv">VS&nbsp;Code — see §1.10 for the window, §1.11 for the loop</span>
+      <span class="wl">Program</span><span class="wv">VS&nbsp;Code — see Sec. 1.10 for the window, Sec. 1.11 for the loop</span>
       <span class="wl">Files</span><span class="wv"><code>package.json</code>, <code>.env.example</code>, <code>seed.sql</code>, <code>scripts/doctor.js</code></span>
       <span class="wl">Create them</span><span class="wv">In the Explorer, right-click <code>the project root</code> → <span class="ui">New&nbsp;File</span> → type the name with its extension → paste → <span class="kbd">Ctrl&nbsp;S</span></span>
     </div>
@@ -5608,13 +5608,13 @@ restored <span class="b">0</span> schedule(s)
       <div class="hs">
         <div class="hsbox"><span class="hsn">Four areas, four folders</span><span class="hsd">engine · editor · api · integrations</span></div>
         <div class="hsar"><span>npm workspaces</span><i></i></div>
-        <div class="hsbox now"><span class="hsn">§3.1b — one repository</span><span class="hsd">npm run dev · doctor</span></div>
+        <div class="hsbox now"><span class="hsn">3.1b — one repository</span><span class="hsd">npm run dev · doctor</span></div>
         <div class="hsar"><span>the same five<br>commands</span><i></i></div>
-        <div class="hsbox"><span class="hsn">§3.2c — CI, and §2.7b — deploy</span><span class="hsd">run exactly what you run</span></div>
+        <div class="hsbox"><span class="hsn">3.2c — CI, and 2.7b — deploy</span><span class="hsd">run exactly what you run</span></div>
       </div>
       <div class="wires">
       <span class="wl">Receives</span><span class="wv">the four areas as workspace folders. npm links them for you, so <code>import { runWorkflow } from '../../packages/engine/engine.js'</code> works with no build step and nothing published anywhere.</span>
-      <span class="wl">Hands on</span><span class="wv">one command. CI (§3.2c) runs <code>npm run lint / test / e2e</code> and the server (§2.7b) builds the same <code>Dockerfile</code> — so &#8220;works on my machine&#8221; and &#8220;works in CI&#8221; stop being different questions.</span>
+      <span class="wl">Hands on</span><span class="wv">one command. CI (Sec. 3.2c) runs <code>npm run lint / test / e2e</code> and the server (Sec. 2.7b) builds the same <code>Dockerfile</code> — so &#8220;works on my machine&#8221; and &#8220;works in CI&#8221; stop being different questions.</span>
       <span class="wl">Binds together</span><span class="wv">the <code>.env</code> contract. Every part above reads its keys from the same file, and <code>doctor.js</code> is the one place that knows which keys must exist.</span>
       <span class="wl">Seam to agree</span><span class="wv">nobody adds a dependency without saying so in the group chat. A lockfile conflict at 11 p.m. in Week 13 is the most avoidable disaster available to this project.</span>
       </div>
@@ -5720,14 +5720,14 @@ restored <span class="b">0</span> schedule(s)
 <span class="p">$</span> npx playwright install chromium</div>
 
     <div class="where">
-      <span class="wl">Program</span><span class="wv">VS&nbsp;Code — see §1.10 for the window, §1.11 for the loop</span>
+      <span class="wl">Program</span><span class="wv">VS&nbsp;Code — see Sec. 1.10 for the window, Sec. 1.11 for the loop</span>
       <span class="wl">Files</span><span class="wv"><code>packages/engine/engine.test.js</code>, <code>convert.test.ts</code>, <code>google/sheets.test.js</code></span>
       <span class="wl">Create them</span><span class="wv">In the Explorer, right-click <code>beside the file each one tests</code> → <span class="ui">New&nbsp;File</span> → type the name with its extension → paste → <span class="kbd">Ctrl&nbsp;S</span></span>
     </div>
     <div class="bsteps">
       <div class="bstep"><div class="bn">1</div><div class="bb">
         <h4>Level 1 — the engine, in milliseconds</h4>
-        <p>Test the happy path once, then test <b>every guard you wrote in §2.1b</b>. Those six tests are
+        <p>Test the happy path once, then test <b>every guard you wrote in Sec. 2.1b</b>. Those six tests are
           the proof that "robust" is not just a word in the report.</p>
         <div class="fwrap"><span class="fname">packages/engine/engine.test.js</span>
 <pre class="code"><code><span class="tk-k">import</span> { test, expect } <span class="tk-k">from</span> <span class="tk-s">&#x27;vitest&#x27;</span>;
@@ -5912,15 +5912,15 @@ File              | % Stmts | % Branch | % Funcs |
     <div class="conn">
       <h5>How this part connects to the others</h5>
       <div class="hs">
-        <div class="hsbox"><span class="hsn">§2.1b engine · §2.2c convert · §2.6b nodes</span><span class="hsd">the three riskiest files</span></div>
+        <div class="hsbox"><span class="hsn">2.1b engine · 2.2c convert · 2.6b nodes</span><span class="hsd">the three riskiest files</span></div>
         <div class="hsar"><span>imported<br>directly</span><i></i></div>
-        <div class="hsbox now"><span class="hsn">§3.2b — levels 1 and 2</span><span class="hsd">vitest, no network</span></div>
+        <div class="hsbox now"><span class="hsn">3.2b — levels 1 and 2</span><span class="hsd">vitest, no network</span></div>
         <div class="hsar"><span>green or red</span><i></i></div>
-        <div class="hsbox"><span class="hsn">§3.2c — CI</span><span class="hsd">which blocks the merge button</span></div>
+        <div class="hsbox"><span class="hsn">3.2c — CI</span><span class="hsd">which blocks the merge button</span></div>
       </div>
       <div class="wires">
       <span class="wl">Receives</span><span class="wv">the real modules, not copies. A test that imports <code>engine.js</code> is the reason a refactor in Week 11 cannot quietly break Week 3&#8217;s branch pruning.</span>
-      <span class="wl">Hands on</span><span class="wv">an exit code. That is the whole interface to §3.2c: zero means the pull request may merge, non-zero means it may not.</span>
+      <span class="wl">Hands on</span><span class="wv">an exit code. That is the whole interface to Sec. 3.2c: zero means the pull request may merge, non-zero means it may not.</span>
       <span class="wl">Protects the seams</span><span class="wv">each frozen contract above gets exactly one test — the ctx shape, the branch-array shape, the convert round trip, the trigger item shape. <b>Those four tests are how eight people stay in sync without meetings.</b></span>
       <span class="wl">Seam to agree</span><span class="wv">a test lives beside the file it tests, and whoever writes the file writes the test. Not &#8220;the testing person&#8221; — there isn&#8217;t one, and there should not be.</span>
       </div>
@@ -6121,16 +6121,16 @@ stopped again — nothing left running</span></div>
     <div class="conn">
       <h5>How this part connects to the others</h5>
       <div class="hs">
-        <div class="hsbox"><span class="hsn">§3.2b tests · §3.1b scripts</span><span class="hsd">npm test · npm run lint</span></div>
+        <div class="hsbox"><span class="hsn">3.2b tests · 3.1b scripts</span><span class="hsd">npm test · npm run lint</span></div>
         <div class="hsar"><span>on every push</span><i></i></div>
-        <div class="hsbox now"><span class="hsn">§3.2c — CI and branch rules</span><span class="hsd">GitHub Actions</span></div>
+        <div class="hsbox now"><span class="hsn">3.2c — CI and branch rules</span><span class="hsd">GitHub Actions</span></div>
         <div class="hsar"><span>a green main</span><i></i></div>
-        <div class="hsbox"><span class="hsn">§2.7b — deploy</span><span class="hsd">and everybody&#8217;s next git pull</span></div>
+        <div class="hsbox"><span class="hsn">2.7b — deploy</span><span class="hsd">and everybody&#8217;s next git pull</span></div>
       </div>
       <div class="wires">
       <span class="wl">Receives</span><span class="wv">nothing new — it runs the same commands a teammate runs locally. If CI needs a command that is not in <code>package.json</code>, that is the bug, not the CI file.</span>
-      <span class="wl">Hands on</span><span class="wv">a <code>main</code> branch that is always green, which is what makes §2.7b&#8217;s deploy safe to run on the morning of the demo.</span>
-      <span class="wl">Closes the circle</span><span class="wv">the browser test walks every seam in one go: canvas (§2.2c) → server (§2.2b) → engine (§2.1b) → node (§2.3b). One test, three minutes, all four areas.</span>
+      <span class="wl">Hands on</span><span class="wv">a <code>main</code> branch that is always green, which is what makes Sec. 2.7b&#8217;s deploy safe to run on the morning of the demo.</span>
+      <span class="wl">Closes the circle</span><span class="wv">the browser test walks every seam in one go: canvas (Sec. 2.2c) → server (Sec. 2.2b) → engine (Sec. 2.1b) → node (Sec. 2.3b). One test, three minutes, all four areas.</span>
       <span class="wl">Seam to agree</span><span class="wv">the <code>data-testid</code> names. B2 writes Playwright against ids B1 puts in the JSX — agree the list in Week 10 and the browser test stops being flaky.</span>
       </div>
     </div>

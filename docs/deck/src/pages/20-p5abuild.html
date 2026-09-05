@@ -6,7 +6,7 @@
 
   <div class="stack">
     <div class="where">
-      <span class="wl">Program</span><span class="wv">VS&nbsp;Code — see §1.10 for the window, §1.11 for the loop</span>
+      <span class="wl">Program</span><span class="wv">VS&nbsp;Code — see Sec. 1.10 for the window, Sec. 1.11 for the loop</span>
       <span class="wl">Files</span><span class="wv"><code>apps/api/oauth.js</code>, <code>apps/api/crypto.js</code>, <code>schema.sql</code></span>
       <span class="wl">Create them</span><span class="wv">In the Explorer, right-click <code>apps/api</code> → <span class="ui">New&nbsp;File</span> → type the name with its extension → paste → <span class="kbd">Ctrl&nbsp;S</span></span>
     </div>
@@ -291,15 +291,15 @@ const page = (title, body) =&gt;
     <div class="conn">
       <h5>How this part connects to the others</h5>
       <div class="hs">
-        <div class="hsbox"><span class="hsn">§2.2b — the Express app</span><span class="hsd">route() · HttpError · db</span></div>
+        <div class="hsbox"><span class="hsn">2.2b — the Express app</span><span class="hsd">route() · HttpError · db</span></div>
         <div class="hsar"><span>two routes</span><i></i></div>
-        <div class="hsbox now"><span class="hsn">§2.5b — the permission round trip</span><span class="hsd">credentials · oauth_states</span></div>
+        <div class="hsbox now"><span class="hsn">2.5b — the permission round trip</span><span class="hsd">credentials · oauth_states</span></div>
         <div class="hsar"><span>encrypted tokens</span><i></i></div>
-        <div class="hsbox"><span class="hsn">§2.6b / §2.6c — every Google node</span><span class="hsd">googleRequest()</span></div>
+        <div class="hsbox"><span class="hsn">2.6b / 2.6c — every Google node</span><span class="hsd">googleRequest()</span></div>
       </div>
       <div class="wires">
-      <span class="wl">Receives</span><span class="wv">the same Express app, the same <code>route()</code> wrapper and the same error middleware as §2.2b. OAuth adds two routes, not a second server.</span>
-      <span class="wl">Hands on</span><span class="wv">a row in <code>credentials</code> holding an encrypted envelope. <b>Nothing downstream ever sees a stored token</b> — §2.6b asks for one and is handed a fresh access token.</span>
+      <span class="wl">Receives</span><span class="wv">the same Express app, the same <code>route()</code> wrapper and the same error middleware as Sec. 2.2b. OAuth adds two routes, not a second server.</span>
+      <span class="wl">Hands on</span><span class="wv">a row in <code>credentials</code> holding an encrypted envelope. <b>Nothing downstream ever sees a stored token</b> — Sec. 2.6b asks for one and is handed a fresh access token.</span>
       <span class="wl">Shared by all</span><span class="wv"><code>crypto.js</code>. Any future credential — an API key, a database password — reuses <code>encrypt()</code> and <code>decrypt()</code> unchanged.</span>
       <span class="wl">Seam to agree</span><span class="wv"><code>node.credentials.id</code> on the workflow JSON. B1/B2 put the picker in the sidebar, D1 reads it in the node, C1 stores it: one field name, three people, agreed in Week 9.</span>
       </div>

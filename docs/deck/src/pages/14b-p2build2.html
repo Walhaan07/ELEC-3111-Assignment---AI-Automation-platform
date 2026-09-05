@@ -6,7 +6,7 @@
 
   <div class="stack">
     <div class="where">
-      <span class="wl">Program</span><span class="wv">VS&nbsp;Code — see §1.10 for the window, §1.11 for the loop</span>
+      <span class="wl">Program</span><span class="wv">VS&nbsp;Code — see Sec. 1.10 for the window, Sec. 1.11 for the loop</span>
       <span class="wl">Files</span><span class="wv"><code>apps/editor/src/convert.ts</code>, <code>api.ts</code>, <code>Editor.tsx</code></span>
       <span class="wl">Create them</span><span class="wv">In the Explorer, right-click <code>apps/editor/src</code> → <span class="ui">New&nbsp;File</span> → type the name with its extension → paste → <span class="kbd">Ctrl&nbsp;S</span></span>
     </div>
@@ -259,16 +259,16 @@ const run = async () =&gt; {
     <div class="conn">
       <h5>How this part connects to the others</h5>
       <div class="hs">
-        <div class="hsbox"><span class="hsn">§2.2b — the server</span><span class="hsd">GET / PATCH /rest/workflows/:id</span></div>
+        <div class="hsbox"><span class="hsn">2.2b — the server</span><span class="hsd">GET / PATCH /rest/workflows/:id</span></div>
         <div class="hsar"><span>workflow<br>JSON</span><i></i></div>
-        <div class="hsbox now"><span class="hsn">§2.2c — the canvas</span><span class="hsd">toReactFlow ⇄ fromReactFlow</span></div>
+        <div class="hsbox now"><span class="hsn">2.2c — the canvas</span><span class="hsd">toReactFlow ⇄ fromReactFlow</span></div>
         <div class="hsar"><span>node.parameters</span><i></i></div>
-        <div class="hsbox"><span class="hsn">§2.3b — the settings panel</span><span class="hsd">renders properties[]</span></div>
+        <div class="hsbox"><span class="hsn">2.3b — the settings panel</span><span class="hsd">renders properties[]</span></div>
       </div>
       <div class="wires">
-      <span class="wl">Receives</span><span class="wv">exactly the row §2.2b returns. Nothing is reshaped on the way in — <code>toReactFlow</code> is the only translator in the project, and §3.2b tests it both ways.</span>
-      <span class="wl">Hands on</span><span class="wv">each node object to the panel of §2.3b, which writes straight into <code>node.parameters</code>. The canvas never needs to know what a setting <em>means</em>.</span>
-      <span class="wl">Talks to</span><span class="wv">§2.4b: the executions list is the same <code>api()</code> helper pointed at <code>/rest/executions</code>, so error handling and timeouts were written once.</span>
+      <span class="wl">Receives</span><span class="wv">exactly the row Sec. 2.2b returns. Nothing is reshaped on the way in — <code>toReactFlow</code> is the only translator in the project, and Sec. 3.2b tests it both ways.</span>
+      <span class="wl">Hands on</span><span class="wv">each node object to the panel of Sec. 2.3b, which writes straight into <code>node.parameters</code>. The canvas never needs to know what a setting <em>means</em>.</span>
+      <span class="wl">Talks to</span><span class="wv">Sec. 2.4b: the executions list is the same <code>api()</code> helper pointed at <code>/rest/executions</code>, so error handling and timeouts were written once.</span>
       <span class="wl">Seam to agree</span><span class="wv">branch index = React Flow <code>sourceHandle</code>, and branch&nbsp;0 is the IF node&#8217;s <em>true</em> output. B1/B2 and A2 must write this down in Week 6.</span>
       </div>
     </div>

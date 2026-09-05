@@ -12,17 +12,17 @@
       logic</b> from here on — repeating <code>httpRequestNode</code>'s full <code>properties[]</code>
       block six times would triple this page for no new idea. Wrap each one in the same two pieces
       (<code>description.properties</code> for its sidebar fields, <code>async execute(ctx) { … }</code>
-      around the code shown) exactly like §2.3b did, then register it the same way Sheets is below.</p>
+      around the code shown) exactly like Sec. 2.3b did, then register it the same way Sheets is below.</p>
 
     <div class="where">
-      <span class="wl">Program</span><span class="wv">VS&nbsp;Code — see §1.10 for the window, §1.11 for the loop</span>
+      <span class="wl">Program</span><span class="wv">VS&nbsp;Code — see Sec. 1.10 for the window, Sec. 1.11 for the loop</span>
       <span class="wl">Files</span><span class="wv"><code>packages/nodes/google/request.js</code>, <code>sheets.js</code>, <code>docs.js</code>, <code>drive.js</code></span>
       <span class="wl">Create them</span><span class="wv">In the Explorer, right-click <code>packages/nodes/google</code> → <span class="ui">New&nbsp;File</span> → type the name with its extension → paste → <span class="kbd">Ctrl&nbsp;S</span></span>
     </div>
     <div class="bsteps">
       <div class="bstep"><div class="bn">0</div><div class="bb">
         <h4>First: let the engine hand a node its credential</h4>
-        <p>One more line in the <code>ctx</code> object from §2.1b, and every node from here on can pass
+        <p>One more line in the <code>ctx</code> object from Sec. 2.1b, and every node from here on can pass
           its configured credential straight to <code>googleRequest</code> below. Nothing else in the
           engine changes — the loading, decrypting and caching all happen inside the helper, not here.</p>
         <div class="fwrap"><span class="fname">packages/engine/engine.js — inside the ctx object</span>
@@ -333,16 +333,16 @@ done  Sheets   <span class="g">3 item(s) in 3 780 ms</span>
     <div class="conn">
       <h5>How this part connects to the others</h5>
       <div class="hs">
-        <div class="hsbox"><span class="hsn">§2.5b credentials · §2.3b properties</span><span class="hsd">decrypt() · description</span></div>
+        <div class="hsbox"><span class="hsn">2.5b credentials · 2.3b properties</span><span class="hsd">decrypt() · description</span></div>
         <div class="hsar"><span>googleRequest()</span><i></i></div>
-        <div class="hsbox now"><span class="hsn">§2.6b — the Google nodes</span><span class="hsd">Sheets · Docs · Drive</span></div>
+        <div class="hsbox now"><span class="hsn">2.6b — the Google nodes</span><span class="hsd">Sheets · Docs · Drive</span></div>
         <div class="hsar"><span>items with json{}</span><i></i></div>
-        <div class="hsbox"><span class="hsn">§2.4b triggers · §2.6c Gmail</span><span class="hsd">and the Week 14 demo workflow</span></div>
+        <div class="hsbox"><span class="hsn">2.4b triggers · 2.6c Gmail</span><span class="hsd">and the Week 14 demo workflow</span></div>
       </div>
       <div class="wires">
-      <span class="wl">Receives</span><span class="wv">a credential id from the workflow JSON, and the property vocabulary of §2.3b. It never touches OAuth itself — that is entirely §2.5b&#8217;s job.</span>
+      <span class="wl">Receives</span><span class="wv">a credential id from the workflow JSON, and the property vocabulary of Sec. 2.3b. It never touches OAuth itself — that is entirely Sec. 2.5b&#8217;s job.</span>
       <span class="wl">Hands out</span><span class="wv"><code>googleRequest(credentialId, url, options)</code> — the only function any Google node calls. Refresh, retry, rate limits and scope errors live inside it, once, for all four nodes.</span>
-      <span class="wl">Hands on</span><span class="wv">ordinary items <code>{ json, pairedItem }</code> to the next node, exactly as §2.1b requires. A Sheets node and an HTTP node are indistinguishable to the engine.</span>
+      <span class="wl">Hands on</span><span class="wv">ordinary items <code>{ json, pairedItem }</code> to the next node, exactly as Sec. 2.1b requires. A Sheets node and an HTTP node are indistinguishable to the engine.</span>
       <span class="wl">Seam to agree</span><span class="wv">who owns <code>request.js</code>. D1 writes it in Week 9 and freezes it; D2, A1 and A2 then write four nodes against it in parallel without one merge conflict.</span>
       </div>
     </div>

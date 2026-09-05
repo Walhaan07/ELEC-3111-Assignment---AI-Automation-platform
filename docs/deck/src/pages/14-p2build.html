@@ -6,7 +6,7 @@
 
   <div class="stack">
     <div class="where">
-      <span class="wl">Program</span><span class="wv">VS&nbsp;Code — see §1.10 for the window, §1.11 for the loop</span>
+      <span class="wl">Program</span><span class="wv">VS&nbsp;Code — see Sec. 1.10 for the window, Sec. 1.11 for the loop</span>
       <span class="wl">Files</span><span class="wv"><code>docker-compose.yml</code>, <code>schema.sql</code>, <code>apps/api/db.js</code>, <code>apps/api/server.js</code></span>
       <span class="wl">Create them</span><span class="wv">In the Explorer, right-click <code>the project root, then apps/api</code> → <span class="ui">New&nbsp;File</span> → type the name with its extension → paste → <span class="kbd">Ctrl&nbsp;S</span></span>
     </div>
@@ -132,9 +132,9 @@ export async function withTransaction(fn) {
     async execute() { return [[{ json: {} }]]; },
   },
 };
-// §2.3b adds httpRequest here, §2.6b adds the four Google nodes, §2.6c adds
+// Sec. 2.3b adds httpRequest here, Sec. 2.6b adds the four Google nodes, Sec. 2.6c adds
 // the Code and AI nodes — always the same move: import the file, add one line.</code></pre></div>
-        <p><code>manualTrigger</code> is copied straight from §2.1b's <code>engine.js</code> — the one
+        <p><code>manualTrigger</code> is copied straight from Sec. 2.1b's <code>engine.js</code> — the one
           node type every workflow needs before it can have anything else, which is why it is the only
           one that exists here on day one.</p>
       </div></div>
@@ -345,16 +345,16 @@ ai-automation-db    postgres:16   Up 12 seconds <span class="g">(healthy)</span>
     <div class="conn">
       <h5>How this part connects to the others</h5>
       <div class="hs">
-        <div class="hsbox"><span class="hsn">§2.1b — the engine</span><span class="hsd">runWorkflow()</span></div>
+        <div class="hsbox"><span class="hsn">2.1b — the engine</span><span class="hsd">runWorkflow()</span></div>
         <div class="hsar"><span>imported<br>directly</span><i></i></div>
-        <div class="hsbox now"><span class="hsn">§2.2b — server + database</span><span class="hsd">5 routes · 2 tables</span></div>
+        <div class="hsbox now"><span class="hsn">2.2b — server + database</span><span class="hsd">5 routes · 2 tables</span></div>
         <div class="hsar"><span>HTTP + JSON</span><i></i></div>
-        <div class="hsbox"><span class="hsn">§2.2c — the canvas</span><span class="hsd">fetch('/rest/workflows/…')</span></div>
+        <div class="hsbox"><span class="hsn">2.2c — the canvas</span><span class="hsd">fetch('/rest/workflows/…')</span></div>
       </div>
       <div class="wires">
-      <span class="wl">Receives</span><span class="wv">the engine as a normal <code>import</code> — same process, no queue. §2.4b later reuses the very same <code>runById()</code> wrapper for webhooks and schedules.</span>
+      <span class="wl">Receives</span><span class="wv">the engine as a normal <code>import</code> — same process, no queue. Sec. 2.4b later reuses the very same <code>runById()</code> wrapper for webhooks and schedules.</span>
       <span class="wl">Hands on</span><span class="wv">the workflow JSON <code>{ id, name, nodes[], connections{}, version }</code>. That object is the single shared vocabulary between the server, the canvas and the engine.</span>
-      <span class="wl">Shared by all</span><span class="wv"><code>db.js</code> — one pool, one <code>withTransaction()</code>. §2.4b, §2.5b and §2.6b all import it instead of opening connections of their own.</span>
+      <span class="wl">Shared by all</span><span class="wv"><code>db.js</code> — one pool, one <code>withTransaction()</code>. Sec. 2.4b, Sec. 2.5b and Sec. 2.6b all import it instead of opening connections of their own.</span>
       <span class="wl">Seam to agree</span><span class="wv"><code>version</code>. The canvas sends the number it loaded; the server refuses a stale save with 409. Agree it in Week 5, or two people overwrite each other in Week 11.</span>
       </div>
     </div>

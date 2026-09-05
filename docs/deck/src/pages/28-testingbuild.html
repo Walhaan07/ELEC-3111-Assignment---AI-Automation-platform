@@ -9,14 +9,14 @@
 <span class="p">$</span> npx playwright install chromium</div>
 
     <div class="where">
-      <span class="wl">Program</span><span class="wv">VS&nbsp;Code — see §1.10 for the window, §1.11 for the loop</span>
+      <span class="wl">Program</span><span class="wv">VS&nbsp;Code — see Sec. 1.10 for the window, Sec. 1.11 for the loop</span>
       <span class="wl">Files</span><span class="wv"><code>packages/engine/engine.test.js</code>, <code>convert.test.ts</code>, <code>google/sheets.test.js</code></span>
       <span class="wl">Create them</span><span class="wv">In the Explorer, right-click <code>beside the file each one tests</code> → <span class="ui">New&nbsp;File</span> → type the name with its extension → paste → <span class="kbd">Ctrl&nbsp;S</span></span>
     </div>
     <div class="bsteps">
       <div class="bstep"><div class="bn">1</div><div class="bb">
         <h4>Level 1 — the engine, in milliseconds</h4>
-        <p>Test the happy path once, then test <b>every guard you wrote in §2.1b</b>. Those six tests are
+        <p>Test the happy path once, then test <b>every guard you wrote in Sec. 2.1b</b>. Those six tests are
           the proof that "robust" is not just a word in the report.</p>
         <div class="fwrap"><span class="fname">packages/engine/engine.test.js</span>
 <pre class="code" data-lang="js"><code>import { test, expect } from 'vitest';
@@ -201,15 +201,15 @@ File              | % Stmts | % Branch | % Funcs |
     <div class="conn">
       <h5>How this part connects to the others</h5>
       <div class="hs">
-        <div class="hsbox"><span class="hsn">§2.1b engine · §2.2c convert · §2.6b nodes</span><span class="hsd">the three riskiest files</span></div>
+        <div class="hsbox"><span class="hsn">2.1b engine · 2.2c convert · 2.6b nodes</span><span class="hsd">the three riskiest files</span></div>
         <div class="hsar"><span>imported<br>directly</span><i></i></div>
-        <div class="hsbox now"><span class="hsn">§3.2b — levels 1 and 2</span><span class="hsd">vitest, no network</span></div>
+        <div class="hsbox now"><span class="hsn">3.2b — levels 1 and 2</span><span class="hsd">vitest, no network</span></div>
         <div class="hsar"><span>green or red</span><i></i></div>
-        <div class="hsbox"><span class="hsn">§3.2c — CI</span><span class="hsd">which blocks the merge button</span></div>
+        <div class="hsbox"><span class="hsn">3.2c — CI</span><span class="hsd">which blocks the merge button</span></div>
       </div>
       <div class="wires">
       <span class="wl">Receives</span><span class="wv">the real modules, not copies. A test that imports <code>engine.js</code> is the reason a refactor in Week 11 cannot quietly break Week 3&#8217;s branch pruning.</span>
-      <span class="wl">Hands on</span><span class="wv">an exit code. That is the whole interface to §3.2c: zero means the pull request may merge, non-zero means it may not.</span>
+      <span class="wl">Hands on</span><span class="wv">an exit code. That is the whole interface to Sec. 3.2c: zero means the pull request may merge, non-zero means it may not.</span>
       <span class="wl">Protects the seams</span><span class="wv">each frozen contract above gets exactly one test — the ctx shape, the branch-array shape, the convert round trip, the trigger item shape. <b>Those four tests are how eight people stay in sync without meetings.</b></span>
       <span class="wl">Seam to agree</span><span class="wv">a test lives beside the file it tests, and whoever writes the file writes the test. Not &#8220;the testing person&#8221; — there isn&#8217;t one, and there should not be.</span>
       </div>

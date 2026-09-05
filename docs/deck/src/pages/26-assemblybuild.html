@@ -6,7 +6,7 @@
 
   <div class="stack">
     <div class="where">
-      <span class="wl">Program</span><span class="wv">VS&nbsp;Code — see §1.10 for the window, §1.11 for the loop</span>
+      <span class="wl">Program</span><span class="wv">VS&nbsp;Code — see Sec. 1.10 for the window, Sec. 1.11 for the loop</span>
       <span class="wl">Files</span><span class="wv"><code>package.json</code>, <code>.env.example</code>, <code>seed.sql</code>, <code>scripts/doctor.js</code></span>
       <span class="wl">Create them</span><span class="wv">In the Explorer, right-click <code>the project root</code> → <span class="ui">New&nbsp;File</span> → type the name with its extension → paste → <span class="kbd">Ctrl&nbsp;S</span></span>
     </div>
@@ -207,13 +207,13 @@ restored <span class="b">0</span> schedule(s)
       <div class="hs">
         <div class="hsbox"><span class="hsn">Four areas, four folders</span><span class="hsd">engine · editor · api · integrations</span></div>
         <div class="hsar"><span>npm workspaces</span><i></i></div>
-        <div class="hsbox now"><span class="hsn">§3.1b — one repository</span><span class="hsd">npm run dev · doctor</span></div>
+        <div class="hsbox now"><span class="hsn">3.1b — one repository</span><span class="hsd">npm run dev · doctor</span></div>
         <div class="hsar"><span>the same five<br>commands</span><i></i></div>
-        <div class="hsbox"><span class="hsn">§3.2c — CI, and §2.7b — deploy</span><span class="hsd">run exactly what you run</span></div>
+        <div class="hsbox"><span class="hsn">3.2c — CI, and 2.7b — deploy</span><span class="hsd">run exactly what you run</span></div>
       </div>
       <div class="wires">
       <span class="wl">Receives</span><span class="wv">the four areas as workspace folders. npm links them for you, so <code>import { runWorkflow } from '../../packages/engine/engine.js'</code> works with no build step and nothing published anywhere.</span>
-      <span class="wl">Hands on</span><span class="wv">one command. CI (§3.2c) runs <code>npm run lint / test / e2e</code> and the server (§2.7b) builds the same <code>Dockerfile</code> — so &#8220;works on my machine&#8221; and &#8220;works in CI&#8221; stop being different questions.</span>
+      <span class="wl">Hands on</span><span class="wv">one command. CI (Sec. 3.2c) runs <code>npm run lint / test / e2e</code> and the server (Sec. 2.7b) builds the same <code>Dockerfile</code> — so &#8220;works on my machine&#8221; and &#8220;works in CI&#8221; stop being different questions.</span>
       <span class="wl">Binds together</span><span class="wv">the <code>.env</code> contract. Every part above reads its keys from the same file, and <code>doctor.js</code> is the one place that knows which keys must exist.</span>
       <span class="wl">Seam to agree</span><span class="wv">nobody adds a dependency without saying so in the group chat. A lockfile conflict at 11 p.m. in Week 13 is the most avoidable disaster available to this project.</span>
       </div>

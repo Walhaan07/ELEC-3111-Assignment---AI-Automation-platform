@@ -10,7 +10,7 @@
       validates, it times out, it retries, and it tells you which node went wrong.</p>
 
     <div class="where">
-      <span class="wl">Program</span><span class="wv">VS&nbsp;Code — see §1.10 for the window, §1.11 for the loop</span>
+      <span class="wl">Program</span><span class="wv">VS&nbsp;Code — see Sec. 1.10 for the window, Sec. 1.11 for the loop</span>
       <span class="wl">Files</span><span class="wv"><code>packages/engine/errors.js</code>, <code>packages/engine/http.js</code>, <code>packages/engine/engine.js</code></span>
       <span class="wl">Create them</span><span class="wv">In the Explorer, right-click <code>packages/engine</code> → <span class="ui">New&nbsp;File</span> → type the name with its extension → paste → <span class="kbd">Ctrl&nbsp;S</span></span>
     </div>
@@ -301,15 +301,15 @@ Weather → {"current_condition":[{"temp_C":"18",…}]} …
       <div class="hs">
         <div class="hsbox"><span class="hsn">Nothing yet</span><span class="hsd">a workflow object typed by hand</span></div>
         <div class="hsar"><span>hard-coded<br>workflow</span><i></i></div>
-        <div class="hsbox now"><span class="hsn">§2.1b — the engine</span><span class="hsd">runWorkflow(wf, nodeTypes)</span></div>
+        <div class="hsbox now"><span class="hsn">2.1b — the engine</span><span class="hsd">runWorkflow(wf, nodeTypes)</span></div>
         <div class="hsar"><span>{ results, log,<br>steps }</span><i></i></div>
-        <div class="hsbox"><span class="hsn">§2.2b — the server</span><span class="hsd">stores it, runs it, records it</span></div>
+        <div class="hsbox"><span class="hsn">2.2b — the server</span><span class="hsd">stores it, runs it, records it</span></div>
       </div>
       <div class="wires">
       <span class="wl">Hands out</span><span class="wv">the <code>ctx</code> object — <b>every node ever written depends on these four names</b>: <code>getInputData</code>, <code>getNodeParameter</code>, <code>helpers</code>, <code>logger</code>. Freeze it in Week 3 and nobody is ever blocked waiting for anybody.</span>
-      <span class="wl">Hands on</span><span class="wv">a plain object <code>{ results, log, steps }</code>. §2.2b writes <code>results</code> into <code>executions.data</code> and <code>log</code> into <code>executions.log</code> — no translation step in between.</span>
+      <span class="wl">Hands on</span><span class="wv">a plain object <code>{ results, log, steps }</code>. Sec. 2.2b writes <code>results</code> into <code>executions.data</code> and <code>log</code> into <code>executions.log</code> — no translation step in between.</span>
       <span class="wl">Shared by all</span><span class="wv"><code>errors.js</code> and <code>http.js</code>. Every later part imports these two rather than writing its own retry loop or its own error class.</span>
-      <span class="wl">Seam to agree</span><span class="wv">a node returns <b>an array of branches, each an array of items</b>. §2.2c draws one edge handle per branch; §2.4b prunes on an empty one. Change this and four people rewrite code.</span>
+      <span class="wl">Seam to agree</span><span class="wv">a node returns <b>an array of branches, each an array of items</b>. Sec. 2.2c draws one edge handle per branch; Sec. 2.4b prunes on an empty one. Change this and four people rewrite code.</span>
       </div>
     </div>
 

@@ -6,7 +6,7 @@
 
   <div class="stack">
     <div class="where">
-      <span class="wl">Program</span><span class="wv">VS&nbsp;Code — see §1.10 for the window, §1.11 for the loop</span>
+      <span class="wl">Program</span><span class="wv">VS&nbsp;Code — see Sec. 1.10 for the window, Sec. 1.11 for the loop</span>
       <span class="wl">Files</span><span class="wv"><code>packages/nodes/google/gmail.js</code>, <code>core/code.js</code>, <code>ai/anthropic.js</code></span>
       <span class="wl">Create them</span><span class="wv">In the Explorer, right-click <code>packages/nodes</code> → <span class="ui">New&nbsp;File</span> → type the name with its extension → paste → <span class="kbd">Ctrl&nbsp;S</span></span>
     </div>
@@ -274,16 +274,16 @@ done  Gmail    <span class="g">messageId 18f2c… · thread 18f2c…</span></div
     <div class="conn">
       <h5>How this part connects to the others</h5>
       <div class="hs">
-        <div class="hsbox"><span class="hsn">§2.6b googleRequest() · §2.3b resolve()</span><span class="hsd">the shared helper</span></div>
+        <div class="hsbox"><span class="hsn">2.6b googleRequest() · 2.3b resolve()</span><span class="hsd">the shared helper</span></div>
         <div class="hsar"><span>same helper</span><i></i></div>
-        <div class="hsbox now"><span class="hsn">§2.6c — Gmail · Code · AI</span><span class="hsd">the three hardest nodes</span></div>
+        <div class="hsbox now"><span class="hsn">2.6c — Gmail · Code · AI</span><span class="hsd">the three hardest nodes</span></div>
         <div class="hsar"><span>classified items</span><i></i></div>
         <div class="hsbox"><span class="hsn">The Week 14 demo</span><span class="hsd">webhook → AI → IF → Gmail + Sheets</span></div>
       </div>
       <div class="wires">
       <span class="wl">Receives</span><span class="wv">the Google helper for Gmail, and the expression resolver for the AI node&#8217;s prompt — which is what lets somebody type <code>{{ $json.body.message }}</code> into a prompt box in the sidebar.</span>
-      <span class="wl">Hands on</span><span class="wv">a <code>json</code> object the IF node of A2 branches on. The AI node does not know an IF node exists; it returns items, and §2.1b&#8217;s branch pruning does the rest.</span>
-      <span class="wl">Deliberately apart</span><span class="wv">the Code node is the only part that does <em>not</em> use the shared helper. It is a worker thread with its own memory limit, isolated on purpose, and §3.2b tests it on its own.</span>
+      <span class="wl">Hands on</span><span class="wv">a <code>json</code> object the IF node of A2 branches on. The AI node does not know an IF node exists; it returns items, and Sec. 2.1b&#8217;s branch pruning does the rest.</span>
+      <span class="wl">Deliberately apart</span><span class="wv">the Code node is the only part that does <em>not</em> use the shared helper. It is a worker thread with its own memory limit, isolated on purpose, and Sec. 3.2b tests it on its own.</span>
       <span class="wl">Seam to agree</span><span class="wv">the AI node&#8217;s output key. Everything downstream reads <code>$json.urgency</code>; change the prompt to emit <code>priority</code> and three workflows break silently. Put the key in the node&#8217;s default prompt.</span>
       </div>
     </div>

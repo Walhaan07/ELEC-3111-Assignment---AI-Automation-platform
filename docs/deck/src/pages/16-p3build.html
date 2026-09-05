@@ -6,7 +6,7 @@
 
   <div class="stack">
     <div class="where">
-      <span class="wl">Program</span><span class="wv">VS&nbsp;Code — see §1.10 for the window, §1.11 for the loop</span>
+      <span class="wl">Program</span><span class="wv">VS&nbsp;Code — see Sec. 1.10 for the window, Sec. 1.11 for the loop</span>
       <span class="wl">Files</span><span class="wv"><code>packages/nodes/core/httpRequest.ts</code>, <code>packages/engine/expressions.js</code>, <code>apps/editor/src/ParameterPanel.tsx</code></span>
       <span class="wl">Create them</span><span class="wv">In the Explorer, right-click <code>packages/nodes/core and apps/editor/src</code> → <span class="ui">New&nbsp;File</span> → type the name with its extension → paste → <span class="kbd">Ctrl&nbsp;S</span></span>
     </div>
@@ -236,7 +236,7 @@ export function resolve(value, item, results, itemIndex = 0) {
   if (whole) return evaluate(whole[1]);                      // …so keep the real type
   return value.replace(/\{\{([\s\S]+?)\}\}/g, (_, e) =&gt; String(evaluate(e) ?? ''));
 }</code></pre></div>
-        <p>Now wire it into the engine. This is the whole change to §2.1b — three lines, and from
+        <p>Now wire it into the engine. This is the whole change to Sec. 2.1b — three lines, and from
           this moment every setting of every node supports expressions, forever:</p>
         <div class="fwrap"><span class="fname">packages/engine/engine.js — inside the ctx object</span>
 <pre class="code" data-lang="js"><code>getNodeParameter(name, i = 0, fallback = undefined) {
@@ -247,7 +247,7 @@ export function resolve(value, item, results, itemIndex = 0) {
   return resolve(raw, items[i], results, i);        // &lt;- the only new line
 },</code></pre></div>
         <p>Node authors never see braces. <b>Say plainly in the report</b> that shadowing is a speed
-          bump, not a sandbox — the real isolation story is the Code node in §2.6c.</p>
+          bump, not a sandbox — the real isolation story is the Code node in Sec. 2.6c.</p>
       </div></div>
     </div>
 
@@ -322,16 +322,16 @@ export function resolve(value, item, results, itemIndex = 0) {
     <div class="conn">
       <h5>How this part connects to the others</h5>
       <div class="hs">
-        <div class="hsbox"><span class="hsn">§2.2b — /rest/node-types</span><span class="hsd">every description, as JSON</span></div>
+        <div class="hsbox"><span class="hsn">2.2b — /rest/node-types</span><span class="hsd">every description, as JSON</span></div>
         <div class="hsar"><span>properties[]</span><i></i></div>
-        <div class="hsbox now"><span class="hsn">§2.3b — schema-driven UI</span><span class="hsd">one panel · expressions</span></div>
+        <div class="hsbox now"><span class="hsn">2.3b — schema-driven UI</span><span class="hsd">one panel · expressions</span></div>
         <div class="hsar"><span>parameters{}</span><i></i></div>
-        <div class="hsbox"><span class="hsn">§2.6b / §2.6c — six new nodes</span><span class="hsd">written by six people at once</span></div>
+        <div class="hsbox"><span class="hsn">2.6b / 2.6c — six new nodes</span><span class="hsd">written by six people at once</span></div>
       </div>
       <div class="wires">
       <span class="wl">Receives</span><span class="wv">the <code>description</code> of every registered node. Add a file to <code>packages/nodes</code>, restart, refresh — the form exists. <b>This is the single thing that makes the Week 8 node surge possible.</b></span>
-      <span class="wl">Hands on</span><span class="wv">a filled <code>parameters</code> object into the workflow JSON of §2.2b, saved by the canvas of §2.2c.</span>
-      <span class="wl">Changes the engine</span><span class="wv">by exactly one line: <code>getNodeParameter</code> now calls <code>resolve()</code>. From here, every node in §2.6b and §2.6c gets expressions for free without knowing they exist.</span>
+      <span class="wl">Hands on</span><span class="wv">a filled <code>parameters</code> object into the workflow JSON of Sec. 2.2b, saved by the canvas of Sec. 2.2c.</span>
+      <span class="wl">Changes the engine</span><span class="wv">by exactly one line: <code>getNodeParameter</code> now calls <code>resolve()</code>. From here, every node in Sec. 2.6b and Sec. 2.6c gets expressions for free without knowing they exist.</span>
       <span class="wl">Seam to agree</span><span class="wv">the property <code>type</code> vocabulary — <code>string · number · boolean · options · json</code>. A node author who invents a seventh type gets a blank field, so add it to the panel first.</span>
       </div>
     </div>

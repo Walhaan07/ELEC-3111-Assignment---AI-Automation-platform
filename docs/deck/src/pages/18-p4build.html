@@ -6,7 +6,7 @@
 
   <div class="stack">
     <div class="where">
-      <span class="wl">Program</span><span class="wv">VS&nbsp;Code — see §1.10 for the window, §1.11 for the loop</span>
+      <span class="wl">Program</span><span class="wv">VS&nbsp;Code — see Sec. 1.10 for the window, Sec. 1.11 for the loop</span>
       <span class="wl">Files</span><span class="wv"><code>apps/api/webhooks.js</code>, <code>apps/api/schedules.js</code>, <code>apps/api/runner.js</code></span>
       <span class="wl">Create them</span><span class="wv">In the Explorer, right-click <code>apps/api</code> → <span class="ui">New&nbsp;File</span> → type the name with its extension → paste → <span class="kbd">Ctrl&nbsp;S</span></span>
     </div>
@@ -330,16 +330,16 @@ restored <span class="b">1</span> schedule(s)
     <div class="conn">
       <h5>How this part connects to the others</h5>
       <div class="hs">
-        <div class="hsbox"><span class="hsn">§2.2b db.js · §2.1b engine</span><span class="hsd">pool · runWorkflow()</span></div>
+        <div class="hsbox"><span class="hsn">2.2b db.js · 2.1b engine</span><span class="hsd">pool · runWorkflow()</span></div>
         <div class="hsar"><span>runById()</span><i></i></div>
-        <div class="hsbox now"><span class="hsn">§2.4b — the triggers</span><span class="hsd">webhook · cron · runner</span></div>
+        <div class="hsbox now"><span class="hsn">2.4b — the triggers</span><span class="hsd">webhook · cron · runner</span></div>
         <div class="hsar"><span>executions rows</span><i></i></div>
-        <div class="hsbox"><span class="hsn">§2.2c — the executions list</span><span class="hsd">and §2.7b&#8217;s k6 benchmark</span></div>
+        <div class="hsbox"><span class="hsn">2.2c — the executions list</span><span class="hsd">and Sec. 2.7b&#8217;s k6 benchmark</span></div>
       </div>
       <div class="wires">
       <span class="wl">Receives</span><span class="wv">the database pool and the engine, unchanged. This part adds no new way of running a workflow — it adds new <em>reasons</em> to run one.</span>
       <span class="wl">Hands out</span><span class="wv"><code>runById(workflowId, triggerItems, mode)</code>. The manual Run route, the webhook and the scheduler all funnel through it, so the concurrency limit and the execution row exist once.</span>
-      <span class="wl">Hands on</span><span class="wv">a row in <code>executions</code> with <code>mode</code> set. §2.2c lists it, §2.7b measures it, and the report quotes it.</span>
+      <span class="wl">Hands on</span><span class="wv">a row in <code>executions</code> with <code>mode</code> set. Sec. 2.2c lists it, Sec. 2.7b measures it, and the report quotes it.</span>
       <span class="wl">Seam to agree</span><span class="wv">the trigger item shape <code>{ headers, query, body, method, receivedAt }</code>. Every workflow the group builds writes <code>{{ $json.body.… }}</code> against it, so changing it later breaks all of them at once.</span>
       </div>
     </div>
