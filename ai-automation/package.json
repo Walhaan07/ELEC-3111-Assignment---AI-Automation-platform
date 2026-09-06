@@ -1,0 +1,43 @@
+{
+  "name": "ai-automation",
+  "version": "1.0.0",
+  "private": true,
+  "description": "An end-to-end AI automation platform - a flexible alternative to n8n (ELEC 3111, Group 2)",
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "doctor": "node scripts/doctor.js",
+    "predev": "npm run doctor",
+    "dev": "npm-run-all --parallel dev:api dev:editor",
+    "dev:api": "node --watch apps/api/server.js",
+    "dev:editor": "npm run dev --workspace @ai-automation/editor",
+    "start": "node apps/api/server.js",
+    "build": "npm run build --workspace @ai-automation/editor",
+    "migrate": "node scripts/migrate.js",
+    "seed": "node scripts/migrate.js --seed",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "coverage": "vitest run --coverage",
+    "e2e": "playwright test",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "typecheck": "tsc --noEmit -p apps/editor/tsconfig.json",
+    "guide": "node scripts/build-guide-pdf.js"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.63.0",
+    "@vitest/coverage-v8": "^3.2.4",
+    "eslint": "^10.10.0",
+    "globals": "^17.12.0",
+    "npm-run-all2": "^8.0.4",
+    "playwright-core": "^1.63.0",
+    "vitest": "^3.2.4"
+  }
+}

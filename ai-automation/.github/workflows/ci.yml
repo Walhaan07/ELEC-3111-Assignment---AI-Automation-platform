@@ -1,0 +1,65 @@
+name: ci
+on: [push, pull_request]
+
+# a second push cancels the first run instead of queueing behind it
+concurrency:
+  group: "ci-${{ github.ref }}"
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      DATABASE_URL: postgres://postgres:dev@localhost:5432/automation
+      BASE_URL: http://localhost:5678
+      EDITOR_ORIGIN: http://localhost:5173
+      ENCRYPTION_KEY: "00000000000000000000000000000000000000000000000000000000000000ff"
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: dev
+          POSTGRES_DB: automation
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: cp .env.example .env
+      - run: npm run migrate
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck the editor
+        run: npm run typecheck
+
+      - name: Levels 1 and 2 - engine, nodes, API
+        run: npm test
+
+      - name: Level 3 - the browser test
+        run: |
+          npx playwright install --with-deps chromium
+          npm run e2e
+
+      - name: Build the editor
+        run: npm run build
+
+      - uses: actions/upload-artifact@v4
+        if: failure()                       # only when something broke, and it self-deletes
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

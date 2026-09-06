@@ -1,0 +1,50 @@
+# The production stack: three containers and a certificate.
+# Run from the repository root:
+#   docker compose -f infra/docker-compose.prod.yml up -d --build
+services:
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports: ["80:80", "443:443"]
+    volumes:
+      - ./infra/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+    depends_on:
+      api: { condition: service_healthy }
+
+  api:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file: ../.env
+    environment:
+      DATABASE_URL: postgres://postgres:${DB_PASSWORD}@postgres:5432/automation
+      NODE_ENV: production
+    depends_on:
+      postgres: { condition: service_healthy }
+    # Identical limits to the n8n stack in benchmarks/, or the comparison is
+    # not a comparison.
+    deploy:
+      resources:
+        limits: { cpus: "1.0", memory: 1G }
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: automation
+    volumes: ["pgdata:/var/lib/postgresql/data"]
+    # NO ports: - the database is reachable only from the other containers
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d automation"]
+      interval: 10s
+      retries: 5
+
+volumes:
+  caddy_data: {}
+  pgdata: {}
