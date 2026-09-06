@@ -23,11 +23,24 @@ export default defineConfig({
       ? { executablePath: process.env.PW_CHROMIUM_PATH }
       : {},
   },
-  webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:5173',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
-    stdout: 'pipe',
-  },
+  // Both halves, waited for separately. Waiting only on the editor is a trap:
+  // Vite is ready in about 300 ms and the API takes a second or two, so the
+  // first test fires at an API that is not listening yet.
+  webServer: [
+    {
+      command: 'npm run dev:api',
+      url: 'http://localhost:5678/healthz',
+      reuseExistingServer: !process.env.CI,
+      timeout: 120_000,
+      stdout: 'pipe',
+      stderr: 'pipe',
+    },
+    {
+      command: 'npm run dev:editor',
+      url: 'http://localhost:5173',
+      reuseExistingServer: !process.env.CI,
+      timeout: 120_000,
+      stdout: 'pipe',
+    },
+  ],
 });

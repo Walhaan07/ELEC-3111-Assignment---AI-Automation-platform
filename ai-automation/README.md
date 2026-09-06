@@ -75,6 +75,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 | `npm run lint` | ESLint |
 | `npm run typecheck` | TypeScript over the editor |
 | `npm run build` | Production build of the editor |
+| `npm run guide` | Rebuild the printable guide PDF from the source files |
 | `npm run doctor` | "Why won't it start?" |
 
 ## The three ideas the whole thing rests on
@@ -105,7 +106,7 @@ Levels 1–3 run on every push (`.github/workflows/ci.yml`). Level 4 is the
 checklist in [`docs/demo-checklist.md`](docs/demo-checklist.md).
 
 ```bash
-npm test     # 92 tests, about five seconds, no internet needed
+npm test     # 158 tests, about seven seconds, no internet needed
 npm run e2e  # 2 browser tests, about seven seconds
 ```
 

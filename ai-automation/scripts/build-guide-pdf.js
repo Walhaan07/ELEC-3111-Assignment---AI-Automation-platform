@@ -104,7 +104,7 @@ const cols = (...items) => `<div class="cols">${items.map((i) => `<div>${i}</div
 
 const stats = {
   nodes: 13,
-  tests: 142,
+  tests: 158,
   routes: 14,
   files: Number(process.env.FILE_COUNT ?? 0),
 };
@@ -512,22 +512,24 @@ const testingPage = section('Four levels of testing, and what each one catches',
 ${table(['Level', 'What it catches', 'How long', 'Where'], [
   ['1 · engine', 'order, branch pruning, every guard', 'milliseconds', '<code>packages/engine/*.test.js</code>'],
   ['2 · nodes', 'the right request, built from the settings — against a fake server', 'seconds', '<code>packages/nodes/**/*.test.js</code>'],
+  ['', 'the AI node too: prose instead of JSON, a missing key, an overloaded model', '', '<code>packages/nodes/ai/anthropic.test.js</code>'],
   ['2b · API', 'the five status codes, webhooks, idempotency, schedules', 'a second', '<code>apps/api/server.test.js</code>'],
   ['3 · browser', 'drag, connect, run, reload', 'seconds', '<code>e2e/build-and-run.spec.ts</code>'],
   ['4 · by hand', 'a real email; a real spreadsheet row', 'before every demo', '<code>docs/demo-checklist.md</code>'],
 ])}
-${listing('npm test — no internet, no Google credentials', ` ✓ packages/engine/engine.test.js       (26 tests)
+${listing('npm test — no internet, no Google credentials, no API key', ` ✓ packages/engine/engine.test.js       (26 tests)
  ✓ packages/engine/http.test.js         (11 tests)
  ✓ packages/nodes/core/flow.test.js     (41 tests)
  ✓ packages/nodes/core/code.test.js     (12 tests)
  ✓ packages/nodes/google/sheets.test.js (10 tests)
  ✓ packages/nodes/google/gmail.test.js  (12 tests)
+ ✓ packages/nodes/ai/anthropic.test.js  (16 tests)
  ✓ apps/api/server.test.js              (20 tests)
  ✓ apps/editor/src/convert.test.ts      (10 tests)
 
- Test Files  8 passed (8)
-      Tests  142 passed (142)
-   Duration  6.5 s`)}
+ Test Files  9 passed (9)
+      Tests  158 passed (158)
+   Duration  7.0 s`)}
 ${listing('coverage — branch coverage is the honest number', `File          | % Stmts | % Branch | % Funcs
 --------------|---------|----------|--------
  engine.js    |  96.51  |  79.64   |  82.35
