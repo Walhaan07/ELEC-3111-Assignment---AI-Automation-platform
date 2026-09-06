@@ -1,3 +1,4 @@
+import { pathToFileURL } from 'node:url';
 import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
@@ -259,7 +260,12 @@ export async function start() {
 }
 
 // `node server.js` starts it; `import { app }` in a test does not.
-if (process.argv[1] && import.meta.url === `file://${process.argv[1]}`) {
+//
+// pathToFileURL, not string concatenation: on Windows argv[1] is
+// C:\Users\you\server.js while import.meta.url is file:///C:/Users/you/server.js,
+// so `file://` + argv[1] never matches and the server would define everything
+// and then exit without ever listening.
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   start().catch((err) => {
     console.error('could not start:', err.message);
     process.exit(1);

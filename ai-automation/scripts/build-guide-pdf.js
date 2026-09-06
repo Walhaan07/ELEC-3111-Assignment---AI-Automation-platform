@@ -11,6 +11,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { chromium } from 'playwright-core';
 import { rootDir } from '../apps/api/env.js';
 
@@ -808,7 +809,8 @@ const browser = await chromium.launch(
   process.env.PW_CHROMIUM_PATH ? { executablePath: process.env.PW_CHROMIUM_PATH } : {},
 );
 const page = await browser.newPage();
-await page.goto(`file://${htmlPath}`, { waitUntil: 'load' });
+// pathToFileURL, not string concatenation - a Windows path needs escaping
+await page.goto(pathToFileURL(htmlPath).href, { waitUntil: 'load' });
 await page.pdf({
   path: OUT,
   format: 'A4',
