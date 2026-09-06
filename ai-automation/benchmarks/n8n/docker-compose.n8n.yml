@@ -1,0 +1,58 @@
+# n8n, configured the same way we configure ourselves - not its simplest
+# setup, or the comparison is unfair and a marker will notice.
+#
+# The version is pinned and cited in the report.
+services:
+  n8n:
+    image: n8nio/n8n:1.70.1
+    restart: unless-stopped
+    environment:
+      DB_TYPE: postgresdb
+      DB_POSTGRESDB_HOST: n8n-db
+      DB_POSTGRESDB_DATABASE: n8n
+      DB_POSTGRESDB_USER: postgres
+      DB_POSTGRESDB_PASSWORD: bench
+      EXECUTIONS_MODE: queue
+      QUEUE_BULL_REDIS_HOST: redis
+      GENERIC_TIMEZONE: Australia/Sydney
+      N8N_DIAGNOSTICS_ENABLED: "false"
+    ports: ["5679:5678"]
+    depends_on: [n8n-db, redis]
+    deploy:
+      resources:
+        limits: { cpus: "1.0", memory: 1G }
+
+  n8n-worker:
+    image: n8nio/n8n:1.70.1
+    command: worker
+    restart: unless-stopped
+    environment:
+      DB_TYPE: postgresdb
+      DB_POSTGRESDB_HOST: n8n-db
+      DB_POSTGRESDB_DATABASE: n8n
+      DB_POSTGRESDB_USER: postgres
+      DB_POSTGRESDB_PASSWORD: bench
+      EXECUTIONS_MODE: queue
+      QUEUE_BULL_REDIS_HOST: redis
+    depends_on: [n8n-db, redis]
+    deploy:
+      replicas: 2
+      resources:
+        limits: { cpus: "1.0", memory: 1G }
+
+  n8n-db:
+    image: postgres:16
+    environment:
+      POSTGRES_PASSWORD: bench
+      POSTGRES_DB: n8n
+    volumes: ["n8ndata:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d n8n"]
+      interval: 10s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+
+volumes:
+  n8ndata: {}

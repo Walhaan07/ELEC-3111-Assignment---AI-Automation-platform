@@ -1,0 +1,10 @@
+{
+  "name": "@ai-automation/nodes",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "index.js",
+  "dependencies": {
+    "@ai-automation/engine": "*"
+  }
+}

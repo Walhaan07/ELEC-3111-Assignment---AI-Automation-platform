@@ -1,0 +1,14 @@
+# TLS, headers and compression in nine lines. Caddy obtains and renews the
+# Let's Encrypt certificate by itself - there is no step 2.
+your-domain.com {
+  encode gzip
+
+  header {
+    Strict-Transport-Security "max-age=31536000"
+    X-Content-Type-Options    "nosniff"
+    Referrer-Policy           "strict-origin-when-cross-origin"
+    -Server
+  }
+
+  reverse_proxy api:5678
+}

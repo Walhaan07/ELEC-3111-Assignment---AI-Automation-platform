@@ -1,0 +1,13 @@
+{
+  "name": "@ai-automation/engine",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "engine.js",
+  "exports": {
+    ".": "./engine.js",
+    "./errors.js": "./errors.js",
+    "./http.js": "./http.js",
+    "./expressions.js": "./expressions.js"
+  }
+}

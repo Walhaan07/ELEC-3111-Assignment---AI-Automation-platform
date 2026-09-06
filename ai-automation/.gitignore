@@ -1,0 +1,17 @@
+node_modules/
+dist/
+coverage/
+backups/
+.env
+.env.local
+*.pem
+*.log
+.DS_Store
+.vscode/
+.idea/
+docs/.guide.html
+test-results/
+playwright-report/
+blob-report/
+benchmarks/results/*.json
+!benchmarks/results/.gitkeep
