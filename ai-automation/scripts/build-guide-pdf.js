@@ -104,7 +104,7 @@ const cols = (...items) => `<div class="cols">${items.map((i) => `<div>${i}</div
 
 const stats = {
   nodes: 13,
-  tests: 158,
+  tests: 165,
   routes: 14,
   files: Number(process.env.FILE_COUNT ?? 0),
 };
@@ -521,15 +521,16 @@ ${listing('npm test — no internet, no Google credentials, no API key', ` ✓ p
  ✓ packages/engine/http.test.js         (11 tests)
  ✓ packages/nodes/core/flow.test.js     (41 tests)
  ✓ packages/nodes/core/code.test.js     (12 tests)
+ ✓ packages/nodes/core/triggers.test.js  (7 tests)
  ✓ packages/nodes/google/sheets.test.js (10 tests)
  ✓ packages/nodes/google/gmail.test.js  (12 tests)
  ✓ packages/nodes/ai/anthropic.test.js  (16 tests)
  ✓ apps/api/server.test.js              (20 tests)
  ✓ apps/editor/src/convert.test.ts      (10 tests)
 
- Test Files  9 passed (9)
-      Tests  158 passed (158)
-   Duration  7.0 s`)}
+ Test Files  10 passed (10)
+      Tests  165 passed (165)
+   Duration  7.2 s`)}
 ${listing('coverage — branch coverage is the honest number', `File          | % Stmts | % Branch | % Funcs
 --------------|---------|----------|--------
  engine.js    |  96.51  |  79.64   |  82.35

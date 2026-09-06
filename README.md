@@ -49,6 +49,6 @@ container limits, for an architectural and performance comparison.
 | | |
 | --- | --- |
 | Node types | 13 — triggers, flow, transform, Google, AI |
-| Automated tests | 158 unit/integration + 2 browser tests |
+| Automated tests | 165 unit/integration + 2 browser tests |
 | HTTP routes | 14 REST routes, plus webhooks and OAuth |
 | Live canvas | React Flow, with per-node run state streamed over SSE |

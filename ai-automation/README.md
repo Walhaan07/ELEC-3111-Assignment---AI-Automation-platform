@@ -106,7 +106,7 @@ Levels 1–3 run on every push (`.github/workflows/ci.yml`). Level 4 is the
 checklist in [`docs/demo-checklist.md`](docs/demo-checklist.md).
 
 ```bash
-npm test     # 158 tests, about seven seconds, no internet needed
+npm test     # 165 tests, about seven seconds, no internet needed
 npm run e2e  # 2 browser tests, about seven seconds
 ```
 

@@ -54,7 +54,21 @@ export const webhookTrigger = {
   async execute(ctx) {
     // The request was turned into items by apps/api/webhooks.js before the run started.
     const items = ctx.getInputData();
-    return [items.length ? items : [{ json: {} }]];
+    if (items.length && Object.keys(items[0].json ?? {}).length) return [items];
+
+    // Pressing Run by hand on a webhook workflow is how you build one, so the
+    // trigger emits an item of the RIGHT SHAPE rather than an empty object.
+    // Without this, every {{ $json.body.… }} downstream fails with "cannot read
+    // properties of undefined" before you have sent a single request.
+    return [[{
+      json: {
+        headers: {},
+        query: {},
+        body: {},
+        method: ctx.getNodeParameter('method', 0, 'POST'),
+        receivedAt: new Date().toISOString(),
+      },
+    }]];
   },
 };
 
