@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Page, type APIRequestContext } from '@playwright/test';
 
 /**
  * One browser test, walking every seam in the system:
@@ -11,14 +11,29 @@ import { test, expect, type Page } from '@playwright/test';
 
 const API = 'http://localhost:5678';
 
-async function newWorkflow(request: any, name: string) {
+/** Everything this file creates, so it can tidy up after itself. */
+const created: string[] = [];
+
+async function newWorkflow(request: APIRequestContext, name: string) {
   // start from a known state: make the workflow through the API, not by clicking
-  const created = await request.post(`${API}/rest/workflows`, {
+  const response = await request.post(`${API}/rest/workflows`, {
     data: { name, nodes: [], connections: {} },
   });
-  expect(created.ok()).toBeTruthy();
-  return (await created.json()).id as string;
+  expect(response.ok()).toBeTruthy();
+  const id = (await response.json()).id as string;
+  created.push(id);
+  return id;
 }
+
+// A test that leaves rows behind turns the workflow list into a wall of
+// "e2e 1788714212909" after a few runs, and buries the real workflows.
+test.afterAll(async ({ playwright }) => {
+  const request = await playwright.request.newContext();
+  for (const id of created.splice(0)) {
+    await request.delete(`${API}/rest/workflows/${id}`).catch(() => {});
+  }
+  await request.dispose();
+});
 
 /**
  * Wait until the canvas has stopped moving.
