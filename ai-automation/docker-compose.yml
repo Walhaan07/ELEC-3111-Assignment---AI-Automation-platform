@@ -1,8 +1,16 @@
-# The development database. `npm run dev` brings this up first.
+# The development database.
+#
+#   docker compose up -d --wait     start it (once)
+#   docker compose ps               is it running?
+#   docker compose down             stop it, keeping the data
+#   docker compose down -v          stop it and wipe the data
 services:
   postgres:
     image: postgres:16
     container_name: ai-automation-db
+    # Comes back by itself when Docker Desktop starts, so the daily routine is
+    # `npm run dev` and nothing else. `docker compose down` still stops it.
+    restart: unless-stopped
     environment:
       POSTGRES_PASSWORD: dev
       POSTGRES_DB: automation

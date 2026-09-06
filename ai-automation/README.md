@@ -25,6 +25,15 @@ npm run dev                  # editor 5173 · api 5678
 
 Open <http://localhost:5173>, click **Hello weather**, press **Run**.
 
+That whole list is once, ever. **After the first time it is one command:**
+
+```bash
+npm run dev
+```
+
+The database container restarts with Docker Desktop, so it is already waiting
+for you. `docker compose down` stops it if you want it gone.
+
 `npm run dev` runs `scripts/doctor.js` first. If anything is missing, the
 doctor names the problem *and the exact command that fixes it* — a broken
 start can never happen silently.
