@@ -1,6 +1,6 @@
 import { test, expect, describe, beforeAll, afterAll, beforeEach } from 'vitest';
 import http from 'node:http';
-import { httpRequest } from './http.js';
+import { httpRequest, parseBody } from './http.js';
 
 /**
  * The shared HTTP helper.
@@ -33,14 +33,49 @@ beforeEach(() => {
   };
 });
 
-describe('the happy path', () => {
+describe('reading the body', () => {
   test('JSON comes back parsed', async () => {
     expect(await httpRequest(`${base}/x`)).toEqual({ ok: true });
   });
 
-  test('anything else comes back as { data }', async () => {
+  test('plain text comes back as { data }', async () => {
     handler = (_req, res) => { res.writeHead(200, { 'content-type': 'text/plain' }); res.end('hello'); };
     expect(await httpRequest(`${base}/x`)).toEqual({ data: 'hello' });
+  });
+
+  // wttr.in's ?format=j1 - the endpoint in our own starter workflow - serves
+  // JSON as text/plain. Trusting the header alone handed the next node a
+  // string, and every expression written against the real shape failed.
+  test('JSON mislabelled as text/plain is still parsed', async () => {
+    handler = (_req, res) => {
+      res.writeHead(200, { 'content-type': 'text/plain' });
+      res.end('{"current_condition":[{"temp_C":"18"}]}');
+    };
+    const body = await httpRequest(`${base}/x`);
+    expect(body.current_condition[0].temp_C).toBe('18');
+  });
+
+  test('a JSON array with no content type at all is parsed', async () => {
+    handler = (_req, res) => { res.writeHead(200); res.end('[{"id":1}]'); };
+    expect(await httpRequest(`${base}/x`)).toEqual([{ id: 1 }]);
+  });
+
+  test('text that merely starts with a brace is left alone', () => {
+    expect(parseBody('{not json after all')).toEqual({ data: '{not json after all' });
+  });
+
+  test('a JSON string or number keeps the { data } wrapper', () => {
+    expect(parseBody('"just a string"', 'application/json')).toEqual({ data: 'just a string' });
+    expect(parseBody('42', 'application/json')).toEqual({ data: 42 });
+  });
+
+  test('HTML is never mistaken for JSON', () => {
+    expect(parseBody('<html><body>Rate limited</body></html>', 'text/html'))
+      .toEqual({ data: '<html><body>Rate limited</body></html>' });
+  });
+
+  test('an empty body is an empty object', () => {
+    expect(parseBody('')).toEqual({});
   });
 
   test('204 No Content is an empty object, not a crash', async () => {
