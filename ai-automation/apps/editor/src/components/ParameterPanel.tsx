@@ -2,7 +2,7 @@ import { useEffect, useMemo } from 'react';
 // The very same resolver the engine uses, so the preview cannot disagree with
 // what will actually happen when the workflow runs.
 import { tryResolve } from '@ai-automation/engine/expressions.js';
-import type { NodeDescription, Property, WorkflowNode, Item } from '../types';
+import type { NodeDescription, Property, WorkflowNode, Item, Credential } from '../types';
 import { Icon, UI, UIIcon } from '../icons';
 
 /**
@@ -49,24 +49,54 @@ export function validateParameter(p: Property, value: unknown): string | null {
   return null;
 }
 
+/**
+ * Can this node run with the credential it has been given?
+ *
+ * Kept pure and exported so it can be tested without rendering anything: the
+ * Run button is disabled from exactly this answer.
+ */
+export function credentialProblem(
+  description: NodeDescription,
+  node: WorkflowNode,
+  available: Credential[],
+): string | null {
+  const needed = description.credentials?.[0];
+  if (!needed) return null;
+
+  const chosenId = node.credentials?.id;
+  if (!chosenId) {
+    return needed.required ? `Choose a ${needed.name} credential for this node` : null;
+  }
+
+  const chosen = available.find((c) => c.id === chosenId);
+  if (!chosen) return 'That credential has been deleted - choose another';
+  if (chosen.type !== needed.name) return `"${chosen.name}" is a ${chosen.type} credential, not ${needed.name}`;
+  if (!chosen.connected) return `"${chosen.name}" is not connected yet - press Connect on the Credentials page`;
+  return null;
+}
+
 export default function ParameterPanel({
   node,
   description,
   sampleItem,
+  credentials,
   onChange,
   onRename,
   onValidity,
   onToggleDisabled,
+  onCredentialChange,
   onClose,
   onDelete,
 }: {
   node: WorkflowNode;
   description: NodeDescription;
   sampleItem: Item | null;
+  credentials: Credential[];
   onChange: (parameters: Record<string, unknown>) => void;
   onRename: (name: string) => void;
   onValidity: (ok: boolean) => void;
   onToggleDisabled: (disabled: boolean) => void;
+  onCredentialChange: (credential: { id: string; name: string } | undefined) => void;
   onClose: () => void;
   onDelete: () => void;
 }) {
@@ -87,8 +117,12 @@ export default function ParameterPanel({
     return found;
   }, [visible, values]);
 
-  const errorKey = JSON.stringify(errors);
-  useEffect(() => { onValidity(Object.keys(errors).length === 0); }, [errorKey]);
+  const credentialError = credentialProblem(description, node, credentials);
+
+  const errorKey = JSON.stringify(errors) + (credentialError ?? '');
+  useEffect(() => {
+    onValidity(Object.keys(errors).length === 0 && credentialError === null);
+  }, [errorKey]);
 
   const set = (name: string, value: unknown) => onChange({ ...values, [name]: value });
 
@@ -115,7 +149,17 @@ export default function ParameterPanel({
       </div>
 
       <div className="side-body">
-        {visible.length === 0 && (
+        {description.credentials?.[0] && (
+          <CredentialPicker
+            needs={description.credentials[0]}
+            chosenId={node.credentials?.id}
+            available={credentials}
+            error={credentialError}
+            onChange={onCredentialChange}
+          />
+        )}
+
+        {visible.length === 0 && !description.credentials?.[0] && (
           <div className="notice">This node has no settings. Connect it and press Run.</div>
         )}
 
@@ -147,6 +191,71 @@ export default function ParameterPanel({
         </div>
       </div>
     </aside>
+  );
+}
+
+/**
+ * Which Google account this node acts as.
+ *
+ * The node declares what it needs (`credentials: [{ name: 'gmail' }]`) and this
+ * offers every connected credential of that type - the same schema-driven idea
+ * as the rest of the panel, so a new integration needs no work here either.
+ */
+function CredentialPicker({
+  needs,
+  chosenId,
+  available,
+  error,
+  onChange,
+}: {
+  needs: { name: string; required?: boolean };
+  chosenId?: string;
+  available: Credential[];
+  error: string | null;
+  onChange: (credential: { id: string; name: string } | undefined) => void;
+}) {
+  const matching = available.filter((c) => c.type === needs.name);
+
+  return (
+    <div className="field" data-testid="credential-picker">
+      <label className="field-label" htmlFor="credential">
+        Credential
+        {needs.required && <span className="req" title="required">*</span>}
+      </label>
+
+      {matching.length === 0 ? (
+        <div className="notice">
+          No <b>{needs.name}</b> credential yet. Open{' '}
+          <a className="link" href="#/credentials">Credentials</a>, add one, and press Connect.
+        </div>
+      ) : (
+        <select
+          id="credential"
+          className="select"
+          aria-invalid={Boolean(error)}
+          value={chosenId ?? ''}
+          onChange={(e) => {
+            const found = matching.find((c) => c.id === e.target.value);
+            onChange(found ? { id: found.id, name: found.name } : undefined);
+          }}
+          data-testid="input-credential"
+        >
+          <option value="">Choose an account…</option>
+          {matching.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}{c.connected ? '' : ' (not connected)'}
+            </option>
+          ))}
+        </select>
+      )}
+
+      {error && <div className="field-error" data-testid="error-credential">{error}</div>}
+      {!error && chosenId && (
+        <div className="field-hint">
+          Tokens stay on the server, encrypted. This node only ever sees the account.
+        </div>
+      )}
+    </div>
   );
 }
 

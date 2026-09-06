@@ -153,3 +153,40 @@ test('a workflow that cannot run says so, and names the node', async ({ page, re
   await expect(page.getByTestId('node-HTTP Request')).toHaveAttribute('data-state', 'error');
   await expect(page.getByTestId('save-status')).toContainText('Error');
 });
+
+test('a Google node asks for an account, and remembers the one you pick', async ({ page, request }) => {
+  // a credential exists, but has not been through Google's consent screen yet
+  const madeCredential = await request.post(`${API}/rest/credentials`, {
+    data: { name: `Sheets e2e ${Date.now()}`, type: 'googleSheets' },
+  });
+  const credential = await madeCredential.json();
+
+  const id = await newWorkflow(request, `e2e creds ${Date.now()}`);
+  await page.goto(`/#/workflow/${id}`);
+
+  await page.getByTestId('palette-manualTrigger').click();
+  await page.getByTestId('palette-googleSheets').click();
+  await connect(page, 'handle-Manual Trigger-0', 'target-Google Sheets');
+
+  await page.getByTestId('node-Google Sheets').click();
+  await expect(page.getByTestId('credential-picker')).toBeVisible();
+
+  // nothing chosen yet, so the workflow may not run
+  await expect(page.getByTestId('error-credential')).toContainText('Choose a googleSheets credential');
+  await expect(page.getByTestId('run')).toBeDisabled();
+
+  // choosing the account that has not been connected explains what is missing
+  await page.getByTestId('input-credential').selectOption(credential.id);
+  await expect(page.getByTestId('error-credential')).toContainText('is not connected yet');
+  await expect(page.getByTestId('run')).toBeDisabled();
+
+  // and the choice is saved onto the node, which is the seam the engine reads
+  await page.getByTestId('save').click();
+  await expect(page.getByTestId('save-status')).toContainText('Saved');
+
+  const saved = await (await request.get(`${API}/rest/workflows/${id}`)).json();
+  const sheets = saved.nodes.find((n: { name: string }) => n.name === 'Google Sheets');
+  expect(sheets.credentials).toEqual({ id: credential.id, name: credential.name });
+
+  await request.delete(`${API}/rest/credentials/${credential.id}`);
+});

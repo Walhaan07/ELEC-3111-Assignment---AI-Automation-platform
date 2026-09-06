@@ -502,8 +502,8 @@ ${note('The wall we built, and the wall we did not.',
 `, { kicker: 'Phase 5 · A2' });
 
 const aiPage = section('Phase 5 · the AI node', `
-${fileListing('packages/nodes/ai/anthropic.js', { from: 'async function ask(ctx, i)', to: '^}' })}
-${fileListing('packages/nodes/ai/anthropic.js', { from: 'export function parseJsonAnswer', to: '^}' })}
+${fileListing('packages/nodes/ai/llm.js', { from: 'async function ask(ctx, i)', to: '^}' })}
+${fileListing('packages/nodes/ai/llm.js', { from: 'export function parseJsonAnswer', to: '^}' })}
 ${note('The seam to agree.',
   'Everything downstream reads <code>$json.urgency</code>. Change the prompt to emit <code>priority</code> and '
   + 'three workflows break silently — so the key lives in the node’s default prompt.')}

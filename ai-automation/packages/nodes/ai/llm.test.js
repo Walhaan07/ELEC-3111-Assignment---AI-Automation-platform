@@ -1,6 +1,6 @@
 import { test, expect, describe, beforeAll, afterAll, beforeEach } from 'vitest';
 import http from 'node:http';
-import { aiNode, parseJsonAnswer, MODELS } from './anthropic.js';
+import { aiNode, parseJsonAnswer, MODELS, normaliseLocalUrl } from './llm.js';
 
 /**
  * The AI node, against a fake model server.
@@ -55,6 +55,7 @@ const ctxFor = (parameters, items = [{ json: { body: { message: 'my card was dec
 });
 
 const defaults = {
+  provider: 'anthropic',
   model: 'claude-sonnet-5',
   userPrompt: 'Classify: my card was declined twice',
   maxTokens: 512,
@@ -172,5 +173,160 @@ describe('reading the answer', () => {
   test('the models offered in the sidebar are real ids', () => {
     expect(MODELS.map((m) => m.value)).toEqual(
       expect.arrayContaining(['claude-opus-5', 'claude-sonnet-5']));
+  });
+});
+
+// ---------------------------------------------------------------------------
+// running the model on your own machine
+// ---------------------------------------------------------------------------
+
+describe('LM Studio, and anything else OpenAI-shaped', () => {
+  let local;
+  let localBase;
+  let localCalls = [];
+  let localReply;
+
+  beforeAll(async () => {
+    local = http.createServer((req, res) => {
+      let body = '';
+      req.on('data', (c) => { body += c; });
+      req.on('end', () => {
+        localCalls.push({ url: req.url, method: req.method, auth: req.headers.authorization,
+                          body: body ? JSON.parse(body) : {} });
+
+        if (req.url.endsWith('/models')) {          // LM Studio's model list
+          res.writeHead(200, { 'content-type': 'application/json' });
+          return res.end(JSON.stringify({ data: [{ id: 'qwen2.5-7b-instruct' }] }));
+        }
+        const answer = localReply(localCalls.length);
+        res.writeHead(answer.status, { 'content-type': 'application/json' });
+        return res.end(JSON.stringify(answer.body));
+      });
+    });
+    await new Promise((done) => local.listen(0, '127.0.0.1', done));
+    localBase = `http://127.0.0.1:${local.address().port}/v1`;
+  });
+
+  afterAll(async () => { await new Promise((done) => local.close(done)); });
+
+  const chat = (content, extra = {}) => ({
+    status: 200,
+    body: {
+      model: 'qwen2.5-7b-instruct',
+      choices: [{ message: { role: 'assistant', content }, finish_reason: 'stop' }],
+      usage: { prompt_tokens: 210, completion_tokens: 24 },
+      ...extra,
+    },
+  });
+
+  beforeEach(() => {
+    localCalls = [];
+    localReply = () => chat('{"urgency":"routine","reason":"nothing unusual"}');
+  });
+
+  const localCtx = (over = {}) => ({
+    getInputData: () => [{ json: { body: { message: 'my order is late' } } }],
+    getNodeParameter: (name, _i, fallback) => ({
+      provider: 'openai',
+      baseUrl: localBase,
+      localModel: '',
+      userPrompt: 'Classify: my order is late',
+      maxTokens: 512,
+      expectJson: true,
+      requiredKeys: 'urgency',
+      ...over,
+    }[name] ?? fallback),
+    credentials: {},
+    logger: { info() {}, warn() {} },
+  });
+
+  test('a local model answers, and the JSON is merged into the item', async () => {
+    const [out] = await aiNode.execute(localCtx());
+    expect(out[0].json).toMatchObject({ urgency: 'routine', reason: 'nothing unusual' });
+    expect(out[0].json.body.message).toBe('my order is late');
+  });
+
+  test('it posts the OpenAI chat shape, not the Anthropic one', async () => {
+    await aiNode.execute(localCtx({ systemPrompt: 'Answer with JSON only.' }));
+    const call = localCalls.at(-1);
+
+    expect(call.url).toBe('/v1/chat/completions');
+    expect(call.body.messages).toEqual([
+      { role: 'system', content: 'Answer with JSON only.' },
+      { role: 'user', content: 'Classify: my order is late' },
+    ]);
+    expect(call.body.max_tokens).toBe(512);
+    expect(call.body.stream).toBe(false);
+    expect(call.body).not.toHaveProperty('system');      // that is Anthropic's field
+  });
+
+  test('no API key is needed', async () => {
+    await aiNode.execute(localCtx());
+    expect(localCalls.at(-1).auth).toBe('Bearer not-needed');
+  });
+
+  // LM Studio users rarely know the model id, so an empty box asks the server.
+  test('an empty model name uses whichever model is loaded', async () => {
+    await aiNode.execute(localCtx());
+    expect(localCalls[0].url).toBe('/v1/models');
+    expect(localCalls.at(-1).body.model).toBe('qwen2.5-7b-instruct');
+  });
+
+  test('a model name that was typed in is used as given, with no lookup', async () => {
+    await aiNode.execute(localCtx({ localModel: 'llama-3.1-8b' }));
+    expect(localCalls.some((c) => c.url.endsWith('/models'))).toBe(false);
+    expect(localCalls.at(-1).body.model).toBe('llama-3.1-8b');
+  });
+
+  test('usage is reported in the same shape as the hosted API', async () => {
+    const [out] = await aiNode.execute(localCtx());
+    expect(out[0].json.usage).toEqual({ input_tokens: 210, output_tokens: 24 });
+  });
+
+  test('prose instead of JSON is caught here too', async () => {
+    localReply = () => chat('Honestly it seems routine to me.');
+    await expect(aiNode.execute(localCtx())).rejects.toThrow(/did not return JSON/);
+  });
+
+  // Small local models love wrapping JSON in a code fence.
+  test('a fenced answer from a small model is still read', async () => {
+    localReply = () => chat('```json\n{"urgency":"urgent"}\n```');
+    const [out] = await aiNode.execute(localCtx());
+    expect(out[0].json.urgency).toBe('urgent');
+  });
+
+  test('a server that is not running says what to do about it', async () => {
+    await expect(aiNode.execute(localCtx({ baseUrl: 'http://127.0.0.1:9/v1' })))
+      .rejects.toThrow(/Could not reach a model server.*LM Studio.*Start Server/s);
+  });
+
+  test('an overloaded local server is waited out', async () => {
+    localReply = (n) => (n <= 1
+      ? { status: 503, body: { error: { message: 'loading model' } } }
+      : chat('{"urgency":"routine"}'));
+    const [out] = await aiNode.execute(localCtx({ localModel: 'x' }));
+    expect(out[0].json.urgency).toBe('routine');
+  });
+});
+
+describe('the server address box is forgiving', () => {
+  test('accepts what LM Studio actually shows you', () => {
+    expect(normaliseLocalUrl('http://localhost:1234/v1')).toBe('http://localhost:1234/v1');
+  });
+
+  test('adds the scheme and the version when they are missing', () => {
+    expect(normaliseLocalUrl('localhost:1234')).toBe('http://localhost:1234/v1');
+  });
+
+  test('tolerates a trailing slash', () => {
+    expect(normaliseLocalUrl('http://localhost:1234/v1/')).toBe('http://localhost:1234/v1');
+  });
+
+  test('leaves Ollama’s address alone', () => {
+    expect(normaliseLocalUrl('http://localhost:11434/v1')).toBe('http://localhost:11434/v1');
+  });
+
+  test('an empty box falls back to the LM Studio default', () => {
+    expect(normaliseLocalUrl('')).toBe('http://localhost:1234/v1');
   });
 });

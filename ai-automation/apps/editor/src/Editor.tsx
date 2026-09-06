@@ -15,7 +15,7 @@ import ParameterPanel from './components/ParameterPanel';
 import OutputPanel from './components/OutputPanel';
 import { useLiveRun } from './useLiveRun';
 import { UI, UIIcon } from './icons';
-import type { NodeDescription, Workflow, WorkflowNode, RunResult, Item } from './types';
+import type { NodeDescription, Workflow, WorkflowNode, RunResult, Item, Credential } from './types';
 
 const nodeTypes = { workflowNode: WorkflowNodeView };
 const edgeTypes = { workflowEdge: WorkflowEdge };
@@ -34,6 +34,7 @@ function EditorInner({ id, onNavigate }: { id: string; onNavigate: (to: string) 
   const [nodes, setNodes, onNodesChangeBase] = useNodesState<RfNode>([]);
   const [edges, setEdges, onEdgesChangeBase] = useEdgesState<Edge>([]);
   const [descriptions, setDescriptions] = useState<NodeDescription[]>([]);
+  const [credentials, setCredentials] = useState<Credential[]>([]);
   const [name, setName] = useState('');
   const [active, setActive] = useState(false);
   const [webhookUrl, setWebhookUrl] = useState<string | null>(null);
@@ -69,9 +70,14 @@ function EditorInner({ id, onNavigate }: { id: string; onNavigate: (to: string) 
     Promise.all([
       api<NodeDescription[]>('/rest/node-types', { signal: stop.signal }),
       api<Workflow>(`/rest/workflows/${id}`, { signal: stop.signal }),
+      // a failure here must not stop the workflow loading - a node that needs a
+      // credential simply says so in its panel
+      api<{ data: Credential[] }>('/rest/credentials', { signal: stop.signal })
+        .catch(() => ({ data: [] as Credential[] })),
     ])
-      .then(([types, wf]) => {
+      .then(([types, wf, creds]) => {
         setDescriptions(types);
+        setCredentials(creds.data);
         setName(wf.name);
         setActive(Boolean(wf.active));
         setWebhookUrl(wf.webhookUrl ?? null);
@@ -92,6 +98,18 @@ function EditorInner({ id, onNavigate }: { id: string; onNavigate: (to: string) 
     // second load racing the first and showing stale data.
     return () => stop.abort();
   }, [id, setNodes, setEdges]);
+
+  // Connecting a Google account happens in another tab. Refreshing when this
+  // one regains focus means the new credential is in the dropdown immediately.
+  useEffect(() => {
+    const refresh = () => {
+      api<{ data: Credential[] }>('/rest/credentials')
+        .then((r) => setCredentials(r.data))
+        .catch(() => {});
+    };
+    window.addEventListener('focus', refresh);
+    return () => window.removeEventListener('focus', refresh);
+  }, []);
 
   // --- save ---------------------------------------------------------------
   const save = useCallback(async () => {
@@ -460,7 +478,9 @@ function EditorInner({ id, onNavigate }: { id: string; onNavigate: (to: string) 
             node={selectedNode}
             description={byName[selectedNode.type]}
             sampleItem={sampleItem}
+            credentials={credentials}
             onChange={(parameters) => patchSelected({ parameters })}
+            onCredentialChange={(credential) => patchSelected({ credentials: credential })}
             onRename={renameSelected}
             onValidity={setPanelValid}
             onToggleDisabled={(disabled) => patchSelected({ disabled })}

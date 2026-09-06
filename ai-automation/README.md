@@ -101,6 +101,8 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
    side of an IF stops without any special case in the engine.
 
 Full explanations, with diagrams, are in [`docs/guide.md`](docs/guide.md).
+Connecting Google and running the AI node locally are in
+[`docs/credentials-setup.md`](docs/credentials-setup.md).
 
 ## Testing
 

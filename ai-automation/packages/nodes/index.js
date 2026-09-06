@@ -15,7 +15,7 @@ import { sheetsNode } from './google/sheets.js';
 import { docsNode } from './google/docs.js';
 import { driveNode } from './google/drive.js';
 import { gmailNode } from './google/gmail.js';
-import { aiNode } from './ai/anthropic.js';
+import { aiNode } from './ai/llm.js';
 
 export const nodeTypes = {
   // triggers
